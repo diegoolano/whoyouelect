@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<head>
+<title>Federal Congressional Map of Texas</title>
+<meta charset="utf-8">
+<link rel="stylesheet" type="text/css" href="css/style2.css">
+<script type="text/javascript" src="js/jquery-2.1.3.min.js"></script>
+<style>
+ body { background: white; }
+ path { stroke-linejoin: round; stroke-linecap: round; }
+.land { fill: #bbb; }
+.land .state48:hover { fill: #bbb; cursor:pointer;}
+.land .state48.neighbor { fill: orange; }
+.border { pointer-events: none; fill: none; stroke: #fff; }
+.border--district { stroke-width: .5px; }
+.border--state { stroke-width: 1.5px; }
+ path.state35, path.state40, path.state22, path.state5, path.state29, path.state28, path.state15{ fill: white; }
+ svg { margin-top: -140px; }
+
+#search-results { font-size:18px; }
+#search-results div{ font-size:18px; color:black; height:1000px;}
+#search-results .dems{ color:rgba(31, 119, 180, .8); height:18px;}
+#search-results .reps{ color: #F15858; height:18px;}
+ 
+#search-results div.neighbordist{ height: 75px; float: left; width: 200px;}
+
+.listreps{ position: absolute; left:2px; cursor:pointer;}
+.listreps ul{list-style-type: none; padding-left:2px; font-size:13px;}
+.listreps .dems{ color:rgba(31, 119, 180, .8); height:18px;}
+.listreps .reps{ color: #F15858; height:18px;}
+</style>
+</head>
+<body>
+<div class='listreps'></div>
+<div class='intro'>
+  <img style="width:430px;" src="images/WYE-small-logo.jpg"/>
+  <div id='search-results'>
+  </div>
+</div>
+<script src="js/d3.v3.min.js"></script>
+<script src="js/queue.v1.min.js"></script>
+<script src="js/topojson.v1.min.js"></script>
+<script>
+
+var width = 960, height = 900;
+//var width = 1920, height = 1200;   //this doesn't affect zooming at all ( just makes canvas bigger and centers map )
+
+//var projection = d3.geo.albersUsa() .scale(1280) .translate([width / 2, height / 2]);   //this what i'm using to hack a zoom perspective
+var projection = d3.geo.albersUsa() .scale(4000) .translate([width / 1.52, 1]);
+
+var path = d3.geo.path() .projection(projection);
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .style("margin-left","140px")
+    .attr("height", height);
+
+var center_node_attrs;
+var feds, feds_by_district;
+d3.json("js/configdesc.json", function(error, cd){
+	center_node_attrs = cd;	
+	feds = {};
+	Object.keys(center_node_attrs).forEach(function(c){ 
+		cna = center_node_attrs[c]; 
+		if(cna["info1"].indexOf("Federal Representative") > -1 ){ 
+			//feds[c] = cna;
+			dnum = cna["info2"].split("District: ")[1]; 
+			if( cna["info1"].indexOf("Democrat") > -1){ party = "Democratic"; }
+			else{ 
+				if( cna["info1"].indexOf("Republican") > -1){
+					party = "Republican";
+				}
+			}
+			feds[dnum] = {'name':c, 'party': party, 'image': cna["image"], 'snippet': cna['snippet']};
+		}
+	});
+	
+	lrout = "<ul>";
+	rmap = {'Republican':'reps','Democratic':'dems'}
+	Object.keys(feds).forEach(function(d){
+		curdistrict = d;
+		lrout += "<li class='"+rmap[feds[d]['party']]+"'>"+feds[d]['name']+" (District: "+d+")</li>";
+	});
+	jQuery(".listreps").html(lrout);
+	items = jQuery(".listreps li");
+	items.sort(function(a,b){
+	  var keyA = jQuery(a).text();
+	  var keyB = jQuery(b).text();
+
+	  if (keyA < keyB) return -1;
+	  if (keyA > keyB) return 1;
+	  return 0;
+	});
+	jQuery(".listreps ul").html(items);
+
+         jQuery(".listreps li").hover(
+	  function() {
+	    //on over
+	    if(clicked ==0){ 
+		    //console.log(this.textContent);
+		    hovered = this;
+		    nodeid = this.textContent.split("District:")[1].split(")")[0];
+		    console.log("MOUSE OVER",nodeid);
+		    handle_mouseover(48,nodeid.trim());
+		    $(this).css("text-decoration","underline");
+	    }
+	  }, function() {
+	    //on out
+	    if(clicked ==0){ 
+		    nodeid = this.textContent.split("District:")[1].split(")")[0];
+		    console.log("MOUSE OVER",nodeid);
+		    handle_mouseout(48,nodeid.trim());
+		    $(this).css("text-decoration","none");
+	    }
+	  }
+         );
+   
+        jQuery(".listreps li").click( 
+		function(){ 
+		    nodeid = this.textContent.split("District:")[1].split(")")[0];
+		    console.log("MOUSE OVER",nodeid);
+		    district_clicked(nodeid.trim());
+		    $(this).css("text-decoration","underline");
+		});
+});
+
+queue()
+    .defer(d3.json, "js/us.json")
+    .defer(d3.json, "js/us-congress-113.json")
+    .await(ready);
+
+var outc, outd, outn, outt, outu, texascounties, texasneighbors, texas_i_to_id;
+
+var clicked, curclicked;
+
+
+function handle_mouseover(st,districtnum){
+	if(clicked == 0 && st == 48 ){
+		jQuery("path[name='district"+districtnum+"']").css("fill","yellow");
+
+		per = feds[districtnum];
+		pclass = 'reps';  
+		clr = '#F15858';
+		if(per['party'] == "Democratic"){ pclass='dems'; clr = 'rgba(31, 119, 180, .8)';}
+		output ='<div style="position:relative; top:27px; left:23%;height:15px;"><svg width="140" height="140"> <defs> <pattern id="image'+districtnum+'" x="10" y="0" patternUnits="userSpaceOnUse" width="125" height="175"> <image x="0" y="0" width="125" height="175" xlink:href="'+per["image"]+'"></image> </pattern> </defs> <circle id="top" cx="71" cy="71" r="60" fill="url(#image'+districtnum+')" style="stroke:'+clr+'; stroke-width:2px"/> </svg></div>';
+		
+		neighs = "<ul>";
+		texasneighbors[districtnum].forEach(function(n){ 
+			console.log(n);
+			thisper = feds[n]; 
+			if(typeof(thisper) != "undefined"){
+				thispclass = 'reps';  
+				thisclr = '#F15858';
+				if(thisper['party'] == "Democratic"){ thispclass='dems'; thisclr = 'rgba(31, 119, 180, .8)';}
+
+				neighs += "<div class='neighbordist'>District: "+n+"<br><span style='color:"+thisclr+"'> "+thisper['party']+'<br>'+thisper['name']+"</span>";
+				neighs +='<div style="position:relative; top:-5px; left:90px;height:20px;"><svg width="80" height="80"> <defs> <pattern id="image'+districtnum+"-"+n+'" x="10" y="0" patternUnits="userSpaceOnUse" width="64" height="88"> <image x="0" y="0" width="64" height="88" xlink:href="'+thisper["image"]+'"></image> </pattern> </defs> <circle id="top" cx="42" cy="38" r="30" fill="url(#image'+districtnum+'-'+n+')" style="stroke:'+thisclr+'; stroke-width:2px"/> </svg></div></div>';
+			}
+		});
+		neighs += "</ul>";
+
+		jQuery(".clickres").html("<div><span style='color:yellow; font-weight:bold; font-size:24px;background:gray; line-height:60px;'>District "+districtnum+"</span><br>"+output+"<br><span class='"+pclass+"'>"+per['party']+" Representative "+per['name']+"</span><br><br><span style='color:orange; font-weight:bold'>with neighbors<br></span><br>"+neighs+"</div>");
+		
+	}
+
+}
+
+function handle_mouseout(st,districtnum){
+	if(clicked == 0 && st == 48){
+		/*
+		d.neighbors.style("fill",function(nf){ 
+			if( st == 48 ){ 
+				pf = feds[districtnum];
+				if( typeof(pf) != "undefined"){ // && 'party' in pf ){
+					if( pf['party'] == "Republican"){ 
+						return "#F15858"; 
+					}
+					else{ return "rgba(31, 119, 180, .8)"; } 
+				}
+				else{ return "rgba(31, 119, 180, .8)"; }
+			}
+			else{ return "white" }
+		});		
+		*/
+
+		dt = districtnum;
+		pff = feds[dt]
+		if( typeof(pff) != "undefined" && 'party' in pff ){
+			if( pff['party'] == "Republican"){ col = "#F15858"; }
+			else{ col =  "rgba(31, 119, 180, .8)"; } 
+		}
+		else{ 	
+			console.log("ERROR2");
+			col = "rgba(31, 119, 180, .8)"; 
+		}
+		jQuery("path[name='district"+dt+"']").css("fill",col);
+	}
+
+}
+
+function district_clicked(districtnum){
+	if(clicked == 0){ 
+		curclicked = districtnum;
+		console.log(districtnum);
+		clicked = 1; 
+		jQuery("path[name='district"+districtnum+"']").css("fill","yellow");
+	} 
+	else{
+		if(clicked == 1 && curclicked == districtnum){ 
+			console.log("now unselected");
+			pf = feds[curclicked]
+			if( typeof(pf) != "undefined" && 'party' in pf ){
+				if( pf['party'] == "Republican"){ 
+					jQuery("path[name='district"+districtnum+"']").css("fill","#F15858");
+				}
+				else{ 
+					jQuery("path[name='district"+districtnum+"']").css("fill","rgba(31, 119, 180, .8)");
+				} 
+			}else{ 
+				//this is beto
+				jQuery("path[name='district"+districtnum+"']").css("fill","rgba(31, 119, 180, .8)");
+			}
+			clicked = 0; curclicked = 0;
+		}
+		else{ return false; }
+	}
+
+	per = feds[districtnum];
+	pclass = 'reps';  
+	clr = '#F15858';
+	if(per['party'] == "Democratic"){ pclass='dems'; clr = 'rgba(31, 119, 180, .8)';}
+	output ='<div style="position:relative; top:27px; left:23%;height:15px;"><svg width="140" height="140"> <defs> <pattern id="image'+districtnum+'" x="10" y="0" patternUnits="userSpaceOnUse" width="125" height="175"> <image x="0" y="0" width="125" height="175" xlink:href="'+per["image"]+'"></image> </pattern> </defs> <circle id="top" cx="71" cy="71" r="60" fill="url(#image'+districtnum+')" style="stroke:'+clr+'; stroke-width:2px"/> </svg></div>';
+	
+	neighs = "<ul>";
+	texasneighbors[districtnum].forEach(function(n){ 
+		console.log(n);
+		thisper = feds[n]; 
+		if(typeof(thisper) != "undefined"){
+			thispclass = 'reps';  
+			thisclr = '#F15858';
+			if(thisper['party'] == "Democratic"){ thispclass='dems'; thisclr = 'rgba(31, 119, 180, .8)';}
+
+			neighs += "<div class='neighbordist'>District: "+n+"<br><span style='color:"+thisclr+"'> "+thisper['party']+'<br>'+thisper['name']+"</span>";
+			neighs +='<div style="position:relative; top:-5px; left:90px;height:20px;"><svg width="80" height="80"> <defs> <pattern id="image'+districtnum+"-"+n+'" x="10" y="0" patternUnits="userSpaceOnUse" width="64" height="88"> <image x="0" y="0" width="64" height="88" xlink:href="'+thisper["image"]+'"></image> </pattern> </defs> <circle id="top" cx="42" cy="38" r="30" fill="url(#image'+districtnum+'-'+n+')" style="stroke:'+thisclr+'; stroke-width:2px"/> </svg></div></div>';
+		}
+	});
+	neighs += "</ul>";
+	console.log(neighs);
+	
+
+	jQuery(".clickres").html("<div><span style='color:yellow; font-weight:bold; font-size:24px;background:gray; line-height:60px;'>District "+districtnum+"</span><br>"+output+"<br><span class='"+pclass+"'>"+per['party']+" Representative "+per['name']+"</span><br><br><span style='color:orange; font-weight:bold'>with neighbors<br></span><br>"+neighs+"</div>");
+
+}
+
+
+function ready(error, us, congress) {
+  clicked = 0;
+  curclicked = 0;
+
+  if (error) return console.error(error);
+
+  var districts = congress.objects.districts,
+      neighbors = topojson.neighbors(districts.geometries);
+
+  //diego add
+  outc = congress, outd = districts, outn = neighbors, outt = topojson, outu = us;
+  
+  texascounties = outc["objects"]["districts"]["geometries"].filter(function(f){ if(Math.floor(parseInt(f['id'])/100) == 48){ return f; }});
+  texas_i_to_id = {};
+  texasneighbors = {};
+  for(n=0; n < outn.length; n++){ 
+	if(Math.floor(parseInt(outc["objects"]["districts"]["geometries"][n]['id'])/100) == 48){ texas_i_to_id[n] = outc["objects"]["districts"]["geometries"][n]['id']; }
+  }
+  Object.keys(texas_i_to_id).forEach(function(i){ 
+		curdistrict = texas_i_to_id[i] - 4800;
+		texasneighbors[curdistrict] = [];  
+		curn = outn[i];
+		curn.forEach(function(cn){ 
+			if( Object.keys(texas_i_to_id).indexOf(cn.toString()) > -1){ 
+				texasneighbors[curdistrict].push(texas_i_to_id[cn] - 4800);
+			}
+		});
+  });
+
+  //NOW texasneighbors is a dictionary that is indexed by a Texas Federal District Number and gives the Federal Neighboring District Numbers it touches.
+  //for instance District 1, texasneighbors[1] has the following District neighbors [36, 5, 8, 4] 
+
+
+  svg.append("defs").append("path")
+      .attr("id", "land")
+      .datum(topojson.feature(us, us.objects.land))
+      .attr("d", path);
+
+  svg.append("clipPath")
+      .attr("id", "clip-land")
+    .append("use")
+      .attr("xlink:href", "#land");
+
+  var district = svg.append("g")
+      .attr("class", "land")
+      .attr("clip-path", "url(#clip-land)")
+    .selectAll("path")
+      .data(topojson.feature(congress, districts).features)
+    .enter().append("path")
+      .attr("d", path)
+      .style("fill",function(d){
+		//console.log("in fill with "+d);
+		if( Math.floor(parseInt(d['id'])/100) == 48 ){
+			pf = feds[parseInt(d['id']) - 4800];
+			if( typeof(pf) != "undefined" && 'party' in pf ){
+				if( pf['party'] == "Republican"){ return "#F15858"; }
+				else{ return "rgba(31, 119, 180, .8)"; } 
+			}else{ return "rgba(31, 119, 180, .8)"; }
+		}
+		else{ return "white"; }
+	})
+      .attr("name", function(d){ return "district"+(parseInt(d['id']) - 4800).toString();  })
+      .attr("class", function(d){ return "state"+Math.floor(parseInt(d['id'])/100).toString();  });   //i added this so we could white out otherstates
+
+  district.append("title")
+      .text(function(d) { return "DISTRICT "+ (parseInt(d['id']) - 4800).toString(); });
+
+  district
+      .each(function(d, i) { d.neighbors = d3.selectAll(neighbors[i].map(function(j) { return district[0][j]; })); })
+      .on("mouseover", function(d) { 
+		st = Math.floor(parseInt(d['id'])/100);
+		districtnum = parseInt(d['id']) - 4800;
+		handle_mouseover(st,districtnum);
+	})
+      .on("mouseout", function(d) { 
+		st = Math.floor(parseInt(d['id'])/100);
+		districtnum = parseInt(d['id']) - 4800;
+		handle_mouseout(st,districtnum);
+	})
+      .on("click",function(d){
+		console.log("clicked "+d.id +" and clicked currently: "+clicked+ "and curclicked: "+curclicked);
+		districtnum = parseInt(d['id']) - 4800;
+		district_clicked(districtnum);
+      });
+
+  svg.append("path")
+      .attr("class", "border border--district")
+      .datum(topojson.mesh(congress, congress.objects.districts, function(a, b) { return a !== b && (a.id / 1000 | 0) === (b.id / 1000 | 0); }))
+      .attr("d", path);
+
+  svg.append("path")
+      .attr("class", "border border--state")
+      .datum(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; }))
+      .attr("d", path);
+
+  repst = 0;
+  demst = 0;
+  Object.keys(feds).forEach(function(k){ if( feds[k]['party'] == 'Republican'){ repst += 1; }else{ demst += 1;}});
+  repcount = "<div class='reps'>"+repst+" Republican</div>";
+  demcount = "<div class='dems'>"+demst+" Democrats</div>";
+  jQuery("#search-results").html("TEXAS FEDERAL CONGRESSIONAL DISTRICTS: "+repcount +demcount+"<b>"+ Object.keys(texasneighbors).length +" TOTAL</b><br><div class='clickres'></div>");
+}
+
+d3.select(self.frameElement).style("height", height + "px");
+
+</script>

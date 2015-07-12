@@ -1,0 +1,2666 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Extended Communnities</title>
+    <link rel="stylesheet" href="css/jquery-ui-smoothness.css">
+    <script src="js/d3.v3.min.js" charset="utf-8"></script>
+    <script type="text/javascript" src="js/jquery-2.1.3.min.js"></script>
+    <script type="text/javascript" src="js/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="js/jLouvain.js"></script>
+    <script type="text/javascript" src="js/betweenness.js"></script>
+    <script type="text/javascript" src="js/sylvester.js"></script> <!-- for use with page rank -->
+    <style>
+	    body { background: white; }
+	    .node { stroke: #fff; stroke-width: 1px; }
+	    .link { stroke: #999; stroke-opacity: .6; stroke-width: 0.2px; }
+	    #content_wrapper { position:absolute; width:200px;height:100%; }
+	    #content_wrapper ul { list-style-type:none; padding-left:5px; margin-top:5px;}
+	    #content_wrapper a { text-decoration:none; color: inherit;}
+	    #content_wrapper ul li ul li{ color:black; font-size:12px; }
+	    svg{ left:100px; position:fixed;}
+	    svg .node{ cursor:pointer;}
+	    #nodeinfo{ position: absolute; right:2px; z-index:10; top:10px; width:270px; border:3px dashed red; height:62px; display:none; padding-left: 10px; }
+	    #linkedto{ position: absolute; right:2px; z-index:10; top:84px; width:276px; border:2px dashed gray; border-bottom: 0px; height:100%; display:none; padding-left: 5px; line-height: 14px;}
+	    #linkedto ul{ list-style-type:none; padding-left:4px; margin-top:4px; font-size:14px; white-space: nowrap;}
+	    #counter {font-size:14px; font-weight:bold; }
+	    .results ul{ white-space: nowrap; }
+	    .stats{ white-space: nowrap; }
+	    .clusterout li div li{ cursor: pointer; }
+	    .clusterout{ margin-bottom: 10px;}
+	    .clusterout li { font-size: 13px;}
+	    #ordering a{ font-size:10px;text-decoration:none;color:black;}
+	    #nodeinfo a.weight:hover, #nodeinfo a.community:hover, #nodeinfo a.name:hover { color:"red";}
+	    #searchInput { width:230px; }
+	    #filter { position:fixed; top:5px; left:235px; z-index:10}
+	    #ui-id-1 { list-style-type:none; font-family: "Trebuchet MS", "Helvetica", "Arial",  "Verdana", "sans-serif"; font-size: 62.5%; }
+	    .ui-autocomplete { max-height: 100px; overflow-y: auto; /* prevent horizontal scrollbar */ overflow-x: hidden; }
+	    #showstats{ display: none; position: relative; top: 0px; left: 0px; width:220px; height: 690px; opacity: 1; font-size:15px; z-index:0; }
+	    #showstats ul{list-style-type:none; padding-left:5px; margin-top:2px;} 
+	    #showstats .results table th{text-align:left; width:30%;} 
+	    #showstats .results tr { line-height:12px;}
+	    #showstats .results tr ul { margin-top:0px; margin-bottom:0px;}
+	    #showstats .results tr li { line-height:16px;}
+	    .clusts, .degrees { width:220px; }
+	    .results table a { text-decoration:none; color:black; font-size:12px;}
+	    .results li{ cursor: pointer; }
+	    #filter .nodesize {font-size:11px;}
+	    #filter .nodesize a{text-decoration:none; color:black;}
+	    #filter .nodesize a:hover {color:red;}
+	    #entitytypes { position:fixed; bottom:5px; left:17%; z-index:10}
+	    #entitytypes .nodesize {font-size:11px;}
+	    #entitytypes .nodesize a{text-decoration:none; color:black;}
+	    #entitytypes .nodesize a:hover {color:red;}
+	    #entitytypes .subparty {font-size:10px;}
+	    #entitytypes .subparty a{text-decoration:none; font-style:italic; color:black;}
+	    #entitytypes .subparty a:hover {color:red;}
+	    .comma { width: 1100px; height: 600px; background: white; border: 3px dashed gray; cursor:pointer; z-index:100; opacity:.95; font-size:14px; position: absolute; left:250px; top:100px; padding:10px; overflow-x: hidden;}
+	    .comma a { color:black; text-decoration:none;}
+	    .comma a:hover { color:red;}
+            .commdiv { margin-top:-4px; }
+    </style>
+</head>
+  <body>
+    <div id="content_wrapper"> <!-- <input type="button" value="Run Community Detection" id='comm_detect' />--> </div>
+    <div id="nodeinfo"></div>
+    <div id='linkedto'></div>
+    <div id='filter'><span class='nodesize'><b>NODE SIZE BY:</b>&nbsp; 
+			<a href='javascript: changeSizeFor("degree");'>DEGREE</a>&nbsp;|&nbsp;
+			<a href='javascript: changeSizeFor("pagerank");'>PAGE RANK</a>&nbsp;|&nbsp;
+			<a href='javascript: changeSizeFor("transitivity");'>INVERSE STR</a>&nbsp;|&nbsp;
+			<a href='javascript: changeSizeFor("strength");'>STRENGTH</a>&nbsp;|&nbsp;
+			<a href='javascript: changeSizeFor("articles");'>ARTICLES</a>&nbsp;|&nbsp;
+			<a href='javascript: changeSizeFor("none");' style='color:blue'>NONE</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		        <b>SEARCH FOR ENTITY BY NAME:</b>  </span><input id="searchInput" value="">
+    </div>
+    <div id='entitytypes'><span class='nodesize'><b>SHOW NODES OF TYPE:</b>&nbsp; 
+			<a href='javascript: toggleType("politician");'>POLITICIAN</a>&nbsp;
+				<span class='subparty'>(&nbsp;
+					<a href='javascript: toggleType("REP");'>REPUBLICAN</a>&nbsp;|&nbsp;
+					<a href='javascript: toggleType("DEM");'>DEMOCRAT</a>&nbsp;&nbsp;)
+				</span>&nbsp;|&nbsp;
+			<a href='javascript: toggleType("ORG");'>ORGANIZATION</a>&nbsp;|&nbsp;
+			<a href='javascript: toggleType("PER");'>PERSON</a>&nbsp;|&nbsp;
+			<a href='javascript: toggleType("LOC");'>LOCATION</a>&nbsp;|&nbsp;
+			<a href='javascript: toggleType("BILL");'>BILL</a>&nbsp;|&nbsp;
+			<a href='javascript: toggleType("MISC");'>MISC</a>&nbsp;|&nbsp;
+			<a href='javascript: toggleType("ALL");' style='color:blue'>ALL</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			&nbsp;&nbsp;<span class='nodetypenumbers'></span></span>
+   </div>
+  </body>
+<script>
+jQuery("body").append("<div id='loading' style='position:absolute;top:20%;width:100%;text-align:center;'><img src='images/loading.gif'/></div>");
+
+function togglecomm(){ jQuery(".commdiv").toggle(); }
+function toggleclust(){ jQuery(".clusts").toggle(); }
+function toggledeg(){ jQuery(".degrees").toggle(); }
+function togglepr(){ jQuery(".pagerank").toggle(); }
+function toggleinv(){ jQuery(".inverseartstrength").toggle(); }
+function togglestr(){ jQuery(".strength").toggle(); }
+function toggleart(){ jQuery(".artapp").toggle(); }
+function togglenodesinfo(){ jQuery("#nodesinfo").toggle();}
+function togglearticlesinfo(){ jQuery("#articlesinfo").toggle();}
+		
+
+function calculateNumArticles(ents,overall_selected){
+	clustarts = {}
+	ents.forEach(function(ca){
+		//grid = original_node_data[ca]['value'];
+		grid = ca;
+		as = articlemap.ns[grid];
+		as.forEach(function(f){
+			if( f in clustarts ){ clustarts[f] += 1; }
+			else{ clustarts[f] = 1; }
+		});
+	});	
+
+	if(overall_selected == 1){
+		//make time distribution
+		timed = {'90s':0, '2000-2005':0,'2006-2010':0,'2011-2015':0}
+		Object.keys(clustarts).forEach(function(a){
+			thisart = urlslist[articlemap.ms[a - 1]];
+			thisdate = thisart['date']
+			ps = thisdate.split("-")
+			if(ps.length > 1){ 
+				year = parseInt(ps[0]);
+				if( year > 2010){ timed['2011-2015'] += 1;}
+				else{
+					if( year >= 2006 & year <= 2010 ){ timed['2006-2010'] += 1;}
+					else{
+						if( year >= 2000 & year <= 2005 ){ timed['2000-2005'] += 1;}
+						else{ if( year < 2000 ){ timed['90s'] += 1; }}
+					}	
+				}
+			}
+			else{ console.log("not sure of year for "+thisdate); }
+
+		});
+		//so clustarts has the article ids followed by how many times they appear in the node (max is number of nodes in community)
+		return [ clustarts, timed];
+	}
+	else{
+		//so clustarts has the article ids followed by how many times they appear in the node (max is number of nodes in community)
+		return clustarts;
+	}
+}
+
+var matrix;
+var betwns;
+var localdegree;
+function calculateConductance(ents,Amatrix){
+	//fraction of edges leaving the cluster..   cond = f_c   /    ( 2m_c  + f_c ) 
+	// m_c = nr. edges within cluster c
+	// f_c = nr. edges connecting from within C to outside
+	mc = 0;
+	fc = 0;
+        n = 0;
+
+	matrix = [];  //for betweeness measure
+	for (i=0; i < ents.length; i++){ 
+		   matrix[i] = {};    
+		   for (j=0; j < ents.length; j++){ 
+			matrix[i][j]=0;
+		   }
+	}    
+
+	localdegree = [];  //local degree
+        localstrength = []; //local strength
+	//calulate conducatance
+	ents.forEach(function(ca){
+		locals = 0;
+		localst = 0;
+		cai = ents.indexOf(ca);
+		edges = Object.keys(Amatrix[ca]);
+		edges.forEach(function(e){ 
+			if( ents.indexOf(e) > -1 ){ 
+				mc += 1;
+				ei = ents.indexOf(e);
+				matrix[cai][ei] = parseFloat(Amatrix[ca][e]);
+				matrix[ei][cai] = parseFloat(Amatrix[ca][e]);
+				locals += 1;
+				localst += parseFloat(Amatrix[ca][e]);
+			}
+			else{ fc += 1; } 
+			n += 1;
+		});
+		localdegree[cai] = locals;
+		localstrength[cai] = localst;
+	});
+	cond = fc / ( (2*mc) + fc);
+	//console.log("fc",fc,"mc",mc,"cond",cond);
+
+	console.log(matrix);
+	
+	//betwns = calcBetweenness(edge_data,og_vals_to_id,userlength)
+  	betwns =  compute_betweenness(matrix,ents.length);
+
+	return [fc,mc,cond,n,betwns,localdegree,localstrength];
+}
+
+function showClust(f){
+	if(f == 'OVERALL'){
+		allents = {};
+		output = "<br><b>SUMMARY OF COMMUNITY STRUCTURES </b><br>(overall modularity: "+modularity+")<br><table class='mostassoc' border='1'><thead style='font-size:14px;'><th>Community</th><th>Nodes</th><th>Internal Edges</th><th>Conductance</th><th>Expansion</th><th>Articles</th><th>Articles Published:</th><th>pre 2000</th><th>2000s</th><th>2000-2005</th><th>2006-2010</th><th>2011-2015</th></thead><tbody>";
+		Object.keys(clusters_peeps).forEach(function(f){
+			ents = clusters_peeps[f];  //get entities for community f
+			cond = calculateConductance(ents,Amatrix);
+			cond[2] = Math.round(( cond[2] * 10000)) / 10000;
+			expa = Math.round(10000*(cond[0] / cond[3] )) / 10000;
+			allents[f] = [cond[2],expa,cond[3],ents.length] ;    //this is conductance, expansion, num internal edges, num nodes 	
+			artsaa = calculateNumArticles(ents,1);
+			artsinfo = artsaa[0];
+			artstime = artsaa[1];
+			output += "<tr><td>"+f+"</td><td>"+ents.length+"</td><td>"+cond[3]+"</td><td>"+cond[2]+"</td><td>"+expa+"</td><td>"+Object.keys(artsinfo).length+"</td><td>&nbsp;</td><td>"+artstime['90s']+"</td><td>"+(artstime['2000-2005']+artstime['2006-2010'])+"</td><td>"+artstime['2000-2005']+"</td><td>"+artstime['2006-2010']+"</td><td>"+artstime['2011-2015']+"</td></tr>";
+		});
+		output += "</tbody></table>";
+		jQuery(".caresults").html(output);
+		table = document.getElementsByClassName("mostassoc")[0];
+		makeSortableSummary(table);
+	}
+	else{
+		ents = clusters_peeps[f];  //get entities for community f
+
+		//calculate "conductance" measure
+		//make a table with name, entitytype, party, district, degree, pagerank that is sortable
+		cond = calculateConductance(ents,Amatrix);
+		cond[2] = Math.round(( cond[2] * 10000)) / 10000;
+		expa = Math.round(10000*(cond[0] / cond[3] )) / 10000;
+
+		artsinfo = calculateNumArticles(ents,0);
+
+		output = "<br><table border=0><tr><td style='padding-right:20px;'><span style='color: "+color(f)+"; font-weight:bold; font-size:16px;'>Community "+f+" with "+ents.length+" entities</span></td><td ><span style='color:black;font-size:13px;'><b>CONDUCTANCE</b> = "+cond[0]+"/(2*"+cond[1]+" + "+cond[0]+") = <b>"+cond[2]+"</b>  -- fraction of edges leaving the communities. (smaller is better)</span></td><td style='padding-left:20px'>L = LOCAL TO COMMUNITY</td></tr><tr><td><span style='color:black;font-size:13px;'>SPANNING "+Object.keys(artsinfo).length+" articles</span></td><td><span style='color:black;font-size:13px;'><b>EXPANSION</b> = "+cond[0]+"/"+cond[3]+" = <b>"+expa+"</b> -- nr of edges per node leaving the community </span></td><td style='padding-left:20px'>G = GLOBAL</td></tr></table><br>";
+		output += '<a href="javascript: togglenodesinfo();">ENTITIES INFO</a>+/-';
+		output += "<div id='nodesinfo'><table class='mostassoc' border='1'><thead style='font-size:14px;'><th>Name</th><th>Type</th><th>Party</th><th>Level</th><th>Position</th><th>District</th><th>G Degree</th><th>L Degree</th><th>G Page Rank</th><th>G Transitivity</th><th>G Strength</th><th>L Strength</th><th>L Betweeness</th><th>Articles</th></thead><tbody>";
+		ents.forEach(function(ca){
+			eid = ents.indexOf(ca);
+			og = og_vals_to_id[ca];
+			add= "";
+			if(grpost.elements.nodes[ca]["entity_type"]){ 
+				chamber = ""; district = ""; party = ""; position = ""; level = "";
+				poli = grpost.elements.nodes[ca];
+				//if( "chamber" in poli){ chamber = chambermap[poli["chamber"]];}   // chamber is redundant for the most part
+				if( "party" in poli){ party = "<span style='color:"+partycol[poli['party']]+"'>"+poli["party"]+"</span>";}
+				if( "district" in poli){ district = poli["district"];}
+				if( "position" in poli){ position = poli["position"];}
+				if( "level" in poli){ level = poli["level"];}
+				degree = nodesEdges[ca].length;
+				pagerank = 100 * (G.pi.e(og+1) / Gmax);
+				pagerank = Math.round(( pagerank * 1000)) / 1000;
+				transi = localClusteringCoefficient[ca];
+				if(transi == 1 && degree == 1){ 
+					//not interesting since its just one edge so push to bottom
+					transi = 0.00001; 
+				}
+				transi = Math.round(( transi * 1000)) / 1000;
+				strength = nodestrengths[ca];
+				strength = Math.round(( strength * 1000)) / 1000;
+				lstrength = Math.round(( cond[6][eid] * 1000)) / 1000;
+				bbbnn = Math.round(( cond[4][eid] * 1000)) / 1000;
+			}
+			output += "<tr><td>"+grpost.elements.nodes[ca]["full_name"]+"</td><td>"+entity_typemap[grpost.elements.nodes[ca]["entity_type"]]+"</td>";
+			output += "<td>"+party+"</td><td>"+level+"</td><td>"+position+"</td><td>"+district+"</td><td>"+degree+"</td><td>"+cond[5][eid]+"</td><td>"+pagerank+"</td><td>"+parseFloat(transi)+"</td><td>"+strength+"</td><td>"+lstrength+"</td><td>"+bbbnn+"</td><td>"+articlemap.ns[ca].length+"</td></tr>";
+		})
+		output += "</tbody></table></div>";
+		//TODO add article area!
+		output += '<br><a href="javascript: togglearticlesinfo();">ARTICLES INFO</a>+/-';
+		output += "<div id='articlesinfo'>";
+		output += "<table class='mostassocarts' border='1'><thead style='font-size:14px;'><th>URL</th><th>DATE</th><th>NUM TIMES IN COMMUNITY</th></thead><tbody>";
+		Object.keys(artsinfo).forEach(function(a){
+			console.log(a);
+			thisart = urlslist[articlemap.ms[a - 1]]
+			output += "<tr><td><a href='"+thisart.url+"' target='_blank'>"+thisart.url+"</a></td><td>"+thisart.date+"</td><td>"+artsinfo[a]+"</td></tr>";
+		})	
+		output += "</table></div>";
+
+		jQuery(".caresults").html(output);
+		table = document.getElementsByClassName("mostassoc")[0];
+		makeSortable(table);
+
+		//makeSortableArt
+		tablea = document.getElementsByClassName("mostassocarts")[0];
+		makeSortableArt(tablea);
+	}
+
+
+	jQuery(".topc a").css("color","black");
+	jQuery(".topc a").each(function(a){ 
+		if(this.text == f){ 
+			if(f == "OVERALL"){
+				$(this).css("color","blue"); 
+			}
+			else{
+				$(this).css("color",color(f)); 
+			}
+		}
+	});
+
+	//TODO calculate and show "purity" ( interedges vs outeredges ) 
+}
+function togglecomma(){ 
+	inner = '<div style="position:absolute; top:0px; right:-5px; width:45px; padding-left:5px;"><a href="javascript: jQuery(\'.comma\').remove();"><img src="images/close_news.png"/></a></div>';
+	//go through communities in cluster_peeps
+	content = "<div class='topc'>SHOW COMMUNITY: ";
+	Object.keys(clusters_peeps).forEach(function(f){ content += "<a href='javascript: showClust("+f+");'>"+f+"</a>&nbsp;&nbsp;";});
+	content += "|&nbsp;&nbsp;<a href='javascript: showClust(\"OVERALL\");'>OVERALL</a></div><div class='caresults'></div>";
+
+	jQuery("body").append("<div class='comma'>"+inner+""+content+"</div>");
+        jQuery('.comma').draggable().resizable();
+
+	showClust(0);
+}
+
+function getURLParameter(name) {
+  return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search)||[,""])[1].replace(/\+/g, '%20'))||"NONE"
+}
+
+
+//LOAD S from GET, GET LARGE NET FOR PERSON, GET RID OF DUPLICATES, CALCULATE MY METRIC ON EACH PERSON, TRANSFORM DATA TO BE like node_data and edge_data ( with each edge having weight of metric )
+//use entire canvas
+var s = getURLParameter("s") ;    //center node
+var commdect = getURLParameter("commdect");  //for now only louvain works native anyways
+if( commdect == "NONE"){ commdect="louvain"; }
+
+var threshhold = getURLParameter("t");
+if(threshhold == "NONE"){ threshhold = 5; }
+else{ threshhold = parseFloat(threshhold); }
+
+var init_cluster = getURLParameter("cl");
+if(init_cluster == "NONE"){ init_cluster = 25; }
+else{ init_cluster = parseInt(init_cluster); }
+
+var search_terms;
+var gr;
+var grpost;
+var edge_data;
+var node_data;
+var predge_data;
+var community;
+var width;
+var height;
+var original_node_data;
+var max_weight;
+var weight_scale;
+var force;
+var svg;
+var link;
+var node;
+var community_assignment_result;
+var community_assignment_result_old;
+var node_ids;
+var max_community_number;
+var min_community_number;
+var clusters_seen
+var color;
+var newnodes;
+var clicklocked = 0;
+var currentclicked = "";
+
+var concurrent_clicklocked = 0;
+var concurrent_currentclicked = "";
+
+var og_vals_to_id;
+var clusters_peeps;
+var order_by = "weight";  //community (and then weight), or name
+var G;
+var nodestrengths;
+var minStrength; var maxStrength;
+
+function toggle(f){
+   cur = jQuery(".cluster"+f).css("display");
+   if(cur == "none"){ jQuery(".cluster"+f).show();}
+   else{ jQuery(".cluster"+f).hide();}
+}
+
+var entity_typemap = {"ORGANIZATION":"ORG","PERSON":"PER","politician":"POL","LOCATION":"LOC","MISC":"MISC","BILL":"BILL"}
+
+
+
+function showstats(){ 
+	jQuery("#showstats").show(); 
+	resheight = jQuery(".results table").css("height");
+	jQuery("#showstats").css("height",resheight)
+}
+function closestats(){ jQuery("#showstats").hide(); }
+
+function num_clusters(community_method){
+   			  //community assignment result is indexed by grpost ids and the values are the cluster ids each is assigned to  
+    clusters_seen = {};   //indexed from Cluster 0 to cluster whatever, its the count in that cluster
+    clusters_peeps = {}   //all the people in a cluster, their ids are from the grpost ids (so to get them to original you need to map them1)
+    Object.keys(community_assignment_result).forEach(function(f){ 
+	if( community_assignment_result[f] in clusters_seen ){ 
+		clusters_seen[community_assignment_result[f]] += 1;
+		clusters_peeps[community_assignment_result[f]].push(f);
+	}
+	else{ 
+		clusters_seen[community_assignment_result[f]] = 1;
+		clusters_peeps[community_assignment_result[f]] = [];
+		clusters_peeps[community_assignment_result[f]].push(f);
+	} 
+   });
+   //Object {0: 70, 1: 23, 2: 22, 3: 27, 4: 3,  5: 2,  6: 2,  7: 5,  8: 3,  9: 5, 10: 4, 11: 3, 12: 2, 13: 2, 14: 3, 
+   //       15: 2, 16: 2, 17: 2, 18: 2, 19: 2, 20: 4, 21: 2, 22: 3, 23: 3, 24: 4, 25: 4, 26: 2, 27: 3, 28: 2}
+   cluster_out = "<ul class='clusterout'>";
+   Object.keys(clusters_seen).forEach(function(f){ 	
+      cids = [];
+      clusterpeeps = "";       
+      chambermap = {"lower":"House","upper":"Senate"} ;
+      partycol = {"Republican":"red","Democratic":"blue","Democrat":"blue"}
+
+
+     
+
+      Object.keys(community_assignment_result).forEach( function(ca){ 
+	if(community_assignment_result[ca] == f){ 
+		cids.push( ca );
+		add= "";
+		if(grpost.elements.nodes[ca]["entity_type"]){ 
+			poli = grpost.elements.nodes[ca];
+			if( "chamber" in poli){ add += chambermap[poli["chamber"]]+" ";}
+			if( "party" in poli){ add += "<span style='color:"+partycol[poli['party']]+"'>"+poli["party"]+"</span>, ";}
+			if( "district" in poli){ add += "district: "+poli["district"]+", ";}
+		}
+		clusterpeeps += "<li class='left"+ca+"'>"+grpost.elements.nodes[ca]["full_name"]+" ("+entity_typemap[grpost.elements.nodes[ca]["entity_type"]]+", id"+ca+", "+add+" )</li>"
+	}});
+      cluster_out += "<li style='color:"+color(f)+"'><a href='javascript: toggle("+f+")'>COMMUNITY "+f+" ["+clusters_seen[f]+" nodes]</a><div style='display:none;' class='cluster"+f+"'><ul>"+clusterpeeps+"</ul></div><li>";
+   })
+   cluster_out += "</ul>";
+
+   statsa = '<div id="showstats"> <div class="results"><table style="width:220px">';
+   statsa += '<tr><td><a href="javascript: togglecomma()">COMMUNITY ANALYSIS</a></div></td></tr>';
+   statsa += '<tr><td><a href="javascript: toggleart()">ARTICLE APPEARENCES</a>+/-<div class="artapp"></div></td></tr>';
+   statsa += '<tr><td><a href="javascript: toggleclust();">CLUSTERING COEFFICIENT</a>+/-<div class="clusts"></div></td></tr>';
+   statsa += '<tr><td><a href="javascript: toggledeg()">DEGREE CENTRALITY</a>+/-<div class="degrees"></div></td></tr>';
+   statsa += '<tr><td><a href="javascript: togglestr()">NODE STRENGTH</a>+/-<div class="strength"></div></td></tr>';
+   statsa += '<tr><td><a href="javascript: togglepr()">PAGE RANK</a>+/-<div class="pagerank"></div></td></tr>';
+   //statsa += '<tr><td><a href="javascript: toggleinv()">INVERSE ARTICLES STRENGTH</a>+/-<div class="inverseartstrength"></div></td></tr>';
+   statsa += '</table></div> </div>';
+
+   jQuery("#content_wrapper").append("<div class='results'><span style=' white-space: nowrap; '><i>& After Filtering</i>&nbsp;<b>V: "+newnodes.length+"&nbsp;,&nbsp;E: "+newedges.length+"</b><br>"+Object.keys(clusters_seen).length+" communities detected [<span style='color:"+color(0)+";'>"+community_method.toLowerCase()+"</span>]</span><br>threshold for edge weights: "+threshhold+"<br><span class='commsarea' style='font-size: 12px;color:black;text-decoration:none'><a href='javascript: togglecomm();'><b>COMMUNITIES AREA</b></a>+/-</span><br><div class='commdiv'>"+cluster_out+"</div><a href='#'><span style='font-size:12px;font-weight:bold;'>STATS AREA</span></a>"+statsa+"</div>");
+   for(c=0; c <= max_community_number; c++){
+		var items = jQuery('.cluster'+c+' li').get();
+		items.sort(function(a,b){
+		  var keyA = jQuery(a).text();
+		  var keyB = jQuery(b).text();
+
+		  if (keyA < keyB) return -1;
+		  if (keyA > keyB) return 1;
+		  return 0;
+		});
+		var ul = jQuery('.cluster'+c+' ul');
+		jQuery.each(items, function(i, li){
+		  ul.append(li);
+		});
+   }
+
+   jQuery(".clusterout li div li").hover(
+	  function() {
+	    //on over
+	    if(clicklocked ==0){ 
+		    nodeid = this.className.split("left")[1];
+		    tocall = og_vals_to_id[nodeid] 
+		    //console.log("MOUSE OVER",nodeid,tocall,original_node_data[tocall]);
+		    handle_mouseover(original_node_data[tocall]);
+		    $(this).css("color",color(original_node_data[tocall].community));
+	    }
+	  }, function() {
+	    //on out
+	    if(clicklocked ==0){ 
+		    nodeid = this.className.split("left")[1];
+		    tocall = og_vals_to_id[nodeid] 
+		    handle_mouseout(original_node_data[tocall]);
+		    $(this).css("color","black");
+	    }
+	  }
+   );
+ 
+   jQuery(".clusterout li div li").click( 
+	function(){ 
+	    nodeid = this.className.split("left")[1];
+            tocall = og_vals_to_id[nodeid] 
+	    //console.log("MOUSE OVER",nodeid,tocall,original_node_data[tocall]);
+	    handle_clicked(original_node_data[tocall]);
+	    $(this).css("color",color(original_node_data[tocall].community));
+	});
+
+}
+
+
+var edgeslist; 
+var id_of_main_dude;
+var articlemap;   //articlemap['ns']  is indexed by grpost nodeids and points to a dict whose values refer to mongoids
+var urlslist;
+
+d3.json("js/config.json", function(error, st) {
+	//console.log(st);
+	search_terms = st;
+        
+	jQuery("#loading").append("<p style='font-size:12px;'>loaded config file for "+s+"</p>");
+	jQuery("#loading").append("<p style='font-size:12px;'>Parameters passed in:</p>");
+	jQuery("#loading").append("<p style='font-size:12px;'>1. Edge Weight Threshold: "+threshhold+"</p>");
+	jQuery("#loading").append("<p style='font-size:12px;'>2. Number of Communities to look for: "+init_cluster+"</p>");
+	jQuery("#loading").append("<p style='font-size:12px;'>...now loading urls </p>");
+	entity_long_file = "data/"+search_terms[s][3];
+	//id_of_main_dude = 244
+	
+	urls_file = "data/"+search_terms[s][1];
+	jQuery.get(urls_file, function(data){ 
+		urlslist = data; 
+		jQuery("#loading").append("<p style='font-size:12px;'>loaded urlslist with "+Object.keys(urlslist).length+" articles</p>");
+		jQuery("#loading").append("<p style='font-size:12px;'>...now loading entity to articles map</p>");
+	});
+
+	entname = search_terms[s][3].split("-")[0]
+	ncoledges = "netanalysis/" + entname + ".ncol";
+	ncolnodes = "netanalysis/" + entname + "-nodes.json";
+
+	//eddie_rodriguez-largenet-06-04_07-02-55-node-article-map.json
+	articles_file = entity_long_file.replace(".json","") + "-node-article-map.json";
+	jQuery.get(articles_file, function(data){ 
+		articlemap = data; 
+		jQuery("#loading").append("<p style='font-size:12px;'>loaded article map with "+articlemap.ms.length+" articles</p>");
+		jQuery("#loading").append("<p style='font-size:12px;'>...now loading edges list</p>");
+	});
+
+
+	//console.log(ncoledges);
+	jQuery.get(ncoledges, function(data){ 
+		//console.log(data);
+		edgeslist = data; 
+		jQuery("#loading").append("<p style='font-size:12px;'>loaded edges list with "+edgeslist.length+" rows</p>");
+		jQuery("#loading").append("<p style='font-size:12px;'>...now loading associated nodes information</p>");
+		getnodes(edgeslist,ncolnodes,s);
+	});
+});
+	
+var ingrs; 
+function getnodes(edgeslist,ncolnodes,s){
+	d3.json(ncolnodes, function(error, grnodes) {
+	   ingrs = grnodes;
+	jQuery("#loading").append("<p style='font-size:12px;'>loaded nodes information</p>");
+          if (error) return console.warn(error);
+		
+	 construct(grnodes);
+          //construct edges{} from edgeslist and then combine with grnodes and save as graph, and then see if things just work !
+	  //id1 id2 weight
+         });
+}
+
+function construct(grnodes){
+	jQuery("#loading").append("<p style='font-size:12px;'>...now constructing graph and tools</p>");
+          edges = []
+	  insttotal = 0;
+	  nodesseen = {};
+	  ees = edgeslist.split("\n");
+	 // console.log("before loop",insttotal);
+	  for(e=0; e<ees.length-1; e++){ 
+		ep = ees[e].split(" "); 
+		sr = parseInt(ep[0]);
+		tr = parseInt(ep[1]);
+		wt = parseFloat(ep[2]);
+		it = parseInt(ep[3]);
+		if(typeof(it) == "number" && String(it) != "NaN" ){
+			thisl = {"source":sr,"target":tr,"weight":wt,"insts":it}
+			edges.push(thisl);
+			if(!( sr in nodesseen)){ nodesseen[sr] = it; }else{ nodesseen[sr] += it; }
+			if(!( tr in nodesseen)){ nodesseen[tr] = it; }else{ nodesseen[tr] += it; }
+		
+			insttotal += it;
+			if(String(insttotal) == "NaN"){ 
+				//console.log("herehre");
+				console.log("ERRROR with insttotal at "+e);
+			}
+			//else{ console.log(insttotal); }
+			//if(sr == 49 || tr == 49){ console.log(thisl); }
+		}
+		else{
+			console.log("in here");
+		 	console.log("ERROR at "+e+", ");
+			console.log(ees[e]);
+		}
+	  }
+	  //console.log("insttotal",insttotal,typeof(insttotal));
+	  //console.log(nodesseen[49]);
+	  
+	  //edge_data = graph.elements.links;
+	  graph = {"elements":{"nodes":grnodes,"links":edges}}
+	   
+	  gr = graph;
+	  for(i=0; i < grnodes.length; i++){
+		if(grnodes[i]['full_name'] == s){
+			id_of_main_dude = i;
+			break;
+		}
+	 }
+
+	  //fplinks=0; gr.elements.links.forEach(function(f){ if(f.source == id_of_main_dude || f.target == id_of_main_dude){ fplinks += 1; }});
+	  //console.log("FP links",fplinks);
+  	  console.log('Num Nodes', graph["elements"]["nodes"].length);
+	  console.log('Num Links', graph["elements"]["links"].length);
+
+	  //Original node and edge data  
+	 // var node_data = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38,39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60 , 61, 62, 63, 64, 65 , 66, 67, 68, 69, 70, 71, 72, 73];
+	  //console.log('Input Node Data', node_data);
+	   node_data = Object.keys(new Int8Array(graph.elements.nodes.length)).map(Number); //.slice(1)
+	   //console.log(node_data);
+
+	  //COMPUTE WEIGHT FOR EACH LINK and remove dupes!  <-- HERE DO THIS AT BABELIA
+	  //seen = {};
+	  to_remove = [];
+	  numlinks = graph.elements.links.length;
+
+	  grpost = graph;
+	  fplinks=0; grpost.elements.links.forEach(function(f){ if(f.source == id_of_main_dude || f.target == id_of_main_dude){ fplinks += 1; }});
+	  console.log("FP links AFTER",fplinks);
+
+	  console.log("NUM LINKS AFTER DEDUPE",graph.elements.links.length);
+	  console.log("NUM LINKS REMOVED",to_remove.length);
+
+	  edge_data = [];
+	  glen = graph.elements.links.length;
+	  weightdist = {}
+	  wght_above_four = 0;
+	  newnodes = [];
+	  newedges = []
+	/*
+         below = 0; 
+	 Object.keys(nodesseen).forEach(function(f){ 	
+		if(f != "NaN"){
+			if(nodesseen[f] < 1000){ below += 1; }     //THIS IS THE NEW THRESHOLD
+			else{ newnodes.push(f); }
+		}
+	 });	
+
+	//now we just want to keep newnodes and edges containing them
+	//node_data = newnodes;
+	*/
+
+        //edge_data = newedges;	
+
+	counn = 0;
+	grpost.elements.links.forEach(function(l){
+		if(l['weight'] >= threshhold){   //THRESHOLD
+			if( typeof(l['source']) != "undefined"){  
+				newl = 	{"source":l['source'],"target":l["target"],"weight": parseFloat(l['weight'])}
+				newedges.push(newl);
+				if( newnodes.indexOf(l['source']) > -1){}else{ newnodes.push(l['source']);}
+				if( newnodes.indexOf(l['target']) > -1){}else{ newnodes.push(l['target']);}
+			}
+		}
+	});
+
+	newnodes.sort(function(a,b){
+	  var keyA = parseInt(a);
+	  var keyB = parseInt(b);
+
+	  if (keyA < keyB) return -1;
+	  if (keyA > keyB) return 1;
+	  return 0;
+	});
+
+
+
+
+	node_data = newnodes;
+        edge_data = newedges;	
+	//console.log(edge_data[0]);
+	//console.log(node_data.length);
+	
+
+	//console.log(edge_data[0]);   //EVERYTHING HAS TO BE A STRING
+	for(no=0; no < node_data.length; no++){ node_data[no] = node_data[no] + ""; }	
+
+	for(ie=0; ie < edge_data.length; ie++){  
+		if(!( "weight" in edge_data[ie])){ // || String(edge_data[ie]['weight'] == "NaN")){ 
+			console.log("Issue with edge ",ie,edge_data[ie]);
+		}
+		else{  
+			edge_data[ie]["source"] = edge_data[ie]["source"] + "";
+			edge_data[ie]["target"] = edge_data[ie]["target"] + "";
+		}
+	} 
+
+	seen = [];
+	//console.log(newnodes.length);
+	//console.log(newnodes.join(" "));
+	for(i = 0; i < newedges.length; i++){ 
+		l = newedges[i];	
+		sr = l['source'] + "";
+		tr = l['target'] + "";
+		//console.log("LOOK FOR ",sr,tr,typeof(sr),typeof(tr));
+		if(newnodes.indexOf(sr) > -1 && newnodes.indexOf(tr) > -1){ 
+			//console.log("FOUND",sr,tr);
+			//if(sr == "49" || tr == "49"){ console.log(l); }
+			if( sr in seen){
+				if( tr in seen[sr]){
+				}
+				else{  
+					if( tr in seen ){
+						if( sr in seen[tr] ){
+						}	
+						else{
+							seen[sr][tr] = parseFloat(l['weight']); 
+							seen[tr][sr] = parseFloat(l['weight']);
+						}
+					}
+					else{
+						seen[sr][tr] = parseFloat(l['weight']); 
+						seen[tr] = {}
+						seen[tr][sr] = parseFloat(l['weight']);
+					}
+				}
+			}
+			else{
+				if( tr in seen){
+					if( sr in seen[tr] ){
+					}	
+					else{
+						seen[sr] = {};
+						seen[sr][tr] = parseFloat(l['weight']); 
+						seen[tr][sr] = parseFloat(l['weight']);
+					}
+				}	
+				else{
+					seen[sr] = {};
+					seen[sr][tr] = parseFloat(l['weight']); 
+					seen[tr] = {}
+					seen[tr][sr] = parseFloat(l['weight']);
+					
+				}
+			}	
+		}
+	}
+
+	/* 
+		//change things back to ints breaks things ( so i can't do this to solve issue of links! )
+		for(no=0; no < node_data.length; no++){ node_data[no] = parseInt(node_data[no]); }	
+		for(ie=0; ie < edge_data.length; ie++){  
+			edge_data[ie]["source"] = parseInt(edge_data[ie]["source"]);
+			edge_data[ie]["target"] = parseInt(edge_data[ie]["target"]);
+		} 
+	*/
+
+	  
+	  init_part = {}
+	  for(i=0; i < newnodes.length; i++){ init_part[i] = Math.round(Math.random() * ( init_cluster - 2));}  //should this by minus one or two.. right now if i pass 12 i get 13 back with 1
+	  //console.log(init_part);
+	  communityzero = jLouvain().nodes(node_data).edges(edge_data).partition_init(init_part);  
+	  
+	  partitionone = communityzero();
+	  mc = 0;
+	  Object.keys(partitionone).forEach(function(d){
+	  	mc = mc < partitionone[d] ? partitionone[d]: mc;
+	  });
+	  //console.log("communityz: ",partitionone,mc);
+	  community_assignment_result = partitionone;
+
+	  /*
+	  community = jLouvain().nodes(node_data).edges(edge_data);  
+          community_assignment_result = community();
+	  */
+
+	  st = ""; Object.keys(weightdist).forEach(function(f){ st += f + ": "+weightdist[f]+", "; }); 
+
+	  jQuery("#content_wrapper").prepend("<div class='stats'><img style='margin-top:-8px; margin-left:-8px; width:215px;' src='images/WYE-small-logo.jpg'><br><b>"+s+"</b> extended view<br>generated from "+articlemap.ns[id_of_main_dude].length+" articles<br><i>Before Filtering</i>&nbsp;V: "+graph.elements.nodes.length+"&nbsp;,&nbsp;E: "+graph.elements.links.length+"</div>");
+
+
+	//Drawing code
+	//var width = 400, height = 400;
+	width = window.innerWidth; 
+	height = window.innerHeight;    //changed these numbers
+
+	  original_node_data = d3.entries(node_data);
+          og_vals_to_id = {}
+
+
+	  //now calculate communities!
+	  //Communnity detection  by Louvain
+          function louvain_community(){
+		  //community_assignment_result = community();
+		  //SO HERE BEFORE I MADE THE CHANGE IN JSLOUVAIN, community assignment was a single array but now it has multiple levels so use last level
+		  
+		  //numlevels = community_assignment_result.length;
+		  //community_assignment_result_old = community_assignment_result;
+		  //community_assignment_result = community_assignment_result[numlevels - 1];
+		  //community_assignment_result = community_assignment_result[0];
+		  
+
+		  node_ids = Object.keys(community_assignment_result);
+		  
+		    //console.log('Resulting Community Data', community_assignment_result);
+	            //console.log('node_ids', node_ids,node_ids.length);
+		    //console.log("OG data",original_node_data);
+		    //console.log("OG: ",original_node_data.length);
+		    max_community_number = 0;
+		    min_community_number = 1000;
+			
+                    errors = 0;
+		    Object.keys(original_node_data).forEach(function(k){ og_vals_to_id[original_node_data[k]["value"]] = k; });   
+								//this is how you map the index value from grpost.nodes.elements to original_node_data indexes
+			
+		    //node_ids are the grpost index ids , so you need to map them to the original new one which is between 0 to 1688
+		    //community assignment result is same ids as grpost index ids
+	 	    node_ids.forEach(function(d){
+		       if( og_vals_to_id[d] in original_node_data){	      
+				      original_node_data[og_vals_to_id[d]].community = community_assignment_result[d];
+				      max_community_number = max_community_number < community_assignment_result[d] ? community_assignment_result[d]: max_community_number;
+				      min_community_number = min_community_number > community_assignment_result[d] ? community_assignment_result[d]: min_community_number;
+			}else{ 
+				console.log("D", d);
+				console.log("round2",original_node_data[og_vals_to_id[d]]);
+				console.log("ERROR undefined at ",d);
+				errors += 1;
+			}
+		    });
+	            console.log("Errors",errors)
+
+		    console.log(max_community_number)
+		    //color = d3.scale.category20().domain(d3.range([0, max_community_number]));
+		    color = d3.scale.category20().domain(d3.range([0, max_community_number]));
+
+		    num_clusters("Louvain");
+          }
+	 
+	  function betweenness_community(){
+		//calculated by R igraph
+		comms = [1,1,1,1,1,1,1,1,1,1,1,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2];
+		//community_assignment_result { nodeid : cluster }
+		community_assignment_result = {}
+		for(c=0; c<comms.length;c++){ community_assignment_result[c] = comms[c]; }
+		node_ids = Object.keys(community_assignment_result);
+		max_community_number = 0;
+		min_community_number = 1000;
+		    node_ids.forEach(function(d){
+		      original_node_data[d].community = community_assignment_result[d];
+		      max_community_number = max_community_number < community_assignment_result[d] ? community_assignment_result[d]: max_community_number;
+		      min_community_number = min_community_number > community_assignment_result[d] ? community_assignment_result[d]: min_community_number;
+		    });
+
+		    console.log(max_community_number)
+		    color = d3.scale.category20().domain(d3.range([0, max_community_number]));
+
+		    num_clusters("Betweenness");
+	  }
+ 
+	  function label_propagation(){
+		//calculated by R igraph
+		comms=[1,1,2,2,3,3,3,1,3,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1];	
+		//community_assignment_result { nodeid : cluster }
+		community_assignment_result = {}
+		for(c=0; c<comms.length;c++){ community_assignment_result[c] = comms[c]; }
+		node_ids = Object.keys(community_assignment_result);
+		max_community_number = 0;
+		min_community_number = 1000;
+		    node_ids.forEach(function(d){
+		      original_node_data[d].community = community_assignment_result[d];
+		      max_community_number = max_community_number < community_assignment_result[d] ? community_assignment_result[d]: max_community_number;
+		      min_community_number = min_community_number > community_assignment_result[d] ? community_assignment_result[d]: min_community_number;
+		    });
+
+		    console.log(max_community_number)
+		    color = d3.scale.category20().domain(d3.range([0, max_community_number]));
+
+		    num_clusters("Label Propagation");
+	  }
+
+	   if( commdect == "louvain"){ louvain_community();}
+	   if( commdect == "betweenness"){ betweenness_community();}
+	   if( commdect == "labelpropagation" ){ label_propagation();}
+	  
+
+	  draw_graph();
+
+    }
+
+    var currentdirection = -1;
+    function changeOrderby(t){ 
+	//console.log(t + " " + order_by + " " + currentdirection);
+	if( t != order_by){
+    		currentdirection = -1;
+		order_by = t;
+		getd = jQuery("#nodeinfo").text().split(", id")[1].split(")")[0];
+		showdetails(original_node_data[getd]);
+	}
+	else{
+		//console.log(currentdirection);
+		var items = jQuery('#linkedto li').get();
+		if(t == "weight"){
+			//reverse order by weight
+			
+				//sort by weight
+				//console.log("order by weight");
+				items.sort(function(a,b){
+				  var keyA = parseFloat(jQuery(a).text().split("W:")[1].split(",")[0]);
+				  var keyB = parseFloat(jQuery(b).text().split("W:")[1].split(",")[0]);
+			   
+				if( currentdirection == -1){
+				  if (keyA < keyB) return -1;
+				  if (keyA > keyB) return 1;
+				}
+				else{
+				  if (keyA < keyB) return 1;
+				  if (keyA > keyB) return -1;
+				}
+				  return 0;
+				});
+				var ul = jQuery('#linkedto ul');
+				jQuery.each(items, function(i, li){ ul.append(li); });
+		}
+		else{
+				//order by name by default
+				//console.log("order by name");
+				items.sort(function(a,b){
+				  var keyA = jQuery(a).text().split("(W:")[0];
+				  var keyB = jQuery(b).text().split("(W:")[0];
+
+				if( currentdirection == 1){
+				  if (keyA < keyB) return -1;
+				  if (keyA > keyB) return 1;
+				}
+				else{
+				  if (keyA < keyB) return 1;
+				  if (keyA > keyB) return -1;
+				}
+				  return 0;
+				});
+				var ul = jQuery('#linkedto ul');
+				jQuery.each(items, function(i, li){ ul.append(li); });
+		}
+		currentdirection *= -1;
+	}
+    }
+
+    function showdetails(d){
+	//console.log("IN SHOW DETAILS",d);
+	//d = grpost.elements.nodes[og_vals_to_id[d["key"]]];
+	edges = jQuery(".n"+d["key"]);
+	jQuery("#nodeinfo").show();
+		
+	jQuery("#ordering a").css("text-decoration","none");
+	howtoorder = "<span id='ordering'><a class='weight' href='javascript: changeOrderby(\"weight\");'>WEIGHT</a>&nbsp;|&nbsp;<a class='community' href='javascript: changeOrderby(\"community\");'>COMMUNITY</a>&nbsp;|&nbsp;<a class='name' href='javascript: changeOrderby(\"name\");'>NAME</a></span>";
+
+	add = "";
+	etype = entity_typemap[grpost.elements.nodes[d["value"]]['entity_type']];
+	if(etype == "POL"){
+		poli = grpost.elements.nodes[d["value"]];
+		if( "party" in poli){ add += "<span style='color:"+partycol[poli['party'].trim()]+"'>"+poli["party"].substring(0,3).toUpperCase()+"</span>,";}
+		else{ console.log("Couldn't find party for politician",grpost.elements.nodes[d["value"]]); }
+		if( "district" in poli){ add += "district: "+poli["district"]+",";}
+		//console.log(add);
+	}
+	
+	jQuery("#nodeinfo").html("<span style='color:"+color(d["community"])+"'>"+grpost.elements.nodes[d["value"]]["full_name"]+" ("+etype+","+add+" id"+d["key"]+")</span> - "+edges.length+" edges<br>"+howtoorder+"</div>");
+	jQuery("#nodeinfo ."+order_by).css("text-decoration","underline");
+	jQuery("#linkedto").show();
+	ns = "<ul>";
+	edges.each(function(i){ 	
+		ps = edges[i].attributes.class.textContent.split(" "); 
+		for(p=0; p <ps.length; p++){ 
+			if( ps[p] != "link" && ps[p] != "n"+d["key"]){ 
+				thisn = ps[p].split("n")[1];
+				id_in_grpost = original_node_data[thisn]['value'];
+
+				// the ns now are all from 0 to original_node_data size
+				nme = grpost.elements.nodes[id_in_grpost]["full_name"];
+				col = original_node_data[thisn]["community"];
+				et = grpost.elements.nodes[id_in_grpost]["entity_type"];
+				clr = color(col);
+				//seen is indexed by original ids
+				etype = entity_typemap[et];
+
+				if(nodetypestoshow.indexOf("ALL") == 0 || nodetypestoshow.indexOf(etype) > -1 ){
+					ns += "<li class='right"+thisn+"' style='line-height:18px; color:"+clr+"'>"+nme+" (W:&nbsp;<span style='color:black;font-weight:bold;'>"+seen[d["value"]][id_in_grpost]+"</span>, "+etype+", id"+thisn+")</li>";
+				}
+				else{
+					//( becareful with DEM / REP )
+					if( etype == 'POL' && (nodetypestoshow.indexOf("politician") > -1 || nodetypestoshow.indexOf("DEM") > -1 || nodetypestoshow.indexOf("REP") > -1)){ 
+						
+						add = "";
+						poli = grpost.elements.nodes[id_in_grpost];
+						if( "party" in poli){ add += poli["party"].substring(0,3).toUpperCase()+",";}
+						else{ console.log("Couldn't find party for politician",grpost.elements.nodes[d["value"]]); }
+						if( "district" in poli){ add += "district: "+poli["district"]+",";}
+						
+						ns += "<li class='right"+thisn+"' style='line-height:18px; color:"+clr+"'>"+nme+" (W:&nbsp;<span style='color:black;font-weight:bold;'>"+seen[d["value"]][id_in_grpost]+"</span>, "+etype+","+add+" id"+thisn+")</li>";
+					}
+					//else skip it
+				}
+			}
+		}
+	});
+	ns += "</ul>";
+	jQuery("#linkedto").html(ns);
+
+	var items = jQuery('#linkedto li').get();
+	
+	if( order_by == "weight"){
+		//sort by weight
+		//console.log("order by weight");
+		items.sort(function(a,b){
+		  var keyA = parseFloat(jQuery(a).text().split("W:")[1].split(",")[0]);
+		  var keyB = parseFloat(jQuery(b).text().split("W:")[1].split(",")[0]);
+           
+		  if (keyA < keyB) return 1;
+		  if (keyA > keyB) return -1;
+		  return 0;
+		});
+		var ul = jQuery('#linkedto ul');
+		jQuery.each(items, function(i, li){ ul.append(li); });
+	}
+	else{
+		if( order_by == "community"){
+			//console.log("order by community");
+			items.sort(function(a,b){
+			  var keyA = parseInt(a.className.replace("right",""));
+			  var keyB = parseInt(b.className.replace("right",""));
+
+			  cA = original_node_data[keyA]["community"];
+			  cB = original_node_data[keyB]["community"];
+
+			  var weightA = parseFloat(jQuery(a).text().split("W:")[1].split(",")[0].trim());
+			  var weightB = parseFloat(jQuery(b).text().split("W:")[1].split(",")[0].trim());
+
+			  sA = (10000*cA) + (10000 - weightA);
+			  sB = (10000*cB) + (10000 - weightB);
+			  
+			  if (sA < sB) return -1;
+			  if (sA > sB) return 1;
+			  return 0;
+			});
+			var ul = jQuery('#linkedto ul');
+			jQuery.each(items, function(i, li){ ul.append(li); });
+
+		}
+		else{
+			//order by name by default
+			//console.log("order by name");
+			items.sort(function(a,b){
+			  var keyA = jQuery(a).text().split("(W:")[0];
+			  var keyB = jQuery(b).text().split("(W:")[0];
+
+			  if (keyA < keyB) return -1;
+			  if (keyA > keyB) return 1;
+			  return 0;
+			});
+			var ul = jQuery('#linkedto ul');
+			jQuery.each(items, function(i, li){ ul.append(li); });
+		}
+	}
+	//curorderedby = order_by;
+
+
+	//make lis hoverable
+	   jQuery("#linkedto li").hover(
+		  function() {
+		    //on over
+	    	    if(concurrent_clicklocked ==0){ 
+			    //console.log("here");
+			    nodeid = this.textContent.split(", id")[1].split(")")[0];
+			    //console.log(nodeid);
+			    handle_mouseover_concurrent(original_node_data[nodeid],d["key"]);
+			    //$(this).css("text-decoration","underline");
+		    }
+
+		  }, function() {
+		    //on out
+	    	    if(concurrent_clicklocked ==0){ 
+			    nodeid = this.textContent.split(", id")[1].split(")")[0];
+			    handle_mouseout_concurrent(original_node_data[nodeid],d["key"]);
+			    $(this).css("text-decoration","none");
+		    }
+		  }
+	   );
+
+	   jQuery("#linkedto li").click( 
+		function(){ 
+			nodeid = this.textContent.split(", id")[1].split(")")[0];
+	    		handle_clicked_concurrent(original_node_data[nodeid],d["key"]);
+		});
+
+	    }
+
+    function hidedetails(){ 
+	jQuery("#nodeinfo").hide(); 
+	jQuery("#linkedto").hide();
+    }
+
+    function handle_clicked_concurrent(d,from){
+	if(concurrent_clicklocked == 0){ 
+		concurrent_clicklocked = 1; 
+		concurrent_currentclicked = d["key"]; 
+		handle_mouseout_concurrent(d,from); // to clear right hand side menu ( so it doesn't double )
+		handle_mouseover_concurrent(d,from);
+		jQuery(".right"+d["key"]).css("background","lightyellow");	
+	}
+	else{ 	
+		if(d["key"] == concurrent_currentclicked)
+		{ 
+			concurrent_clicklocked = 0; 
+			handle_mouseout_concurrent(d,from);
+			//hidedetails(); 
+			jQuery(".right"+d["key"]).css("background","white");	
+		}
+	}
+    }
+
+    function handle_clicked(d){
+	if(clicklocked == 0){ 
+		showdetails(d); 
+		clicklocked = 1; 
+		currentclicked = d["key"]; 
+	}
+	else{ 	
+		if(d["key"] == currentclicked)
+		{ 
+			//first if a background in side was highlighted close it!
+			if(concurrent_clicklocked == 1){
+				concurrent_clicklocked = 0;
+				from = d;
+				//how to find concurrent one;
+				curred = jQuery("#currentred").attr("class").replace("red","");
+				console.log(curred);
+				concurrentone = original_node_data[curred];
+				console.log(concurrentone);
+				handle_mouseout_concurrent(concurrentone,from["key"]);
+			}
+
+			clicklocked = 0; 
+			hidedetails(); 
+		}
+	}
+    }
+
+    function handle_mouseover(d){
+	if(clicklocked ==0){ 
+		showdetails(d); 
+		//console.log(d);
+		jQuery("#nodeid"+d["key"]).css("stroke-width","3px").css("stroke","red");
+		jQuery("line.n"+d["key"]).css("stroke","black").css("stroke-width","1.8px");
+
+		 d3.select("svg").append("text")
+		      .attr("id", "bigred")
+		      .attr("x", d.x + 10)
+		      .attr("y", d.y + 5)
+		      .attr("fixed",true)
+		      .style("font-size","20px")
+		      .style("stroke","blue")
+		      .style("fillColor","blue")
+		      .style("stroke-width","2px")
+		      .text( grpost.elements.nodes[d["value"]]["full_name"] ); 
+
+		//make others yellow
+		edges = jQuery(".n"+d["key"]);
+		edges.each(function(i){ 	
+			ps = edges[i].attributes.class.textContent.split(" "); 
+			for(p=0; p <ps.length; p++){ 
+				if( ps[p] != "link" && ps[p] != "n"+d["value"]){ 
+					thisn = ps[p].split("n")[1];
+					jQuery("#nodeid"+thisn).css("stroke-width","2px").css("stroke","yellow");
+				}
+			}
+		});
+
+	}
+    }
+
+    function handle_mouseout(d){
+	if(clicklocked ==0){ 
+		hidedetails(d); 
+		jQuery("#nodeid"+d["key"]).css("stroke-width","1px").css("stroke","white");
+		jQuery("line.n"+d["key"]).css("stroke","#999").css("stroke-width",".2px");
+		jQuery("#bigred").remove();
+		jQuery(".bigorange").remove();
+
+		//make others white
+		edges = jQuery(".n"+d["key"]);
+		edges.each(function(i){ 	
+			ps = edges[i].attributes.class.textContent.split(" "); 
+			for(p=0; p <ps.length; p++){ 
+				if( ps[p] != "link" && ps[p] != "n"+d["value"]){ 
+					thisn = ps[p].split("n")[1];
+					jQuery("#nodeid"+thisn).css("stroke-width","1px").css("stroke","white");
+				}
+			}
+		});
+	}
+    }
+
+
+    function handle_mouseover_concurrent(d,from){
+	if(from == -1){ showdetails(d); }
+	initialfrom = from;
+
+	//NEW hide all lines
+	jQuery("line").css("stroke-width","0px");
+	jQuery(".node").css("opacity",.2);
+
+	//don't overwrite from!
+	//console.log("mouseover",d['key'],from);
+	jQuery("#nodeid"+d["key"]).css("stroke-width","3px").css("stroke","red").css("opacity",1);
+
+
+	//ONLY SHOW TRIANGLES!
+
+	//jQuery("line.n"+d["key"]).css("stroke","red").css("stroke-width","1.8px");  /// old way of making all edges red.. now only make triangles red
+	ls = jQuery("line.n"+d["key"]);
+	ls.each(function(l){
+		cs = ls[l].className.baseVal.split(" ");
+		for(c=0; c < cs.length; c++){
+			if( cs[c] != "link" && cs[c] != "n"+d["key"]){ 
+				thisn = cs[c].split("n")[1];
+	
+				//IMPORTANT if from passed in as -1 use first edge as from
+				if(from == -1){ from = thisn; }
+
+				if(thisn != from.trim() || initialfrom == 1){
+					//look if thisn has a line in common with "from"
+					tr = jQuery("line.n"+thisn+".n"+from.trim());
+					if(tr.length == 1){ 
+						jQuery("line.n"+d["key"]+".n"+thisn).css("stroke","red").css("stroke-width","1.8px");  /// old way of making all edges red.. now only make triangles red
+						jQuery("line.n"+d["key"]+".n"+from.trim()).css("stroke","red").css("stroke-width","1.8px");  /// old way of making all edges red.. now only make triangles red
+						jQuery("line.n"+thisn+".n"+from.trim()).css("stroke","red").css("stroke-width","1.8px");  /// old way of making all edges red.. now only make triangles red
+						jQuery("#nodeid"+thisn).css("opacity",1);
+					}
+				}
+			}
+		}
+	
+	});
+
+
+	//from = initialfrom;
+	//make others yellow
+	//and ADD TEXT OF OTHER PEOPLE IN TRIANGLE?
+	edges = jQuery(".n"+d["key"]);
+	cur = jQuery(".right"+d["key"]).html();
+	cur += " - <span style='color:black'>"+edges.length+" edges</span> <ul style='list-style-type:disc; text-decoration:none; padding-left:20px;'>";
+	edges.each(function(i){ 	
+		ps = edges[i].attributes.class.textContent.split(" "); 
+		for(p=0; p <ps.length; p++){ 
+			if( ps[p] != "link" && ps[p] != "n"+d["key"]){ 
+				thisn = ps[p].split("n")[1];
+				//console.log(thisn,from);
+				if(thisn != from.trim() || initialfrom == -1){
+					//look if thisn has a line in common with "from"
+					tr = jQuery("line.n"+thisn+".n"+from.trim());
+					if(tr.length == 1 || initialfrom == -1){ 
+
+						jQuery("#nodeid"+thisn).css("stroke-width","3px").css("stroke","orange");
+
+						if( nodesizeby == "none"){ fontsize = "16px"; }
+						else{
+							//font size is relative to its node size
+							fontsize = parseFloat(jQuery("#nodeid"+thisn).attr("r")) * 1.75;
+							//console.log(fontsize);
+							
+							if(fontsize < 8){	
+								console.log("fontsize less than 8 for",thisn);
+								fontsize += 3; 
+							} 
+							else{
+								if(fontsize < 11 ){ 
+									console.log("fontsize less than 11 for",thisn);
+									fontsize += 2; 
+								} 
+							}
+							fontsize += "px";
+						}
+			
+						thisnd = original_node_data[thisn] 
+						 d3.select("svg").append("text")
+						      .attr("class", "bigorange")
+						      .attr("x", thisnd.x + 10)
+						      .attr("y", thisnd.y + 5)
+						      .attr("fixed",true)
+						      .style("font-size",fontsize)
+						      .style("stroke","black")
+						      .style("fillColor","black")
+						      .style("stroke-width","1.5px")
+						      .text( grpost.elements.nodes[thisnd["value"]]["full_name"] ); 
+
+						id_in_grpost = original_node_data[thisn]['value'];
+						nme = grpost.elements.nodes[id_in_grpost]["full_name"];
+						col = original_node_data[thisn]["community"];
+						et = grpost.elements.nodes[id_in_grpost]["entity_type"];
+						clr = color(col);
+						cur += "<li style='font-size:13px; line-height:14px; color:"+clr+"'>"+nme+" (W:&nbsp;<span style='color:black;font-weight:bold;'>"+seen[d["value"]][id_in_grpost]+"</span>, "+entity_typemap[et]+", id"+thisn+")</li>";
+					}
+				}else{ 
+					console.log("do not touch"); 
+				}
+				
+			}
+		}
+	});
+	cur += "</ul>";
+        //console.log(cur);
+	jQuery(".right"+d["key"]).html(cur);
+	
+	//sort by weight
+	var items = jQuery('.right'+d["key"]+' li').get();
+	items.sort(function(a,b){
+	  var keyA = parseInt(jQuery(a).text().split("W:")[1].split(")")[0]);
+	  var keyB = parseInt(jQuery(b).text().split("W:")[1].split(")")[0]);
+
+	  if (keyA < keyB) return 1;
+	  if (keyA > keyB) return -1;
+	  return 0;
+	});
+	var ul = jQuery('.right'+d["key"]+' ul');
+	jQuery.each(items, function(i, li){
+	  ul.append(li);
+	});
+
+	 //.attr("x", d.x - 10)
+	//add big text at end so it shows up over others z-index wise
+	 d3.select("svg").append("text")
+	      .attr("id", "currentred")
+	      .attr("class", "red"+d["key"])
+	      .attr("x", d.x + 10)
+	      .attr("y", d.y + 5)
+	      .attr("fixed",true)
+	      .style("font-size","20px")
+	      .style("stroke","red")
+	      .style("fillColor","red")
+	      .style("stroke-width","2px")
+	      .text( grpost.elements.nodes[d["value"]]["full_name"] ); 
+
+
+    }
+
+
+    function handle_mouseout_concurrent(d,from){
+	if(from == -1){ hidedetails(d); }
+        jQuery("#currentred").remove();
+        jQuery(".bigorange").remove();
+        //jQuery("#bigred").remove();
+	//NEW return all lines to prior stroke-width, and make from lines highlighted again
+	jQuery("line").css("stroke-width",".2px");
+	jQuery("line.n"+from).css("stroke","black").css("stroke-width","1.8px"); //make original line black again.. old way
+	jQuery(".node").css("opacity",1);
+
+	jQuery("#nodeid"+d["key"]).css("stroke-width","1px").css("stroke","white");
+
+	//jQuery("line.n"+from+".n"+d["key"]).css("stroke","black").css("stroke-width","1.8px"); //make original line black again.. old way
+
+	//jQuery("line.n"+d["key"]).css("stroke","#999").css("stroke-width",".2px");  //return lines to normal.. old way
+
+	ls = jQuery("line.n"+d["key"]);
+	ls.each(function(l){
+		cs = ls[l].className.baseVal.split(" ");
+		for(c=0; c < cs.length; c++){
+			if( cs[c] != "link" && cs[c] != "n"+d["key"]){ 
+				thisn = cs[c].split("n")[1];
+				if(from == -1){ from = thisn; }
+				if(thisn != from.trim()){
+					//look if thisn has a line in common with "from"
+					tr = jQuery("line.n"+thisn+".n"+from.trim());
+					if(tr.length == 1){ 
+						jQuery("line.n"+d["key"]+".n"+thisn).css("stroke","#999").css("stroke-width",".2px");  /// old way of making all edges red.. now only make triangles red
+						jQuery("line.n"+d["key"]+".n"+from.trim()).css("stroke","black").css("stroke-width","1.8px");  /// old way of making all edges red.. now only make triangles red
+						jQuery("line.n"+thisn+".n"+from.trim()).css("stroke","black").css("stroke-width","1.8px");  /// old way of making all edges red.. now only make triangles red
+					}
+				}
+			}
+		}
+	
+	});
+
+	//make others white
+	edges = jQuery(".n"+d["key"]);
+	edges.each(function(i){ 	
+		ps = edges[i].attributes.class.textContent.split(" "); 
+		for(p=0; p <ps.length; p++){ 
+			if( ps[p] != "link" && ps[p] != "n"+d["key"]){ 
+				thisn = ps[p].split("n")[1];
+				if(thisn != from.trim()){
+					jQuery("#nodeid"+thisn).css("stroke-width","1px").css("stroke","white");
+				}
+			}
+		}
+	});
+	jQuery(".right"+d["key"]+" ul").remove();
+    }
+
+
+
+function draw_graph(){
+	//console.log(edge_data[0]);
+	// you know the number of clusters, divide the space into that many squares, but find out what is the biggest number of nodes in a cluster and use that for space alotted 
+	//x from 130 to 1030 
+	//y from 30  to 830
+	//clusters_peeps   Object {0: Array[34], 1: Array[11], 2: Array[35], 3: Array[17] ....
+	nclusters = Object.keys(clusters_seen).length;
+	gridn = Math.ceil(Math.sqrt(nclusters));
+
+        rando = [-1,1];
+          for(d=0; d < original_node_data.length; d++){     //original data is from 0 to smaller length than grpost
+		thiscomm = original_node_data[d].community - min_community_number;
+		thisrow = Math.floor(thiscomm / gridn);
+		thiscol = Math.floor(thiscomm % gridn);
+		numinclust = clusters_peeps[thiscomm].length;
+		mult = 30 + (1.2*numinclust)
+		if(mult > 70){ mult = 70; }
+		xpos = ( ((900 / gridn) * thisrow) + (rando[Math.round(Math.random())] * Math.random() * (mult))) + 215;
+		ypos = ( ((800 / (gridn * 1.05)) * thiscol) + (Math.random() * (mult) )) + 30;
+		/*
+		xpos = 40 + ((1000 / max_community_number + 1 ) * ( original_node_data[d].community - min_community_number  )) + (Math.random() * 150);
+		ypos = 80 + (Math.random() * 650);
+		if(xpos < 130){ xpos = 130; }
+		if(xpos > 1090){ xpos = 1090; }
+		*/
+		original_node_data[d].x = xpos;      ///so all the points are given the original_node_data id and not that of the grpost!!!
+		original_node_data[d].y = ypos;
+		original_node_data[d].fixed = true;
+	  }
+
+	  gcoleman = og_vals_to_id[id_of_main_dude];    //map grpost to original via og_vals_to_id
+	  //console.log(gcoleman);
+	  //original_node_data[gcoleman].x=550;
+	  //original_node_data[gcoleman].y=400;
+	  original_node_data[gcoleman].x=900;
+	  original_node_data[gcoleman].y=500;
+	  original_node_data[gcoleman].fixed=true;
+	  original_node_data[gcoleman].r=40;
+
+	//console.log(edge_data[0]);
+	 max_weight = d3.max(edge_data, function(d){ return d.weight});
+	 weight_scale = d3.scale.linear().domain([0, max_weight]).range([1,5]);
+	 force = d3.layout.force() .size([width, height]);
+	 svg = d3.select("body").append("svg") .attr("width", width) .attr("height", height);
+
+	  //console.log("after",edge_data.length);
+	  fplinks=0; edge_data.forEach(function(f){ if(f.source == 49 || f.target == 49){ fplinks += 1; }});
+	  //console.log(fplinks);
+	  //console.log(original_node_data[49]["full_name"]);
+
+	for(o=0; o < original_node_data.length; o++){
+		l = original_node_data[o];	
+	}
+
+		//edge data uses the node ids from grpost and not original_nodes!
+	 force.nodes(original_node_data)
+	      .links(edge_data)
+	      .gravity(.05)
+	      .distance(100)
+	      .charge(-100)
+	      .size([width, height])
+	      .start();
+
+
+	  //console.log("after force nodes");
+	     link = svg.selectAll(".link")
+	      .data(edge_data)
+	    .enter().append("line")
+	      .attr("class", function(d){ 
+			//console.log(d);
+			return "link n"+og_vals_to_id[d.source]+" n"+og_vals_to_id[d.target];    //make sure all node points use ids between 0 and original_nodes_length!
+			//return "link n"+d.source.value+" n"+d.target.value;
+
+			//return "link n"+d.source+" n"+d.target;
+		})
+	        .attr("x1", function(d) { 
+				//return d.source.x; 
+				retval = original_node_data[og_vals_to_id[d.source]].x;
+				return retval;		 })
+		.attr("y1", function(d) { return original_node_data[og_vals_to_id[d.source]].y; })
+		.attr("x2", function(d) { return original_node_data[og_vals_to_id[d.target]].x; })
+		.attr("y2", function(d) { return original_node_data[og_vals_to_id[d.target]].y; });
+
+	      //.style("stroke-width", function(d) { return weight_scale(d.weight); })   ///THIS IS IF YOU WANT TO MAKE EDGES BIGGER/SMALLER
+
+	    //fix main person
+
+	    //from http://bl.ocks.org/norrs/2883411
+	    var node_drag = d3.behavior.drag()
+		.on("dragstart", dragstart)
+		.on("drag", dragmove)
+		.on("dragend", dragend);
+
+	    function dragstart(d, i) {
+		force.stop() // stops the force auto positioning before you start dragging
+	    }
+
+	    function dragmove(d, i) {
+		d.px += d3.event.dx;
+		d.py += d3.event.dy;
+		d.x += d3.event.dx;
+		d.y += d3.event.dy; 
+		tick(); // this is the key to make it work together with updating both px,py,x,y on d !
+	    }
+
+	    function dragend(d, i) {
+		d.fixed = true; // of course set the node to fixed so the force doesn't include the node in its auto positioning stuff
+		tick();
+		//force.resume();
+	    }
+
+
+	     node = svg.selectAll(".node")
+	      .data(force.nodes())
+	    .enter().append("circle")
+	      .attr("class", "node")
+	      .attr("r", 5)
+	      .attr("id", function(d){ return "nodeid"+ d["key"]; })
+	      .style("fill", '#a30500')
+	      .on("mouseover",function(d){ 
+			handle_mouseover(d);
+		})
+	      .on("mouseout",function(d){ 
+			handle_mouseout(d);
+		})
+	      .on("click",function(d){ 
+			handle_clicked(d);
+	       })
+	       .call(node_drag);    
+	       //.call(force.drag);
+
+
+	  force.on("tick", tick);
+	  function tick() {
+		/*
+	      link.attr("x1", function(d) { return d.source.x; })
+		  .attr("y1", function(d) { return d.source.y; })
+		  .attr("x2", function(d) { return d.target.x; })
+		  .attr("y2", function(d) { return d.target.y; });
+		*/
+	      link.attr("x1", function(d) { 
+				//return d.source.x; 
+				retval = original_node_data[og_vals_to_id[d.source]].x;
+				return retval;		 })
+		.attr("y1", function(d) { return original_node_data[og_vals_to_id[d.source]].y; })
+		.attr("x2", function(d) { return original_node_data[og_vals_to_id[d.target]].x; })
+		.attr("y2", function(d) { return original_node_data[og_vals_to_id[d.target]].y; });
+
+	      node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+	    };
+	   
+
+	    d3.selectAll('.node')
+	      .data(original_node_data)
+	      .style('fill', function(d){ return color(d.community);})
+
+      //centerid = "#nodeid" + og_vals_to_id[id_of_main_dude];
+      //centerid = "#nodeid" + id_of_main_dude;
+     // d3.select(centerid)[0][0].attributes().transform
+      
+/*
+      d3.select("svg").append("text")
+      .attr("id", "counter")
+      .attr("x", "920")
+      .attr("y", "515")
+      .attr("fixed",true)
+      .text(s); 
+*/
+  
+  community_nodes = [];
+  newnodes.forEach(function(n){ 
+	//nn = og_vals_to_id[newnodes[n]];
+	nn = og_vals_to_id[n];
+	//nn = newnodes[n];
+	if( String(nn) != "undefined"){
+		orig = original_node_data[nn];
+		orig_val = orig['value'];
+		fname = grpost.elements.nodes[orig_val]['full_name'];
+		community_nodes.push( fname + " (in community: "+orig['community']+", id: "+orig['key']+")"); 
+	}
+	else{
+		console.log("error with", n, newnodes[n], nn);
+		//LOOK INTO MEDINA ISSUE, ADD LOADING THING
+	}
+  })
+
+
+current_toggled = -1;
+  $("#searchInput").autocomplete({
+      source: community_nodes,
+      minLength: 3,
+      select: function( event, ui ) {
+	   console.log(ui);
+	   cval = ui['item']['label'].split("in community: ")[1].split(",")[0];
+	   nval = ui['item']['label'].split(", id: ")[1].split(")")[0];
+	   if( current_toggled != -1){ toggle(current_toggled); }
+	   current_toggled = cval; 
+           toggle(cval);
+	   jQuery(".commdiv").show(); //make sure Communities Area is opened
+
+		console.log(nval,currentclicked);
+		if(nval == currentclicked)
+		{ 
+			handle_mouseout(original_node_data[nval])
+	    		$(".left"+original_node_data[nval]['value']).css("color","black");
+		}
+		else
+		{ 
+			if(currentclicked != ""){
+				handle_mouseout(original_node_data[currentclicked])
+			}
+	    		handle_mouseover(original_node_data[nval]);
+	    		handle_clicked(original_node_data[nval]);
+	    		$(".left"+original_node_data[nval]['value']).css("color",color(cval));
+			currentclicked = nval;
+		}
+      }
+    });
+
+
+	jQuery("#loading").append("<p style='font-size:12px;'>Done!</p>");
+	jQuery("#loading").fadeOut("slow");
+
+  
+	//DO DEGREE CENTRALITY AS WELL AND THEN MAKE A LIST THAT YOU CAN HOVER THAT SHOWS MOST CENTRAL AND CLUSTERED
+	getDegreesAndClusteringCoefficient();
+	//look at localClustering and nodesEdges now
+	//update #showstats #results with most transitive and highest degree, etc.
+
+	clustring = "<ul>";
+	Object.keys(localClusteringCoefficient).forEach(function(i){
+		oid = og_vals_to_id[i];
+		fullname = grpost.elements.nodes[i]['full_name'];
+		etype = entity_typemap[grpost.elements.nodes[i]['entity_type']];
+		fcomm = original_node_data[oid]['community'];
+		ednum = nodesEdges[i].length;
+		if( localClusteringCoefficient[i] != 1){
+			clustring += "<li style='color:"+color(fcomm)+";font-size:12px;'>"+fullname+" (trans: "+localClusteringCoefficient[i]+", e: "+ednum+", "+etype+", c: "+fcomm+", id: "+oid+")</li>";
+		}
+	});	
+	clustring += "</ul>";
+	//console.log(clustring);
+	jQuery("#showstats .clusts").html(clustring);
+
+	//sort by transitivity and then number of edges
+	var items = jQuery('#showstats .clusts li').get();
+	items.sort(function(a,b){
+	  var keyA = parseFloat(jQuery(a).text().split("trans: ")[1].split(",")[0]);
+	  var keyB = parseFloat(jQuery(b).text().split("trans: ")[1].split(",")[0]);
+
+	  var eA = parseFloat(jQuery(a).text().split("e: ")[1].split(",")[0]);
+	  var eB = parseFloat(jQuery(b).text().split("e: ")[1].split(",")[0]);
+	
+	  sA = keyA * 100000000 + ( 10000 + eA);
+	  sB = keyB * 100000000 + ( 10000 + eB);
+	  //if (keyA < keyB) return 1;
+	  //if (keyA > keyB) return -1;
+	  if (sA < sB) return 1;
+	  if (sA > sB) return -1;
+	  return 0;
+	});
+
+	clustgroups = {};
+	jQuery('#showstats .clusts ul').html("");  //clear existing
+	var ul = jQuery('#showstats .clusts ul');
+	jQuery.each(items, function(i, li){
+	    nid = parseInt(jQuery(li).text().split("id: ")[1].split(")")[0]);
+	    grid = original_node_data[nid]['value'];
+	    nneighs = nodesEdges[grid];
+	    if( String(nneighs) != "undefined"){
+		    //cgindex = "group"+nneighs.map(function(f){ return parseInt(f);}).sort().join("-");
+		    grp = nneighs.map(function(f){ return parseInt(og_vals_to_id[f]);});
+		    grp.push(parseInt(nid));
+		    cgindex = "group"+ grp.sort().join("-");
+		    if(cgindex in clustgroups){ 
+			//console.log("Already seen group",cgindex," for nid",nid); 
+		    }
+		    else{
+			clustgroups[cgindex] = nid;
+			//add = "<li class='" + cgindex + "' ";
+			//console.log(li,typeof(li));
+			//li = li.replace("<li ",add);  //add class 
+			//li.att
+			li.className = cgindex;
+			ul.append(li);
+		    }
+	    }
+	    else{ 
+		console.log("didn't handle correctly:",li,nid,grid); 
+	    }
+	});
+
+	//filter clustring so that it doesn't contain the same groupings repeatedly (one for every person in the grouping?)
+	
+
+
+	degstring = "<ul>";
+	Object.keys(nodesEdges).forEach(function(i){
+		oid = og_vals_to_id[i];
+		fullname = grpost.elements.nodes[i]['full_name'];
+		etype = entity_typemap[grpost.elements.nodes[i]['entity_type']];
+		fcomm = original_node_data[oid]['community'];
+		degstring += "<li style='color:"+color(fcomm)+";font-size:12px;'>"+fullname+" (degree: "+nodesEdges[i].length+", "+etype+", c: "+fcomm+", id: "+oid+")</li>";
+	});	
+	degstring += "</ul>";
+	jQuery("#showstats .degrees").html(degstring);
+		var items = jQuery('#showstats .degrees li').get();
+		items.sort(function(a,b){
+		  var keyA = parseFloat(jQuery(a).text().split("degree: ")[1].split(",")[0].trim());
+		  var keyB = parseFloat(jQuery(b).text().split("degree: ")[1].split(",")[0].trim());
+
+		  if (keyA < keyB) return 1;
+		  if (keyA > keyB) return -1;
+		  return 0;
+		});
+		var ul = jQuery('#showstats .degrees ul');
+		jQuery.each(items, function(i, li){
+		  ul.append(li);
+		});
+
+	artstring = "<ul>";
+	Object.keys(nodesEdges).forEach(function(i){
+		oid = og_vals_to_id[i];
+		fullname = grpost.elements.nodes[i]['full_name'];
+		etype = entity_typemap[grpost.elements.nodes[i]['entity_type']];
+		fcomm = original_node_data[oid]['community'];
+		narts = articlemap.ns[i].length;
+		artstring += "<li style='color:"+color(fcomm)+";font-size:12px;'>"+fullname+" (articles: "+narts+", "+etype+", c: "+fcomm+", id: "+oid+")</li>";
+	});	
+	artstring += "</ul>";
+	jQuery("#showstats .artapp").html(artstring);
+		var items = jQuery('#showstats .artapp li').get();
+		items.sort(function(a,b){
+		  var keyA = parseFloat(jQuery(a).text().split("articles: ")[1].split(",")[0].trim());
+		  var keyB = parseFloat(jQuery(b).text().split("articles: ")[1].split(",")[0].trim());
+
+		  if (keyA < keyB) return 1;
+		  if (keyA > keyB) return -1;
+		  return 0;
+		});
+		var ul = jQuery('#showstats .artapp ul');
+		jQuery.each(items, function(i, li){
+		  ul.append(li);
+		});
+
+	prstring = "<ul>";
+	G = calculatePageRank(original_node_data.length,Amatrix);
+	Gmax = G.pi.max();
+	Gmin = 100000; G.pi.elements.forEach(function(f){ if(f < Gmin){ Gmin = f; }});
+	Object.keys(nodesEdges).forEach(function(i){
+		oid = og_vals_to_id[i];
+		fullname = grpost.elements.nodes[i]['full_name'];
+		etype = entity_typemap[grpost.elements.nodes[i]['entity_type']];
+		fcomm = original_node_data[oid]['community'];
+		//thispr = 100 * (G.pi.e(i+1) / Gmax);
+		thispr = 100 * (G.pi.e(oid) / Gmax);
+		prstring += "<li style='color:"+color(fcomm)+";font-size:12px;'>"+fullname+" (pagerank: "+thispr+", "+etype+", c: "+fcomm+", id: "+oid+")</li>";
+	});	
+	prstring += "</ul>";
+	jQuery("#showstats .pagerank").html(prstring);
+		var items = jQuery('#showstats .pagerank li').get();
+		items.sort(function(a,b){
+		  var keyA = parseFloat(jQuery(a).text().split("pagerank: ")[1].split(",")[0].trim());
+		  var keyB = parseFloat(jQuery(b).text().split("pagerank: ")[1].split(",")[0].trim());
+
+		  if (keyA < keyB) return 1;
+		  if (keyA > keyB) return -1;
+		  return 0;
+		});
+		var ul = jQuery('#showstats .pagerank ul');
+		jQuery.each(items, function(i, li){
+		  ul.append(li);
+		});
+
+	nodestrengths = {};	
+	minStrength = 100000;
+	maxStrength = -1;
+	Object.keys(Amatrix).forEach(function(i){
+	curi = Amatrix[i];
+	s = 0;
+	Object.keys(curi).forEach(function(j){ s += curi[j]; });
+		nodestrengths[i] = s;
+		if(s > maxStrength){ maxStrength = s; }
+		else{ if( s < minStrength){ minStrength = s;}}
+	});
+
+	strstring = "<ul>";
+	Object.keys(nodestrengths).forEach(function(i){
+		oid = og_vals_to_id[i];
+		fullname = grpost.elements.nodes[i]['full_name'];
+		etype = entity_typemap[grpost.elements.nodes[i]['entity_type']];
+		fcomm = original_node_data[oid]['community'];
+		strstring += "<li style='color:"+color(fcomm)+";font-size:12px;'>"+fullname+" (strength: "+nodestrengths[i]+", "+etype+", c: "+fcomm+", id: "+oid+")</li>";
+	});	
+	strstring += "</ul>";
+	jQuery("#showstats .strength").html(strstring);
+	var items = jQuery('#showstats .strength li').get();
+	items.sort(function(a,b){
+	  var keyA = parseFloat(jQuery(a).text().split("strength: ")[1].split(",")[0].trim());
+	  var keyB = parseFloat(jQuery(b).text().split("strength: ")[1].split(",")[0].trim());
+
+	  if (keyA < keyB) return 1;
+	  if (keyA > keyB) return -1;
+	  return 0;
+	});
+	var ul = jQuery('#showstats .strength ul');
+	jQuery.each(items, function(i, li){
+	  ul.append(li);
+	});
+
+	invstring = "<ul>";
+	Object.keys(nodestrengths).forEach(function(i){
+		oid = og_vals_to_id[i];
+		fullname = grpost.elements.nodes[i]['full_name'];
+		etype = entity_typemap[grpost.elements.nodes[i]['entity_type']];
+		fcomm = original_node_data[oid]['community'];
+		val = 0;
+		if( articlemap.ns[i].length > 1 && nodesEdges[i].length > 1){ 
+			//val = ( 1 + (nodestrengths[i]/maxStrength)) * Math.log((articlemap.ns[id_of_main_dude].length / articlemap.ns[i].length));   <-- this doesn't make sense
+
+			//val = ( maxStrength / nodestrengths[i]) * Math.log((articlemap.ns[id_of_main_dude].length / articlemap.ns[i].length)); //this does but its not interesting really
+			thispr = 100 * (G.pi.e(oid) / Gmax);
+			val = (articlemap.ns[id_of_main_dude].length / articlemap.ns[i].length) * thispr; 			
+			val = Math.round(val*10000)/10000;
+		}
+		invstring += "<li style='color:"+color(fcomm)+";font-size:12px;'>"+fullname+" (value: "+val+", articles: "+articlemap.ns[i].length+", PR: "+thispr+" "+etype+", c: "+fcomm+", id: "+oid+")</li>";
+	});	
+	invstring += "</ul>";
+	jQuery("#showstats .inverseartstrength").html(invstring);
+	var items = jQuery('#showstats .inverseartstrength li').get();
+	items.sort(function(a,b){
+	  var keyA = parseFloat(jQuery(a).text().split("value: ")[1].split(",")[0].trim());
+	  var keyB = parseFloat(jQuery(b).text().split("value: ")[1].split(",")[0].trim());
+
+	  if (keyA < keyB) return 1;
+	  if (keyA > keyB) return -1;
+	  return 0;
+	});
+	var ul = jQuery('#showstats .inverseartstrength ul');
+	jQuery.each(items, function(i, li){
+	  ul.append(li);
+	});
+
+	//mouse over and click functionality for measures
+        jQuery("#showstats .clusts li").hover(
+	  function() {
+	    if(clicklocked ==0){ 
+		    nodeid = this.textContent.split("id: ")[1].split(")")[0];
+		    //handle_mouseover(original_node_data[nodeid]);
+		    handle_mouseover_concurrent(original_node_data[nodeid],-1);
+		    $(this).css("font-size","16px");
+	    }
+	  }, function() {
+	    if(clicklocked ==0){ 
+		    nodeid = this.textContent.split("id: ")[1].split(")")[0];
+		    handle_mouseout_concurrent(original_node_data[nodeid],-1);
+		    $(this).css("font-size","12px");
+	    }
+	  }
+        );
+ 
+        jQuery("#showstats .clusts li").click( 
+	function(){ 
+	    nodeid = this.textContent.split("id: ")[1].split(")")[0];
+	    handle_clicked(original_node_data[nodeid]);
+	    $(this).css("font-weight","bold");
+	});
+
+
+        jQuery("#showstats .degrees li").hover(
+	  function() {
+	    if(clicklocked ==0){ 
+		    nodeid = this.textContent.split("id: ")[1].split(")")[0];
+		    handle_mouseover(original_node_data[nodeid]);
+		    $(this).css("font-weight","bold");
+	    }
+	  }, function() {
+	    if(clicklocked ==0){ 
+		    nodeid = this.textContent.split("id: ")[1].split(")")[0];
+		    handle_mouseout(original_node_data[nodeid]);
+		    $(this).css("font-weight","normal");
+		    $(this).css("font-size","12px");
+	    }
+	  }
+        );
+ 
+        jQuery("#showstats .degrees li").click( 
+	function(){ 
+	    nodeid = this.textContent.split("id: ")[1].split(")")[0];
+	    handle_clicked(original_node_data[nodeid]);
+	    $(this).css("font-weight","bold");
+	});
+
+        jQuery("#showstats .artapp li").hover(
+	  function() {
+	    if(clicklocked ==0){ 
+		    nodeid = this.textContent.split("id: ")[1].split(")")[0];
+		    handle_mouseover(original_node_data[nodeid]);
+		    $(this).css("font-weight","bold");
+	    }
+	  }, function() {
+	    if(clicklocked ==0){ 
+		    nodeid = this.textContent.split("id: ")[1].split(")")[0];
+		    handle_mouseout(original_node_data[nodeid]);
+		    $(this).css("font-weight","normal");
+		    $(this).css("font-size","12px");
+	    }
+	  }
+        );
+ 
+        jQuery("#showstats .artapp li").click( 
+	function(){ 
+	    nodeid = this.textContent.split("id: ")[1].split(")")[0];
+	    handle_clicked(original_node_data[nodeid]);
+	    $(this).css("font-weight","bold");
+	});
+
+        jQuery("#showstats .pagerank li").hover(
+	  function() {
+	    if(clicklocked ==0){ 
+		    nodeid = this.textContent.split("id: ")[1].split(")")[0];
+		    handle_mouseover(original_node_data[nodeid]);
+		    $(this).css("font-weight","bold");
+	    }
+	  }, function() {
+	    if(clicklocked ==0){ 
+		    nodeid = this.textContent.split("id: ")[1].split(")")[0];
+		    handle_mouseout(original_node_data[nodeid]);
+		    $(this).css("font-weight","normal");
+		    $(this).css("font-size","12px");
+	    }
+	  }
+        );
+ 
+        jQuery("#showstats .pagerank li").click( 
+	function(){ 
+	    nodeid = this.textContent.split("id: ")[1].split(")")[0];
+	    handle_clicked(original_node_data[nodeid]);
+	    $(this).css("font-weight","bold");
+	});
+
+        jQuery("#showstats .strength li").hover(
+	  function() {
+	    if(clicklocked ==0){ 
+		    nodeid = this.textContent.split("id: ")[1].split(")")[0];
+		    handle_mouseover(original_node_data[nodeid]);
+		    $(this).css("font-weight","bold");
+	    }
+	  }, function() {
+	    if(clicklocked ==0){ 
+		    nodeid = this.textContent.split("id: ")[1].split(")")[0];
+		    handle_mouseout(original_node_data[nodeid]);
+		    $(this).css("font-weight","normal");
+		    $(this).css("font-size","12px");
+	    }
+	  }
+        );
+ 
+        jQuery("#showstats .strength li").click( 
+	function(){ 
+	    nodeid = this.textContent.split("id: ")[1].split(")")[0];
+	    handle_clicked(original_node_data[nodeid]);
+	    $(this).css("font-weight","bold");
+	});
+
+        jQuery("#showstats .inverseartstrength li").hover(
+	  function() {
+	    if(clicklocked ==0){ 
+		    nodeid = this.textContent.split("id: ")[1].split(")")[0];
+		    handle_mouseover(original_node_data[nodeid]);
+		    $(this).css("font-weight","bold");
+	    }
+	  }, function() {
+	    if(clicklocked ==0){ 
+		    nodeid = this.textContent.split("id: ")[1].split(")")[0];
+		    handle_mouseout(original_node_data[nodeid]);
+		    $(this).css("font-weight","normal");
+		    $(this).css("font-size","12px");
+	    }
+	  }
+        );
+ 
+        jQuery("#showstats .inverseartstrength li").click( 
+	function(){ 
+	    nodeid = this.textContent.split("id: ")[1].split(")")[0];
+	    handle_clicked(original_node_data[nodeid]);
+	    $(this).css("font-weight","bold");
+	});
+	showstats();
+	jQuery(".clusts").toggle();
+	jQuery(".degrees").toggle();
+	jQuery(".pagerank").toggle();
+	jQuery(".strength").toggle();
+	jQuery(".inverseartstrength").toggle();
+	jQuery(".artapp").toggle();
+
+
+	modularity = calculateModularity(original_node_data, Amatrix, og_vals_to_id );
+	//jQuery(".commdiv").prepend("&nbsp;modularity: 0."+ Math.round(modularity * 1000000)+""); 
+	jQuery(".commsarea").before("modularity: 0."+ Math.round(modularity * 1000000)+"<br>"); 
+ 
+
+	//update number counts for party breakdown
+	pols = 0; 
+	dems = 0;
+	reps = 0;
+	for(i=0; i < original_node_data.length; i++){
+		grid = original_node_data[i]['value'];
+		if(grpost.elements.nodes[grid]['entity_type'] == 'politician'){ 
+			if( (grpost.elements.nodes[grid]['party'] == "Democratic" || grpost.elements.nodes[grid]['party'] == "Democrat" ) ){ dems += 1; pols +=1; }
+			if( grpost.elements.nodes[grid]['party'] == "Republican"){ reps += 1; pols += 1; }
+		}
+	}
+	partybreakdown = "<b>STATS: </b><span style='color:blue'>DEMS: "+dems+"</span>, <span style='color:red'>REPS: "+reps+"</span>, TOTAL: "+pols;
+	//jQuery('.nodetypenumbers').html(partybreakdown);  
+	console.log(partybreakdown);
+	
+}
+
+
+//go through communities and do degree centrality on each ( how many links each has )
+//and clustering coefficent
+
+var localClusteringCoefficient;
+var maxClustering;
+var minClustering;
+var nodesEdges; 
+var Amatrix;
+
+function getDegreesAndClusteringCoefficient() {
+  
+    console.log("getDs");
+  nodes = newnodes;
+  links = edge_data;
+  //this implementation is currently only undirected
+  
+  nodesEdges = {}; 
+  Amatrix = {};
+
+  //we'll store the value we compute in an object to use it to size the results
+  localClusteringCoefficient = {};
+  maxClustering = 0;
+  minClustering = 99999;
+
+  //nodes are indexes for grpost
+  //link edges use grpost ids as well
+
+  for (x in nodes) {
+    localClusteringCoefficient[nodes[x]] = 1;
+    var connectedNodes = [];
+    var localAs = {};
+    // find the nodes connected to this node and put them in an array
+    for (y in links) {
+      if (links[y].source == nodes[x]) {
+        connectedNodes.push(links[y].target);
+	localAs[links[y].target] = links[y].weight;
+      }
+      else if (links[y].target == nodes[x]) {
+        connectedNodes.push(links[y].source);
+	localAs[links[y].source] = links[y].weight;
+      }
+    }
+
+    //nodesEdges[nodes[x]] = connectedNodes.length;
+    nodesEdges[nodes[x]] = connectedNodes;
+    Amatrix[nodes[x]] = localAs;
+
+    //only update the local clustering coefficient if we find more than 1 link (needs to be updated for directed graphs)
+    if (connectedNodes.length > 1) {
+      // each node connected to the node could possibly be connected to every other node
+      var totalPossibleClustering = (connectedNodes.length - 1) * connectedNodes.length;
+      var discoveredLinks = 0;
+      for (y in links) {
+        if (connectedNodes.indexOf(links[y].source) > -1 && connectedNodes.indexOf(links[y].target) > -1) {
+            discoveredLinks++;
+        }
+        else if (connectedNodes.indexOf(links[y].target) > -1 && connectedNodes.indexOf(links[y].source) > -1) {
+            discoveredLinks++;
+        }
+      }
+
+      //Local clustering coefficient is equal to the number of connected nodes divided by the connectivity of those nodes between each other
+    localClusteringCoefficient[nodes[x]] = discoveredLinks / totalPossibleClustering;
+    maxClustering = Math.max(localClusteringCoefficient[nodes[x]], maxClustering);
+    minClustering = Math.min(localClusteringCoefficient[nodes[x]], minClustering);
+    }
+  }
+
+}
+
+/*
+d3.selectAll("image.node").transition().duration(300)
+.attr("height", function(d,i) {return sizeRamp(localClusteringCoefficient[nodes[i]])})
+.attr("width", function(d,i) {return sizeRamp(localClusteringCoefficient[nodes[i]])})
+.attr("x", function(d,i) {return -(sizeRamp(localClusteringCoefficient[nodes[i]]) / 2)})
+.attr("y", function(d,i) {return -(sizeRamp(localClusteringCoefficient[nodes[i]]) / 2)});
+*/
+
+var sizeRamp;
+var nodesizeby = "none";
+function changeSizeFor(measure){
+	jQuery("#filter span:first a").css("color","black");
+	if( measure == 'transitivity'){
+		  d3.selectAll("circle.node")
+		
+		 /*
+		  sizeRamp = d3.scale.linear().domain([minClustering,maxClustering]).range([2,8]).clamp(true);
+		  d3.selectAll("circle.node").transition().duration(300).attr("r", function(d,i) {
+			laplace = .00000000001; //just in case of zeros
+			val = maxClustering * ((minClustering + laplace) /( localClusteringCoefficient[nodes[i]] + laplace))
+			return sizeRamp(val)
+		  });
+		 */
+			
+		 
+		  maxHere =  (maxStrength / minStrength);
+		  sizeRamp = d3.scale.linear().domain([1,maxHere]).range([3,23]).clamp(true);
+		  d3.selectAll("circle.node").transition().duration(300).attr("r", function(d,i) {
+			
+			grid = original_node_data[i]['value'];
+			if( nodesEdges[grid].length > 1){ return sizeRamp( maxStrength / nodestrengths[grid] );}
+			else{ return 1; }
+		  });
+		 
+                  /*
+		  sizeRamp = d3.scale.linear().domain([]).range([2,15]).clamp(true);
+		  d3.selectAll("circle.node").transition().duration(300).attr("r", function(d,i) {
+			grid = original_node_data[i]['value'];
+			return sizeRamp( localClusteringCoefficient[nodes[i]] * 100 * articlemap.ns[grid].length);
+		  });
+		  */
+
+		  jQuery("#filter span:first a").each(function(f){ if(this.text == "INVERSE STR"){ $(this).css("color","blue");}});
+		  nodesizeby = "transitivity";
+	}
+	if( measure == 'degree'){
+		  d3.selectAll("circle.node")
+		  var maxDegree = parseInt(jQuery(".degrees ul li:first").text().split("degree: ")[1].split(",")[0]);
+		  sizeRamp = d3.scale.log().domain([1,maxDegree]).range([3,15]).clamp(true);
+		  d3.selectAll("circle.node").transition().duration(300).attr("r", function(d,i) {
+			grid = original_node_data[i]['value'];
+			return sizeRamp(nodesEdges[grid].length);
+		  });
+		  jQuery("#filter span:first a").each(function(f){ if(this.text == "DEGREE"){ $(this).css("color","blue");}});
+		  nodesizeby = "degree";
+	}
+	if( measure == 'pagerank'){
+		  d3.selectAll("circle.node")
+		  sizeRamp = d3.scale.log().domain([Gmin,Gmax]).range([3,15]).clamp(true);
+		  d3.selectAll("circle.node").transition().duration(300).attr("r", function(d,i) {
+			//console.log(i,G.pi.elements[i]);
+			return sizeRamp(G.pi.elements[i]);
+		  });
+		  jQuery("#filter span:first a").each(function(f){ if(this.text == "PAGE RANK"){ $(this).css("color","blue");}});
+		  nodesizeby = "pagerank";
+	}
+	if( measure == 'strength'){
+		  d3.selectAll("circle.node")
+		  sizeRamp = d3.scale.log().domain([minStrength,maxStrength]).range([3,15]).clamp(true);
+		  d3.selectAll("circle.node").transition().duration(300).attr("r", function(d,i) {
+			grid = original_node_data[i]['value'];
+			return sizeRamp(nodestrengths[grid]);
+		  });
+		  jQuery("#filter span:first a").each(function(f){ if(this.text == "STRENGTH"){ $(this).css("color","blue");}});
+		  nodesizeby = "strength";
+	}
+	if( measure == 'articles'){
+		  d3.selectAll("circle.node")
+		  minArticles = 1;
+		  maxArticles = Object.keys(urlslist).length;
+		  sizeRamp = d3.scale.log().domain([minStrength,maxStrength]).range([3,25]).clamp(true);
+		  d3.selectAll("circle.node").transition().duration(300).attr("r", function(d,i) {
+			grid = original_node_data[i]['value'];
+			return sizeRamp(articlemap.ns[grid].length);
+		  });
+		  jQuery("#filter span:first a").each(function(f){ if(this.text == "ARTICLES"){ $(this).css("color","blue");}});
+		  nodesizeby = "strength";
+	}
+	if( measure == 'none'){
+		  d3.selectAll("circle.node")
+		  d3.selectAll("circle.node").transition().duration(300).attr("r", 5);
+		  jQuery("#filter span:first a").each(function(f){ if(this.text == "NONE"){ $(this).css("color","blue");}});
+		  nodesizeby = "none";
+	}
+}
+
+
+var nodetypestoshow = ["ALL"];
+function showALL(){
+  //SHOW EVERYTHING
+  jQuery("#entitytypes span:first a").css("color","black");
+  d3.selectAll("circle.node")
+  d3.selectAll("circle.node").transition().duration(300).attr("opacity", function(d,i){
+	jQuery("#nodeid"+i).css("opacity",1);
+  });
+  jQuery("#entitytypes span:first a").each(function(f){ if(this.text == "ALL"){ $(this).css("color","blue");}});
+  nodetypestoshow = ["ALL"];
+}
+
+function showET(){
+  console.log("In showET with",nodetypestoshow);
+  //show all types currently in nodetypestoshow
+  d3.selectAll("circle.node")
+  d3.selectAll("circle.node").transition().duration(300).attr("name", function(d,i){
+	grid = original_node_data[i]['value'];
+	found = 0;
+	for(e=0; e < nodetypestoshow.length; e++){
+		if( grpost.elements.nodes[grid]['entity_type'] == nodetypestoshow[e] || grid == id_of_main_dude){ 
+			jQuery("#nodeid"+i).css("opacity",1);
+			found = 1;
+		}
+		else{ 
+			if(grpost.elements.nodes[grid]['entity_type'] == 'politician' && ( nodetypestoshow[e] == "DEM" || nodetypestoshow[e] == "REP")){
+				if( (grpost.elements.nodes[grid]['party'] == "Democratic" || grpost.elements.nodes[grid]['party'] == "Democrat" ) && nodetypestoshow[e] == "DEM"){ jQuery("#nodeid"+i).css("opacity",1); }
+				if( grpost.elements.nodes[grid]['party'] == "Republican" && nodetypestoshow[e] == "REP"){ jQuery("#nodeid"+i).css("opacity",1); }
+				found = 1;
+			}
+		}
+	}
+	if( found == 0){ 
+		jQuery("#nodeid"+i).css("opacity",0);
+	}
+  });
+}
+
+function showStandard(shortn,fulln){
+	  console.log("in showStandard with", shortn, fulln, nodetypestoshow);
+	  if( nodetypestoshow.indexOf("ALL") == 0 ){
+		//was previously showing all so now just show Entity only and highlight it
+		  jQuery("#entitytypes span:first a").css("color","black");
+		  d3.selectAll("circle.node")
+		  d3.selectAll("circle.node").transition().duration(300).attr("name", function(d,i){
+			grid = original_node_data[i]['value'];
+			if( grpost.elements.nodes[grid]['entity_type'] == fulln || grid == id_of_main_dude){ jQuery("#nodeid"+i).css("opacity",1); }
+			else{ jQuery("#nodeid"+i).css("opacity",0); }
+		  });
+		  jQuery("#entitytypes span:first a").each(function(f){ if(this.text == fulln){ $(this).css("color","blue");}});
+		  nodetypestoshow = [shortn];
+	  }
+	  else{
+		//if org already showing, stop showing it!
+		if( nodetypestoshow.indexOf(shortn) > -1 ){
+			  if( nodetypestoshow.length == 1){
+				//if it was only showing this entity so, show all now!
+				showALL();
+			  }
+			  else{
+				  //otherwise remove entity from array and show only ones in array
+				  nodetypestoshow.splice( nodetypestoshow.indexOf(shortn), 1);
+				  jQuery("#entitytypes span:first a").each(function(f){ if(this.text == fulln){ $(this).css("color","black");}});
+				  showET();
+			}
+		}
+		else{
+			//show entity
+			//nodetypestoshow.push(shortn);
+			nodetypestoshow.push(fulln);
+			showET();
+			jQuery("#entitytypes span:first a").each(function(f){ if(this.text == fulln){ $(this).css("color","blue");}});
+		}
+	}
+}
+
+function showPOLITICIANS(){
+	  //SHOW POLITICIANS
+	  if( nodetypestoshow.indexOf("ALL") == 0 ){
+		//was previously showing all so now just show Politicians only and highlight it
+		  jQuery("#entitytypes span:first a").css("color","black");
+		  d3.selectAll("circle.node")
+		  d3.selectAll("circle.node").transition().duration(300).attr("name", function(d,i){
+			grid = original_node_data[i]['value'];
+			if( grpost.elements.nodes[grid]['entity_type'] == "politician"){ jQuery("#nodeid"+i).css("opacity",1); }
+			else{ jQuery("#nodeid"+i).css("opacity",0); }
+			//TODO: hide edges as well 
+		  });
+		  jQuery("#entitytypes span:first a").each(function(f){ if(this.text == "POLITICIAN"){ $(this).css("color","blue");}});
+		  nodetypestoshow = ["politician"];
+	  }
+	  else{
+		//if politician already showing, stop showing it!
+		if( nodetypestoshow.indexOf("politician") > -1 ){
+			  if( nodetypestoshow.length == 1){
+				//if it was only showing politician, show all now!
+				showALL();
+			  }
+			  else{
+				  //otherwise remove POL from array and show only ones in array
+				  nodetypestoshow.splice( nodetypestoshow.indexOf("politician"), 1);
+				  jQuery("#entitytypes span:first a").each(function(f){ if(this.text == "POLITICIAN"){ $(this).css("color","black");}});
+				  showET();
+			}
+		}
+		else{
+			//if dem or rep is present remove it and POL and show all
+			if( nodetypestoshow.indexOf("REP") > -1 || nodetypestoshow.indexOf("DEM") > -1 ){
+				if( nodetypestoshow.indexOf("REP") > -1){
+				  nodetypestoshow.splice( nodetypestoshow.indexOf("REP"), 1);
+				  jQuery("#entitytypes span:first a").each(function(f){ if(this.text == "REPUBLICAN"){ $(this).css("color","black");}});
+				}
+				if( nodetypestoshow.indexOf("DEM") > -1){
+				  nodetypestoshow.splice( nodetypestoshow.indexOf("DEM"), 1);
+				  jQuery("#entitytypes span:first a").each(function(f){ if(this.text == "DEMOCRAT"){ $(this).css("color","black");}});
+				}
+				nodetypestoshow.push("politician");
+				showET();
+				jQuery("#entitytypes span:first a").each(function(f){ if(this.text == "POLITICIAN"){ $(this).css("color","blue");}});
+			}
+			else{
+				//dem or rep not there so just show POL along with rest of crowd	
+				nodetypestoshow.push("politician");
+				showET();
+				jQuery("#entitytypes span:first a").each(function(f){ if(this.text == "POLITICIAN"){ $(this).css("color","blue");}});
+			}
+		}
+	  }
+}
+
+function showDEMREP(party){
+	  if(party == "DEM"){ fulln = "Democratic"; label= "DEMOCRAT"; }
+	  else{ fulln = "Republican"; label = "REPUBLICAN"; }
+
+	  //SHOW DEM
+	  if( nodetypestoshow.indexOf("ALL") == 0 ){
+		//was previously showing all so now just show DEMs only and highlight it
+		  jQuery("#entitytypes span:first a").css("color","black");
+		  d3.selectAll("circle.node")
+		  d3.selectAll("circle.node").transition().duration(300).attr("name", function(d,i){
+			grid = original_node_data[i]['value'];
+			if(party == "REP"){
+				if( grpost.elements.nodes[grid]['party'] == fulln){ jQuery("#nodeid"+i).css("opacity",1); }
+				else{ jQuery("#nodeid"+i).css("opacity",0); }
+			}
+			else{
+				if( grpost.elements.nodes[grid]['party'] == fulln || grpost.elements.nodes[grid]['party'] == "Democrat"){ jQuery("#nodeid"+i).css("opacity",1); }
+				else{ jQuery("#nodeid"+i).css("opacity",0); }
+			}
+			//TODO: hide edges as well
+		  });
+		  jQuery("#entitytypes span:first a").each(function(f){ if(this.text == label){ $(this).css("color","blue");}});
+		  nodetypestoshow = [party];
+	  }
+	  else{
+		if( nodetypestoshow.indexOf(party) > -1 ){
+			  if( nodetypestoshow.length == 1){
+				//if it was only showing DEM, show all now!
+				showALL();
+			  }
+			  else{
+				  //otherwise remove DEM from array and show only ones in array
+				  nodetypestoshow.splice( nodetypestoshow.indexOf(party), 1);
+				  jQuery("#entitytypes span:first a").each(function(f){ if(this.text == party){ $(this).css("color","black");}});
+				  showET();
+			}
+		}
+		else{
+			//if POL is present, remove it, show dems and then show all
+			if( nodetypestoshow.indexOf("politician") > -1){
+				  nodetypestoshow.splice( nodetypestoshow.indexOf("politician"), 1);
+				  jQuery("#entitytypes span:first a").each(function(f){ if(this.text == "politician"){ $(this).css("color","black");}});
+				  
+				  nodetypestoshow.push(party);
+				  jQuery("#entitytypes span:first a").each(function(f){ if(this.text == label){ $(this).css("color","blue");}});
+				  showET();
+			}
+			else{
+				//pol not there so show dem
+				nodetypestoshow.push(party);
+				showET();
+				jQuery("#entitytypes span:first a").each(function(f){ if(this.text == label){ $(this).css("color","blue");}});
+			}
+		}
+	  }
+
+}
+
+
+function toggleType(et){
+	//never hide main politician!
+	console.log("in toggle type with", et,nodetypestoshow);
+	if( et == 'ALL'){ showALL(); }
+	if( et == 'politician'){ showPOLITICIANS(); }
+	if( et == "DEM"){ showDEMREP("DEM"); }
+	if( et == "REP"){ showDEMREP("REP"); }
+	if( et == "LOC"){ showStandard("LOC","LOCATION");	}
+	if( et == "ORG"){ showStandard("ORG","ORGANIZATION");	}
+	if( et == "MISC"){ showStandard("MISC","MISC");	}
+	if( et == "PER"){ showStandard("PER","PERSON");	}
+	if( et == "BILL"){ showStandard("BILL","BILL");	}
+
+	//hide/show edges not used/used
+	showingnodes = {}
+	d3.selectAll(".node")[0].forEach(function(i){
+		if( i.style.opacity == "1" ){
+			nid = i.id.split("nodeid")[1];
+			showingnodes[nid] = 1
+		}
+	});        
+	snkeys = Object.keys(showingnodes);
+	
+	jQuery("line").css("opacity",0);
+	snkeys.forEach(function(i){
+		d3.selectAll("line.n"+i)[0].forEach(function(l){
+			cs = l.attributes.class.textContent.split(" ");
+			for(c=0; c < cs.length; c++){
+				if( cs[c] != "link" && cs[c] != "n"+i){ 
+					thisn = cs[c].split("n")[1];
+					if( thisn in showingnodes ){ l.style.opacity = 1; }
+					else{ l.style.opacity = 0; }
+				}
+			}
+		});
+	});
+}
+  
+
+function calculateModularity(original_node_data, Amatrix, og_vals_to_id ){                        
+	//The modularity of a graph with respect to some division (or vertex types) measures how good the division is, or how separated are the different vertex types from each other. It defined as
+
+	//Q = 1/(2W) * sum( (Aij  - (ki*kj/(2W)) ) delta(ci,cj),i,j),
+
+	//m is the number of edges,   						# edge_data.length      , edges uses grpost indexes
+	//W is the total sum of weights
+	//Aij is the element of the A adjacency matrix in row i and column j,   # Amatrix   , though its not complete so if an index doesn't exist its zero!  uses grpost indexes
+	//ki is the degree of i, kj is the degree of j,				# nodesEdges[i].length , indexed by grpost 
+	//ci is the community of i, cj that of j,				# original_node_data[i].community  ;  this is indexed by mapping grpost via og_val 
+	//the sum goes over all i and j pairs of vertices, and 
+	//delta(x,y) is 1 if x=y and 0 otherwise.
+
+	//If edge weights are given, 
+	//then these are considered as the element of the A adjacency matrix, and 
+	//ki is the sum of weights of adjacent edges for vertex i.
+
+	m = edge_data.length;
+	Q = 0;
+	W = 0;
+
+	//calculate W
+
+	Object.keys(Amatrix).forEach(function(i){
+		row = Amatrix[i];
+		Object.keys(row).forEach(function(j){ W += row[j];});
+	});
+
+	console.log("Total Weight",W);
+
+	Object.keys(Amatrix).forEach(function(i){
+		row = Amatrix[i];
+		ki = 0;
+		Object.keys(row).forEach(function(j){ ki += row[j];});
+
+		Object.keys(row).forEach(function(j){
+			comm_i = original_node_data[og_vals_to_id[i]].community;
+			comm_j = original_node_data[og_vals_to_id[j]].community;
+			if(comm_i = comm_j){
+				kj = 0;
+				jrow = Amatrix[j];
+				Object.keys(jrow).forEach(function(x){ kj += jrow[x];});
+				aij = row[j]; 	
+				Q += aij - ( ki*kj / (2*W));
+			}
+		});
+	});
+
+	Q = (1/(2 * W)) * Q;
+	console.log("final modularity",Q);
+
+	return Q;
+
+}
+
+var H;
+var prH;
+function calculatePageRank(n, Amatrix){
+	//construct parameters necessary for approx pr
+	//n = original_node_data.elements.nodes.length;
+	//keys = Object.keys(Amatrix)       
+ 
+	H = Matrix.Zero(n,n).map(function(x,i,j){ 
+		r_ind = i - 1;    //Matrix is indexed starting by 1 whereas others are indexed from zero so subtract one
+		if( r_ind in Amatrix ){
+			row =  Amatrix[r_ind]
+			c_ind = j - 1;
+			if( c_ind in row){
+				//console.log("Found value at",r_ind,c_ind,row[c_ind])		
+				return row[c_ind];
+			}
+			else{
+				return x;
+			}
+		}
+		else{		
+			return x;
+		}
+	}); //nxn weighted adjacency matrix
+	prH = H;
+	//console.log(prH.row(1).elements);   // this works
+
+	bv = Vector.Zero(n).map( function(x){return 1 /n });
+	b = Matrix.create([bv.elements]);
+	
+	alpha = 0.85
+	t = 10            //precision
+
+	G = approx_pr(H, b, alpha, t);  
+
+	return G;
+}
+
+function approx_pr(H, b, alpha, t) {
+  //function to approximate Page Rank 
+  // ported from R code at  https://users.dimi.uniud.it/~massimo.franceschet/R/pagerank.html
+  // APPROXIMATED SMALL-SCALE COMPUTATION OF PAGERANK (uses dense matrix G)
+  // H = adjacency matrix
+  // b = bookmark vector
+  // alpha = balancing parameter
+  // t = number of digits of precision
+  // S = Google Matrix
+
+  n = H.rows();
+  // normalize adjacency matrix by row sum and replace dangling rows with bookmark vector (S matrix)
+  S = H;
+  // compute row sums
+  ones = Matrix.Zero(n,1).map(function(f){ return 1; });
+  rs = H.multiply(ones);
+  i = 1;
+  while( i <= n ){
+  	if( rs.e(i,1) == 0){ S.elements[i-1] = b.row(1).elements; }
+	else{ S.elements[i-1] = S.row(i).elements.map(function(v){ return v / rs.e(i,1);}); }
+	i++;
+  }
+
+
+  // build teleportation matrix 
+  T = ones.multiply(b)    
+
+  // build Google matrix 
+  G = S.multiply(alpha).add(  T.multiply(1 - alpha) );
+
+  pi0 = Vector.Zero(n)
+  pi1 = Vector.Zero(n).map(function(x){ return 1/ n; })
+  eps = 1/(Math.pow(10,t)); 
+  iter = 0
+  s = 0; 
+  sub = pi0.subtract(pi1).map(function(x){ if( x < 0){ return -1 * x; }else{ return x; }}).each(function(x){ s += x;});
+  //console.log("sub starting",s); 
+  while (s > eps && iter < 500) {
+	pi0 = pi1
+	pi1m = Matrix.create([pi1.elements])
+	pi1n = pi1m.multiply( G )
+        pi1 = Vector.create( pi1n.row(1).elements );
+	iter = iter + 1;
+	s = 0; 
+	sub = pi0.subtract(pi1).map(function(x){ if( x < 0){ return -1 * x; }else{ return x; }}).each(function(x){ s += x;});
+  } 
+  console.log("iteration",iter,s);
+  s = 0;  pi1.each(function(x){ s += x;})
+  pi1 = pi1.multiply( 1 / s )
+  return {'pi':pi1,'iter':iter};
+}
+
+/*
+function test(){
+	n = 3;
+	p = 0.1;
+	H = Matrix.Random(n,n).map(function(x){ return Math.round(x);}); //nxn adjacency matrix
+	bv = Vector.Zero(n).map( function(x){return 1 /n });
+	b = Matrix.create([bv.elements]);
+	alpha = 0.85
+	t = 10
+	G = approx_pr(H, b, alpha, t);  
+}
+*/
+
+function sortSummaryTable(table, col, reverse) {
+    var tb = table.tBodies[0], // use `<tbody>` to ignore `<thead>` and `<tfoot>` rows
+        tr = Array.prototype.slice.call(tb.rows, 0), // put rows into array
+        i;
+    reverse = -((+reverse) || -1);
+  
+    if(col >= 0){ //  || col == 1 || col == 2 || col == 3 || col == 4 || col == 5){
+	//occurrences column is numeric so sort accordingly and not by text comparison
+        tr = tr.sort(function(a,b){ return reverse * (parseFloat(a.cells[col].textContent) - parseFloat(b.cells[col].textContent)); });
+    }
+    else{
+	    tr = tr.sort(function (a, b) { // sort rows
+		return reverse // `-1 *` if want opposite order
+		    * (a.cells[col].textContent.trim() // using `.textContent.trim()` for test
+			.localeCompare(b.cells[col].textContent.trim())
+		       );
+	    });
+    }
+    for(i = 0; i < tr.length; ++i) tb.appendChild(tr[i]); // append each row in order
+}
+
+function sortTableArt(table, col, reverse) {
+    var tb = table.tBodies[0], // use `<tbody>` to ignore `<thead>` and `<tfoot>` rows
+        tr = Array.prototype.slice.call(tb.rows, 0), // put rows into array
+        i;
+    reverse = -((+reverse) || -1);
+  
+    if( col >= 2){  
+	//occurrences column is numeric so sort accordingly and not by text comparison
+        tr = tr.sort(function(a,b){ return reverse * (parseFloat(a.cells[col].textContent) - parseFloat(b.cells[col].textContent)); });
+    }
+    else{
+	if(col == 1){
+        	tr = tr.sort(function(a,b){ 
+			adata = Date.parse(a.cells[col].textContent);
+			bdata = Date.parse(b.cells[col].textContent);
+			return reverse * (adata - bdata); 
+		});
+	    	
+	}
+	else
+	{
+	    tr = tr.sort(function (a, b) { // sort rows
+		return reverse // `-1 *` if want opposite order
+		    * (a.cells[col].textContent.trim() // using `.textContent.trim()` for test
+			.localeCompare(b.cells[col].textContent.trim())
+		       );
+	    });
+	}
+    }
+    for(i = 0; i < tr.length; ++i) tb.appendChild(tr[i]); // append each row in order
+}
+
+function sortTable(table, col, reverse) {
+    var tb = table.tBodies[0], // use `<tbody>` to ignore `<thead>` and `<tfoot>` rows
+        tr = Array.prototype.slice.call(tb.rows, 0), // put rows into array
+        i;
+    reverse = -((+reverse) || -1);
+  
+    if(col >= 6 ){   //|| col == 7 || col == 8 || col == 9 || col == 10 || col == 11 || col == 12){
+	//occurrences column is numeric so sort accordingly and not by text comparison
+        tr = tr.sort(function(a,b){ return reverse * (parseFloat(a.cells[col].textContent) - parseFloat(b.cells[col].textContent)); });
+    }
+    else{
+	    tr = tr.sort(function (a, b) { // sort rows
+		return reverse // `-1 *` if want opposite order
+		    * (a.cells[col].textContent.trim() // using `.textContent.trim()` for test
+			.localeCompare(b.cells[col].textContent.trim())
+		       );
+	    });
+    }
+    for(i = 0; i < tr.length; ++i) tb.appendChild(tr[i]); // append each row in order
+}
+
+function makeSortableSummary(table) {
+    var th = table.tHead, i;
+    th && (th = th.rows[0]) && (th = th.cells);
+    if (th) i = th.length;
+    else return; // if no `<thead>` then do nothing
+    while (--i >= 0) (function (i) {
+        var dir = 1;
+        th[i].addEventListener('click', function () {sortSummaryTable(table, i, (dir = 1 - dir))});
+    }(i));
+}
+
+function makeSortableArt(table) {
+    var th = table.tHead, i;
+    th && (th = th.rows[0]) && (th = th.cells);
+    if (th) i = th.length;
+    else return; // if no `<thead>` then do nothing
+    while (--i >= 0) (function (i) {
+        var dir = 1;
+        th[i].addEventListener('click', function () {sortTableArt(table, i, (dir = 1 - dir))});
+    }(i));
+}
+
+function makeSortable(table) {
+    var th = table.tHead, i;
+    th && (th = th.rows[0]) && (th = th.cells);
+    if (th) i = th.length;
+    else return; // if no `<thead>` then do nothing
+    while (--i >= 0) (function (i) {
+        var dir = 1;
+        th[i].addEventListener('click', function () {sortTable(table, i, (dir = 1 - dir))});
+    }(i));
+}
+  </script>
+</html>

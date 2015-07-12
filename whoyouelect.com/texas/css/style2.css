@@ -1,0 +1,239 @@
+.node, .nodephoto {
+  stroke: #fff;
+  stroke-width: 4px;
+  opacity: .80;
+}
+
+/*fix these 
+#id352.nodephoto{ opacity: 1;}
+#id662.nodephoto{ opacity: 1;}
+*/
+
+/*fix this above so its baded on "mainnode" and not ids! */
+
+
+.node text, .nodephoto text {
+  pointer-events: none;
+  font: 14px sans-serif;
+  stroke: black;
+  stroke-width: 1px;
+}
+
+.link {
+  stroke: #999;
+  stroke-opacity: .6;
+}
+
+.intro{
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  /*width: 530px;*/
+  width:430px;
+  height: 100%;
+  background-color:rgba(239, 239, 239,.8);
+}
+
+#search-results{ margin-left: 4px; font-size: 14px;}
+#search-results ul{ padding-left: 5px; margin-top:3px; }
+#search-results ul li{ list-style-type: none; }
+.entypes { font-size: 11px; }
+.intro{
+ font-size: 13px;
+}
+
+#datepicker-to, #datepicker-from{
+  width:100px;
+  /*background-color:#E9323F;*/
+  background-color:#F15858;
+  color:white;
+}
+
+.info{
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  width: 430px;
+  height: 100%;
+  /*height: 750px;*/
+  /*border: 2px solid rgba(31, 119, 180, .8); */
+  padding: 3px;
+  background-color: rgba(239, 239, 239,.8);
+}
+
+.info ul{
+  list-style-type: none;
+  padding-left: 9px;
+  margin-top:10px;
+}
+
+.info ul li{
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.info #assocheader a {font-size:12px; text-decoration:none;font-weight:normal;}
+.info #assocheader a:hover {text-decoration:underline;}
+
+.info table.mostassoc { background-color:rgba(239, 239, 239,.8);}
+.info table.mostassoc th { cursor:pointer;}
+.info table.mostassoc tr { margin-bottom:0px;}
+.info table.mostassoc a { text-decoration:none;}
+.info table.mostassoc a:hover { color:black;font-weight:bold}
+
+.info ul li a:hover{
+  color: blue;
+  font-size: 14px;
+  /*text-decoration:underline;*/
+}
+
+.buttons{
+ /* position: absolute;
+  bottom: 10px;
+  right: 20px;*/
+ 
+  width: 405px;
+  height: 50px;
+  padding: 3px;
+  margin-top:30px;
+}
+
+.controls{
+  position: absolute;
+  bottom: 10px;
+  right: 450px;
+  width: 147px;
+  height: 50px;
+  padding: 3px;
+}
+
+.help{
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  width:45px;
+  height: 45px;
+}
+
+.helphighlight, #firstime{
+  /*border: rgba(31, 119, 180, .8) 2px solid;*/
+  border: #F15858 2px dashed;
+  border-bottom-left-radius: 30px;
+  border-bottom-right-radius: 30px;
+  border-top-left-radius: 30px;
+  border-top-right-radius: 30px;
+}
+
+
+
+.helpdisplay, #showstats{
+  display: none;
+  position: absolute;
+  top: 5px;
+  left: 60px;
+  width:820px;
+  height: 790px;
+  border: 3px solid rgba(31, 119, 180, .8);
+  background: white;
+  /*opacity: 0.95;*/
+  opacity: 1;
+  padding: 10px 10px 10px 20px;
+  font-size:15px;
+}
+
+.aboutus, .aboutproject{
+  display: none;
+  position: absolute;
+  top: 5px;
+  left: 60px;
+  width:820px;
+  height: 810px;
+  border: 3px solid rgba(31, 119, 180, .8);
+  background: white;
+  opacity: 0.95;
+  padding: 5px 10px 10px 20px;
+  font-size:15px;
+}
+
+.more{ position:absolute; right:10px; bottom: 10px; }
+.more a{ text-decoration: none; color: rgba(31, 119, 180, .8) }
+.more a:hover{ color:#F15858; }
+.aboutus ul, .aboutproject ul { padding-left:5px; margin-top: 5px; }
+.aboutus ul li, .aboutproject ul li{ list-style-type: none; }
+.aboutus a, .aboutproject a{ text-decoration: none; color: rgba(31, 119, 180, .8)  }
+.aboutus a:hover, .aboutproject a:hover{ color:#F15858; }
+
+
+#showstats {width: 965px; left:5px; height: 100%;}
+.results a { color: rgba(31, 119, 180, .8); text-decoration:none;}
+.results ul { padding-left: 3px; }
+.results ul li { list-style-type: none; }
+.small { font-size:13px; }
+
+.results .innerres td:nth-of-type(1) { width:20% }
+.results .innerres td:nth-of-type(2) { width:25% }
+.results .innerres td:nth-of-type(3) { width:20% }
+.results table h1{ margin: 0 0; font-size: 20px;}
+
+.results #combinedstats { width: 100%; }
+.results #combinedstats tr { vertical-align: top; }
+.results #combinedstats .header td { border-top: 1px dashed red; border-bottom: 1px dashed red;}
+#combinedstats .cstop a { font-weight: bold; font-size: 16px; text-align: center; color:grey; }
+#combinedstats td ul{ margin-top:2px; }
+.results a:hover{ color:black !important; }
+.results canvas { cursor: pointer; }
+
+
+/*see http://localhost/dama-larca/d3/Chart.js-master/samples/pie-customTooltips.html */
+#canvas-holder {
+width: 100%;
+margin-top: 50px;
+text-align: center;
+}
+#chartjs-tooltip {
+opacity: 1;
+position: absolute;
+background: rgba(0, 0, 0, .7);
+color: white;
+padding: 3px;
+border-radius: 3px;
+-webkit-transition: all .1s ease;
+transition: all .1s ease;
+/*pointer-events: none;*/
+-webkit-transform: translate(-50%, 0);
+transform: translate(-50%, 0);
+width:600px;
+height:300px;
+}
+#chartjs-tooltip.above {
+/*
+-webkit-transform: translate(-50%, -100%);
+transform: translate(-50%, -100%);
+*/
+-webkit-transform: translate(-80%, -120%);
+transform: translate(-80%, -120%);
+}
+#chartjs-tooltip.above:before {
+border: solid;
+border-color: #111 transparent;
+border-color: rgba(0, 0, 0, .8) transparent;
+border-width: 8px 8px 0 8px;
+bottom: 1em;
+content: "";
+display: block;
+left: 50%;
+top: 100%;
+position: absolute;
+z-index: 99;
+-webkit-transform: translate(-50%, 0);
+transform: translate(-50%, 0);
+}
+
+
+.filterbyentitytype{ position: absolute; bottom: 2px; left: 70px; font-size:12px; color: black; }
+.filterbyentitytype a { text-decoration:none; color:black; }
+.filterbyentitytype a:hover { color:red; }
+
+.usedistancemetric{ position: absolute; top: 5px; left: 5px; font-size:12px; color: black; }
+.usedistancemetric a { text-decoration:none; color:black; }
+.usedistancemetric a:hover { color:red; }

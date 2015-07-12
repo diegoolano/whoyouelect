@@ -1,0 +1,58 @@
+.node, .nodephoto {
+  stroke: #fff;
+  stroke-width: 3px;
+  opacity: .80;
+}
+
+#id352.nodephoto{ opacity: 1;}
+#id662.nodephoto{ opacity: 1;}
+
+/*fix this above so its baded on "mainnode" and not ids! */
+
+.node text, .nodephoto text {
+  pointer-events: none;
+  font: 14px sans-serif;
+  stroke: black;
+  stroke-width: 1px;
+}
+
+.link {
+  stroke: #999;
+  stroke-opacity: .6;
+}
+
+.info{
+  position: absolute;
+  top: 10px;
+  left: 990px;
+  width: 430px;
+  /*height: 750px;*/
+  border: 2px solid rgba(31, 119, 180, .8); 
+  padding: 3px;
+}
+
+.info ul{
+  list-style-type: none;
+  padding-left: 9px;
+  margin-top:10px;
+}
+
+.info ul li{
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.info ul li a:hover{
+  color: blue;
+  font-size: 14px;
+  /*text-decoration:underline;*/
+}
+
+.buttons{
+  position: absolute;
+  bottom: 100px;
+  left: 820px;
+  width: 162px;
+  height: 50px;
+  padding: 3px;
+}

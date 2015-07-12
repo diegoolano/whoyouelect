@@ -1,0 +1,215 @@
+<html>
+<head>
+<title>Texas Committee Assignments</title>
+<link rel="stylesheet" type="text/css" href="css/style2.css">
+<script type="text/javascript" src="js/jquery-2.1.3.min.js"></script>
+<script type="text/javascript" src="jq-ui/jquery-ui.min.js"></script>
+<link rel="stylesheet" type="text/css" href="jq-ui/jquery-ui.min.css">
+<script type="text/javascript" src="js/d3.v3.min.js"></script>
+<style>
+        body { margin-left: 4px; margin-right:4px; margin-top: 0px; 
+  		background-color:rgba(239, 239, 239,.8);
+	}
+	.committees table{ width:100%; margin-top: -3px;}
+	.com{ float:left; width:335px; height:310px; border:2px dashed rgba(31, 119, 180, .8); margin-right:8px; margin-bottom:8px; padding-left:10px; background: white;}
+	.com:hover{ background: rgba(239, 239, 239,.8); }
+	.h { font-weight:bold; font-size:16px; text-align:center; clear:both;}
+
+	ul { list-style-type: none; padding-left:5px; clear:both; margin-bottom:2px;}
+	.com2{ float:left; width:335px; height:310px; border:2px dashed rgba(31, 119, 180, .8); margin-right:8px; margin-bottom:8px; padding-left:10px; background: white;}
+	.com2:hover{ background: rgba(239, 239, 239,.8); }
+	
+	.reps{ color:#F15858;}
+	.dems{ color:rgba(31, 119, 180, .8)}
+</style>
+<script>
+comms = ['TXC000001.json', 'TXC000003.json', 'TXC000005.json', 'TXC000007.json', 'TXC000008.json', 'TXC000009.json', 'TXC000010.json', 'TXC000011.json', 'TXC000015.json', 'TXC000016.json', 'TXC000018.json', 'TXC000019.json', 'TXC000021.json', 'TXC000022.json', 'TXC000024.json', 'TXC000025.json', 'TXC000027.json', 'TXC000029.json', 'TXC000030.json', 'TXC000033.json', 'TXC000035.json', 'TXC000036.json', 'TXC000039.json', 'TXC000042.json', 'TXC000044.json', 'TXC000046.json', 'TXC000049.json', 'TXC000050.json', 'TXC000051.json', 'TXC000057.json', 'TXC000058.json', 'TXC000060.json', 'TXC000061.json', 'TXC000062.json', 'TXC000070.json', 'TXC000071.json', 'TXC000079.json', 'TXC000080.json', 'TXC000095.json', 'TXC000096.json', 'TXC000098.json', 'TXC000103.json', 'TXC000142.json', 'TXC000149.json', 'TXC000150.json', 'TXC000151.json', 'TXC000152.json', 'TXC000201.json', 'TXC000202.json', 'TXC000203.json', 'TXC000204.json', 'TXC000205.json', 'TXC000206.json', 'TXC000207.json', 'TXC000208.json', 'TXC000209.json', 'TXC000210.json', 'TXC000211.json', 'TXC000212.json', 'TXC000213.json', 'TXC000214.json', 'TXC000215.json', 'TXC000216.json', 'TXC000217.json', 'TXC000218.json', 'TXC000219.json'];
+
+wholeappr = ['TXC000040.json','TXC000082.json'];
+
+
+
+var center_node_attrs;
+totalnumber = comms.length + wholeappr.length;
+var dems;
+var reps;
+d3.json("js/configdesc.json", function(error, cd){
+	center_node_attrs = cd;	
+	dems = 0;
+	reps = 0;
+
+	for(i=0; i < wholeappr.length; i++)
+	{
+	  d3.json("js/committees/"+wholeappr[i], function(error,r){
+		results.push(r);
+		n = r['committee'];
+		id = r['id'];
+		updated = r['updated_at'];
+		members = r['members'].sort( function(a,b){ return a['name'] > b['name'] ? 1 : -1;});
+		jQuery("body .pre").append("<div id='"+id+"' class='com2'><div class='h'>"+n+"</div><ul></ul></div>");
+		for(m=0; m < members.length; m++){
+			name = members[m]['name'];
+			role = members[m]['role'];
+			mid = members[m]['leg_id'];
+			out = '<li>'+name+" - "+role+"</li>";
+			if( role == 'member'){ jQuery("#"+id+" ul").append(out); }
+			else{ 
+				if( name in center_node_attrs){ per = center_node_attrs[name]; }
+				else{ per = center_node_attrs["Bob Hall"]; /*TODO*/ }
+
+				if( per["info1"].indexOf("Democrat") > -1){ 
+					clr = "rgba(31, 119, 180, .8)";
+					party = "democrat";
+					dems = dems + 1;
+				}
+				else{ 
+					if( per["info1"].indexOf("Republican") > -1){
+						clr = "#F15858;"
+						party = "republican";
+						reps = reps + 1;
+					}
+					else{ clr = "black"; }
+				}
+
+				if( role == 'chair' ){ 
+					out = '<li style="color:'+clr+'">'+name+" - "+role+"</li>";
+					jQuery("#"+id+" ul").prepend(out); 
+					jQuery("#"+id+" .h").after('<a target="_blank" href="explorer-view.html?show=20&minor=1&s='+name+'"><div style="position:relative; top:0%; left:55%;float:left; height:0px;"><svg width="140" height="140"> <defs> <pattern id="image'+id+'-'+mid+'" x="10" y="0" patternUnits="userSpaceOnUse" width="125" height="175"> <image x="0" y="0" width="125" height="175" xlink:href="'+per["image"]+'"></image> </pattern> </defs> <circle id="top" cx="71" cy="71" r="60" fill="url(#image'+id+'-'+mid+')" style="stroke:'+clr+'; stroke-width:2px"/> </svg></div></a>');
+				}
+				if( role == 'vice chair'){ 
+					out = '<li style="color:'+clr+'">'+name+" - "+role+"</li>";
+					topc = jQuery("#"+id+" ul li").css("color"); 
+
+					if(topc == "#F15858" || topc == "rgb(241, 88, 88)" || topc == "rgba(31, 119, 180, .8)"){
+						jQuery("#"+id+" ul li:eq(0)").after(out);
+					}
+					else{
+						jQuery("#"+id+" ul").prepend(out); 
+					}
+					jQuery("#"+id+" .h").after('<a target="_blank" href="explorer-view.html?show=20&minor=1&s='+name+'"><div style="position:relative; top:130px; left:55%;float:left; height:0px;"><svg width="140" height="140"> <defs> <pattern id="image'+id+'-'+mid+'" x="10" y="0" patternUnits="userSpaceOnUse" width="125" height="175"> <image x="0" y="0" width="125" height="175" xlink:href="'+per["image"]+'"></image> </pattern> </defs> <circle id="top" cx="71" cy="71" r="60" fill="url(#image'+id+'-'+mid+')" style="stroke:'+clr+'; stroke-width:2px"/> </svg></div></a>');
+				}
+
+			}
+		}
+		
+		jQuery("#"+id).append("<div style='font-size: 12px; color:rgba(31, 119, 180, .8); margin-top:7px;'>updated "+updated.split(" ")[0]+"</div>");
+		hh = jQuery("#"+id+" ul").css("height");
+		hn = parseInt(hh.split("px")[0]) + 60;
+		jQuery("#"+id).css("height",hn);
+	  });
+	}
+
+
+	results = [];
+	for(i=0; i < comms.length; i++)
+	{
+	  d3.json("js/committees/"+comms[i], function(error,r){
+		results.push(r);
+		n = r['committee'].replace("S/C on","<span style='font-weight:normal;color:gray'>Subcommittee</span><br/>").replace(", Select","");
+		id = r['id'];
+		updated = r['updated_at'];
+		members = r['members'].sort( function(a,b){ return a['name'] > b['name'] ? 1 : -1;});
+		jQuery("body .res").append("<div id='"+id+"' class='com'><div class='h'>"+n+"</div><ul></ul></div>");
+		for(m=0; m < members.length; m++){
+			name = members[m]['name'];
+			role = members[m]['role'];
+			out = '<li>'+name+" - "+role+"</li>";
+			mid = members[m]['leg_id'];
+			if( role == 'member'){ jQuery("#"+id+" ul").append(out); }
+			else{ 
+				if( name in center_node_attrs){ 
+					per = center_node_attrs[name]; 
+				}
+				else{ 
+					//console.log(name+" not direct hit");
+					ns = name.split(" ")[0] + " "+name.split(" ")[1].substr(0,1);
+					ks = Object.keys(center_node_attrs);
+					p = ks.filter(function(f){ if(f.indexOf(ns) > -1){return f} });
+					if( p.length = 1 && typeof(p[0]) != "undefined" ){ 
+						//console.log(p[0]);
+						per = center_node_attrs[p[0]]; 
+						name = p[0];
+					}
+					else{ 
+						console.log("Couldn't find "+name);
+						per = center_node_attrs["Richard Raymond"]; /*TODO*/ 
+						name = "Richard Raymond";
+					}
+				}
+
+				if( !("info1" in per )){ 
+					console.log("Error: info1 not in "); console.log(per);
+					clr = "#F15858;"
+					party = "republican";
+				}
+				else{
+					if( per["info1"].indexOf("Democrat") > -1){ 
+						clr = "rgba(31, 119, 180, .8)";
+						party = "democrat";
+						dems = dems + 1;
+					}
+					else{ 
+						if( per["info1"].indexOf("Republican") > -1){
+							clr = "#F15858;"
+							party = "republican";
+							reps = reps + 1;
+						}
+						else{ clr = "black"; }
+					}
+				}
+
+				if( role == 'chair' ){ 
+					out = '<li style="color:'+clr+';">'+name+" - "+role+"</li>";
+					jQuery("#"+id+" ul").prepend(out); 
+					jQuery("#"+id+" .h").after('<a target="_blank" href="explorer-view.html?show=20&minor=1&s='+name+'"><div style="position:relative; top:0%; left:55%;float:left; height:0px;"><svg width="140" height="140"> <defs> <pattern id="image'+id+'-'+mid+'" x="10" y="0" patternUnits="userSpaceOnUse" width="125" height="175"> <image x="0" y="0" width="125" height="175" xlink:href="'+per["image"]+'"></image> </pattern> </defs> <circle id="top" cx="71" cy="71" r="60" fill="url(#image'+id+'-'+mid+')" style="stroke:'+clr+'; stroke-width:2px"/> </svg></div></a>');
+				}
+				if( role == 'vice chair'){ 
+					out = '<li style="color:'+clr+'">'+name+" - "+role+"</li>";
+					topc = jQuery("#"+id+" ul li").css("color"); 
+					console.log(topc);
+					if(topc == "#F15858" || topc == "rgb(241, 88, 88)" || topc == "rgba(31, 119, 180, 0.8)"){
+						jQuery("#"+id+" ul li:eq(0)").after(out);
+					}
+					else{
+						jQuery("#"+id+" ul").prepend(out); 
+					}
+					jQuery("#"+id+" .h").after('<a target="_blank" href="explorer-view.html?show=20&minor=1&s='+name+'"><div style="position:relative; top:130px; left:55%;float:left; height:0px;"><svg width="140" height="140"> <defs> <pattern id="image'+id+'-'+mid+'" x="10" y="0" patternUnits="userSpaceOnUse" width="125" height="175"> <image x="0" y="0" width="125" height="175" xlink:href="'+per["image"]+'"></image> </pattern> </defs> <circle id="top" cx="71" cy="71" r="60" fill="url(#image'+id+'-'+mid+')" style="stroke:'+clr+'; stroke-width:2px"/> </svg></div></a>');
+				}
+
+			}
+		}
+		
+		jQuery("#"+id).prepend("<div style='height:0px; position:relative; top:295px; left:230px; font-size: 12px; color:rgba(31, 119, 180, .8)'>updated "+updated.split(" ")[0]+"</div>");
+	  });
+	}
+
+	setTimeout(
+	  function() 
+	  {
+		//now order by div height
+		coms = jQuery(".com");
+		/*
+		coms.sort(function (a, b) {
+		    return $(a).height() > $(b).height() ? 1 : -1;  
+		}).appendTo('body');
+		*/
+		
+		coms.sort(function (a, b) {
+		    return $(".h",a).text() > $(".h",b).text() ? 1 : -1;  
+		}).appendTo('body .res');
+		
+		jQuery(".committees table td").first().html("<b>Texas State Committees</b><br/>Total Number "+totalnumber+"<br><span class='reps'>Republican Chairs/Vice Chairs: "+reps+"</span><br><span class='dems'>Democrat Chairs/Vice Chairs: "+dems+"</span>");
+	  },1000);
+
+});
+
+</script>
+</head>
+<body>
+<div class="committees">
+  <table><tr><td></td><td></td><td style='text-align:right; padding-right:10px'><img style="width:430px;" src="images/WYE-small-logo.jpg"/></td></tr></table>
+</div>
+<div class='pre'></div>
+<div class='res'></div>
+</body>
+</html>

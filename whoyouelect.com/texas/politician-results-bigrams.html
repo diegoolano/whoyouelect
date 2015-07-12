@@ -1,0 +1,255 @@
+<html>
+<head>
+<title>Who You Elect Texas Politicians</title>
+<script type="text/javascript" src="js/jquery-2.1.3.min.js"></script>
+<link rel="stylesheet" href="css/jquery-ui-smoothness.css">
+<script type="text/javascript" src="js/jquery-ui.min.js"></script>
+<style>
+  body { background:white; }
+  #wye { position: absolute; top:0; left:0; }
+  h2, h3, #header p { text-align: left; margin: 2px; margin-left:300px}
+  ul li div { display:none; font-size:14px; margin-left:5px; text-transform:uppercase;}
+
+  ul li div.container { display:none; font-size:13px; margin-left:0px; text-transform:uppercase;}
+  ul li div.container div{ display:none; font-size:13px; margin-left:0px; text-transform:uppercase;}
+  ul li div.container a { text-decoration:none; color: black; }
+  ul li div.container a:hover { color: red; }
+
+  ul li div p { color: black; line-height:4px; white-space:nowrap;}
+  ul li div p:hover { color: #F35D5A; }
+  ul { list-style-type:none; margin-top:4px;}
+  ul li{ cursor: pointer; }
+  ul li:hover { color: #149EF3; }
+  .search { position: fixed; left: 307px; top: 132px; font-size:16px; color: #149EF3;}
+  #searchInput { width:330px; }
+  #filter { position:fixed; top:5px; left:235px; z-index:10}
+  #ui-id-1 { list-style-type:none; font-family: "Trebuchet MS", "Helvetica", "Arial",  "Verdana", "sans-serif"; font-size: 62.5%; }
+  .ui-autocomplete { max-height: 800px; overflow-y: auto; /* prevent horizontal scrollbar */ overflow-x: hidden; }
+  .tps { margin-left: 180px; font-size:13px; }
+</style>
+</head>
+<body>
+<div class='politicos'>
+	<div id='wye'><img style="width:300px;" src="images/WYE-small-logo.jpg"></div>
+	<div id='header'>
+		<h2>SUMMARIES OF POLITICIANS</h2>
+		<h3>VIA TEXT ANALYSIS & TOPIC MODELING OF THE ARTICLES IN WHICH THEY APPEAR</h3>
+		<p>CLICK ON A POLITICIAN.&nbsp;&nbsp;EACH LINE REPRESENTS A TOPIC DESCRIBING THE ARTICLES THAT POLITICIAN APPEARED IN.</p>
+		<p style='font-size:12px'>A TOPIC IS SIMPLY A LIST OF WORDS THAT WHEN COMBINED REFER TO SOME CONCEPT.&nbsp;&nbsp;IN THIS CASE <span style="font-weight:bold; color:#149EF3">BI-GRAMS</span> WERE USED.</p>
+		<p style='font-size:12px'><i>THE TOPICS ARE RANKED IN DESCENDING ORDER BY THE NUMBER OF ARTICLES PERTAINING TO THE POLITICIAN</i></p>
+		<p style='font-size:12px'><i>THAT WERE CLASSIFIED AS BELONGING TO THAT TOPIC .THIS VALUE IS THE FIRST NUMBER OF EACH LINE</i></p>
+	</div>
+	<div class='search'>SEARCH BY TOPIC WORD: </span><input id="searchInput" value=""></div>
+	<ul></ul>
+</div>
+</body>
+<script>
+/* errors with these three so fix and rerun first!
+"allen_fletcher-articles.tsv"
+"ana_hernandez-articles.tsv"
+"borris_miles-articles.tsv"
+*/
+var lines;
+function tsvJSON(tsv){
+  lines=tsv.split("\n");
+  var result = [];
+  var headers=lines[0].split("\t");
+  for(var i=1;i<lines.length;i++){
+	  var obj = {};
+	  var currentline=lines[i].split("\t");
+	  for(var j=0;j<headers.length;j++){ obj[headers[j]] = currentline[j]; }
+	  result.push(obj);
+  }
+  return JSON.stringify(result); //JSON
+}
+
+function checkTSV(lines){
+	cols = lines[0].split("\t").length;
+	console.log(lines[0].split("\t"));
+	for(i=0; i < lines.length - 1;i++){
+		numcs = lines[i].split("\t").length;
+		if(numcs != cols){
+			console.log("Error at "+i+": found "+numcs+" and expecting "+cols+".");
+			console.log( lines[i].split("\t"));
+		}
+	}
+}
+
+var politician_results_file = "lda/SUMMARIZINGpoliticians-2grams.out";
+//var politician_results_file = "lda/allen_fletcher-articles.tsv";
+//var politician_results_file = "lda/ana_hernandez-articles.tsv";
+//var politician_results_file = "lda/borris_miles-articles.tsv";
+var pols_data;
+var polj;
+var text_nodes;
+var priortosort;
+
+var center_node_attrs;
+var person_bag_of_words = {}
+jQuery.get(politician_results_file, function(data){ 
+	pols_data = data; 
+	//polj = tsvJSON(data);
+	//checkTSV(lines);
+	splines = pols_data.split("\n");
+	output = "";
+	currentid = splines[0].split(" ")[0]
+	currentname = currentid.replace("_"," ").toUpperCase();
+	output += "<li>"+currentname+'<div class="'+currentid+'">'; 
+	
+	thesewords = [];
+	text_nodes = [];
+	for(i=1; i < splines.length; i++){
+		thisi = splines[i];
+		if( thisi.indexOf("Topic") == 0){ 
+			nicer = thisi.replace(/,/g,",&nbsp;&nbsp;&nbsp;");
+			nicers = nicer.substr(nicer.indexOf(",")+1).replace(",","&nbsp;%:&nbsp;");
+			weight = nicers.split(":")[0].replace("&nbsp;%","")
+			werds = nicers.substr(nicers.indexOf(":")+1).replace(/&nbsp;/g,"").split(",");
+			for(w in werds){ 
+				curw = werds[w].trim() + ":::" + weight;
+				//if(currentname == "ROGER WILLIAMS"){ console.log(w,werds[w],curw); }
+				if( thesewords.indexOf(werds[w].trim()) == -1){ 
+					//if(currentname == "ROGER WILLIAMS"){ console.log("push: ",curw); }
+					thesewords.push(curw.trim()); 
+				}
+			}
+			output += "<p class='tps'>"+nicers+"</p>"; 
+		}
+		else{
+			//add these words to text_nodes
+			//if(currentname == "ROGER WILLIAMS"){console.log("For ",currentname, "add thesewords", thesewords);}
+			thesewords.forEach(function(w){ 
+				//console.log(w);
+				if( String(w) != "undefined"){
+					ps = w.split(":::");
+					wtext = ps[0];
+					wweight = ps[1].replace("&nbsp;&nbsp;&nbsp;","");
+					string_to_push = wtext + " ( " + currentname +", relevance: "+ wweight + " )";
+					//console.log(string_to_push);
+					text_nodes.push( string_to_push );
+					if( currentname in person_bag_of_words){ person_bag_of_words[currentname].push(wtext); }
+					else{ person_bag_of_words[currentname] = []; person_bag_of_words[currentname].push(wtext); }
+				}
+			});	
+			//continue output, get next person, and clear thesewords
+			currentid = splines[i].split(" ")[0]
+			currentname = currentid.replace("_"," ").toUpperCase();
+			output += "</div></li><li>"+currentname+'<div class="'+currentid+'">'; 
+			thesewords = [];
+		}
+	}
+	output += "</div></li>";
+	jQuery(".politicos ul").html(output);
+
+
+	//JSON.stringify(person_bag_of_words)
+	jQuery("li").click(function(f){ $("div",this).toggle();});
+	
+	priortosort = text_nodes
+	//sort text nodes by word and then weight
+	text_nodes.sort(function(a,b){
+	  var keyA = a.split(" (")[0];
+	  var keyB = b.split(" (")[0];
+
+	  var eA = parseFloat(a.split(", relevance: ")[1].split(" )")[0]);
+	  var eB = parseFloat(b.split(", relevance: ")[1].split(" )")[0]);
+	
+		
+	  if (keyA < keyB){  return 1; }
+	  else{ 
+		if (keyA > keyB){ return -1;}
+		else{
+			//same word so sort based on numeric value
+			//if( keyA == 'marijuana'){ console.log(a,b,eA,eB); }
+			if(eA < eB){ return 1;}
+			else{ return -1; }
+		}
+	  }
+	});
+
+
+	  $("#searchInput").autocomplete({
+	      source: text_nodes,
+	      minLength: 3,
+	      sortResults: false,
+	      select: function( event, ui ) {
+		   //console.log(ui);
+		   //hide everyone and color all ps black again
+		   jQuery(".politicos ul li p.tps").css("color","black")
+		   jQuery(".politicos ul li div").hide();
+
+		   //show and go to
+		   divclass = ui['item']['label'].split("( ")[1].split(",")[0].trim().replace(" ","_").toLowerCase();
+		   jQuery("."+divclass).show();
+		   $('html, body').animate({
+			scrollTop: $("."+divclass).offset().top - 165
+		    }, 2000);	
+		   jQuery("."+divclass+" div").show();
+
+		   //highlight line
+		   relevanceclass = ui['item']['label'].split("relevance: ")[1].split(")")[0].trim()
+		   queryword = ui['item']['label'].split(" (")[0].trim()
+		   jQuery("."+divclass+" p.tps").each(function(f){ 
+			console.log(this.textContent);
+			if( this.textContent.indexOf(relevanceclass) > -1 ){
+				if( this.textContent.indexOf(queryword) > -1){
+					//console.log("Found at ",f);
+					$(this).css("color","red");
+				}
+			}	
+                   });
+	      }
+	    });
+
+
+
+	//d3.json("js/configdesc.json", function(error, cd){
+	//d3.json("js/configdesc.json", function(error, cd){
+	jQuery.get("js/configdesc.json", function(cd){
+		center_node_attrs = cd;	
+		ks = Object.keys(center_node_attrs).sort();
+		ks.forEach(function(center_node){
+			cna = center_node_attrs[center_node];
+			centerrightimage = cna["image"]
+			if( cna["info1"].indexOf("Democrat") > -1){ 
+				clr = "rgba(31, 119, 180, .8)";
+				party = "democrat";
+			}
+			else{ 
+				if( cna["info1"].indexOf("Republican") > -1){
+					clr = "#F15858;"
+					party = "republican";
+				}
+				else{ clr = "black"; }
+			}
+		
+			pos = "";
+			if( cna["info1"].indexOf("State Representative") > -1 ){ pos = "staterep"; }
+			if( cna["info1"].indexOf("State Senator") > -1 ){ pos = "statesen"; }
+			if( cna["info1"].indexOf("Federal Representative") > -1 ){ pos = "fedrep"; }
+			if( cna["info1"].indexOf("Federal Senator") > -1 ){ pos = "fedsen"; }
+			if( cna["info1"].indexOf("Judge") > -1  ){ pos = "judge supreme"; }
+			if( cna["info1"].indexOf("Justice") > -1){ pos = "judge appeals"; }
+			if(pos == ""){ pos = "stateelect"; }
+
+			curid = center_node.replace(/ /g,"_");
+			output = "<div id='node"+curid+"' class='container "+party+" "+pos+"' style='position:relative; left:-7px; top: 10px; width:156px; height:0px; border:0px dashed gray; margin-right:8px; margin-bottom:8px;'>";
+			//output += '<div style=""><span style="font-weight:bold">'+center_node.toUpperCase()+'</span></div>';
+			output +='<div style="text-align:center;"><span style="font-weight:normal; color:'+clr+'">'+cna["info1"]+'</span></div>';
+			output +='<div style="text-align:center;"><span style=" font-weight:normal; color: black;">'+cna["info2"]+'</span></div>';   //top was 0 and left was 15%
+			output +='<div style="position:relative; top:-5%; left:0%;"><svg width="140" height="140"> <defs> <pattern id="image'+curid+'" x="10" y="0" patternUnits="userSpaceOnUse" width="125" height="175"> <image x="0" y="0" width="125" height="175" xlink:href="'+cna["image"]+'"></image> </pattern> </defs> <circle id="top" cx="71" cy="71" r="60" fill="url(#image'+curid+')" style="stroke:black; stroke-width:2px"/> </svg></div>';
+			output += "<p style='text-align:center; position: relative; top:-16%;'><a target='_blank' href='explorer-view.html?show=20&minor=1&s="+center_node+"'>Inner Network</a>&nbsp;&nbsp;</p>";
+			output += "<p style='text-align:center; position: relative; top:-16%;'><a href='communities-from-ncol.html?cl=25&s="+center_node+"&t=15' target='_blank'>Extended Network</a></p>";
+			output += "</div>";
+			
+			jQuery("."+curid).prepend(output);
+		});
+	   });
+
+
+  //x = jQuery("div:first",".politicos ul li")
+  //ids = x.map(function(f){ return x[f].className; })
+
+});
+</script>
+</html>

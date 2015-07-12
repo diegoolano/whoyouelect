@@ -1,0 +1,3105 @@
+<!DOCTYPE html>
+<head>
+<title>Individual Star View</title>
+<meta charset="utf-8">
+<link rel="stylesheet" type="text/css" href="css/style2.css">
+<script type="text/javascript" src="js/jquery-2.1.3.min.js"></script>
+<!--<script type="text/javascript" src="jq-ui/jquery-ui.min.js"></script>
+<link rel="stylesheet" type="text/css" href="jq-ui/jquery-ui.min.css">-->
+<!-- for use with draggable -->
+<link rel="stylesheet" href="css/jquery-ui-smoothness.css">
+<script type="text/javascript" src="js/jquery-ui.min.js"></script>
+<script type="text/javascript" src="js/d3.v3.min.js"></script>
+<script src="js/Chart.min.js"></script>
+<link rel="stylesheet" href="css/leaflet.css">
+<script src="js/leaflet.js"></script>
+<script src="js/wax.leaf.min.js"></script>
+</head>
+<body style='background:white'>
+<div class="intro">
+  <img style="width:430px;" src="images/WYE-small-logo.jpg"/>
+  <div id='search-results'><b>SEARCH RESULTS:</b></div>
+  <table border=0><tr><td>FILTER BY DATE:<br/><input type="input" id="datepicker-from" class="datepicker" value="FROM"/></td>
+		      <td><br/><input type="input" id="datepicker-to" class="datepicker" value="TO"/></td>
+		      <td><br/><a href="javascript:applyfilters();" style='text-decoration:none;background-color:#F15858; color:whitesmoke; padding:1px; border:1px #F15858 outset; font:-webkit-small-control'>APPLY DATE FILTER</a></td></tr></table>
+  <table border=0><tr><td><br/>FILTER BY SOURCE:<br/>
+			<form id="sourcesfilter">
+			</td><td><br/><br/><br/><br/><br/><br/><br/><br/><a href="javascript:applysourcefilters();" style='text-decoration:none;background-color:#3083FB; color:whitesmoke; padding:1px; border:1px #3083FB outset; font:-webkit-small-control'>APPLY NEW SOURCE FILTER</a>
+			</form></td>
+		  </tr></table>
+   <div class="buttons"></div>
+   <div class='more'><a href="javascript: showaboutproject();">ABOUT THE PROJECT</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript: showaboutus();">ABOUT US</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript: showstats();">SHOW STATS</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript: jQuery('.urlsdisplay').show();">ARTICLE URLS</a></div>
+</div>
+<div class='filterbyentitytype'>
+	<b>FILTER BY:&nbsp;&nbsp;</b><a href='javascript: filter_by_type("POLITICIAN");'>POLITICIAN</a>&nbsp;
+		<span class='subparty'>(&nbsp;
+			<a href='javascript: filter_by_type("REP");'>REPUBLICAN</a>&nbsp;|&nbsp;
+			<a href='javascript: filter_by_type("DEM");'>DEMOCRAT</a>&nbsp;&nbsp;)
+		</span>&nbsp;|&nbsp;
+ 	<a href='javascript: filter_by_type("ORGANIZATION");'>ORGANIZATION</a>&nbsp;|&nbsp; <a href='javascript: filter_by_type("PERSON");'>PERSON</a>&nbsp;|&nbsp; <a href='javascript: filter_by_type("LOCATION");'>LOCATION</a>&nbsp;|&nbsp; <a href='javascript: filter_by_type("BILL");'>BILL</a>&nbsp;|&nbsp; <a href='javascript: filter_by_type("MISC");'>MISC</a>&nbsp;|&nbsp; <a href='javascript: filter_by_type("ALL");' style='color:blue'>ALL</a></div>
+ </div>
+<div class='usedistancemetric'><b>DISTANCE METRIC:&nbsp;&nbsp;</b><br><a href='javascript: callWithDistanceMetric("ss")'>SAME SENTENCE</a><br><a href='javascript: callWithDistanceMetric("sn")'>SAME & NEAR SENTENCES</a><br><a href='javascript: callWithDistanceMetric("all")' style='color:blue' >ALL</a><br><a href='javascript: callWithDistanceMetric("comb")'>COMBINED</a>
+</div>
+<div class="controls" style="display:none"><div style='text-align:right;'><a href="javascript:showcontrols();" style='text-decoration:none;background-color:#3083FB; color:whitesmoke; padding:1px; border:1px #3083FB; font:-webkit-small-control'>SHOW CONTROLS</a></div><img style="width:150px" src="images/wye-small-logo.png"/></div>
+<div class="info" style='display:none'></div>
+<div class="help"><a href="javascript: showhelp();"><img style="width:45px;" src="images/info-image-yellow.png"/></a></div>
+<div class="helpdisplay">
+	<div style="position:absolute; top:-8px; right:-1px; width:45px; padding-left:5px;"><a href="javascript: closehelp();"><img src="images/close_news.png"/></a></div>
+	<img style="width:150px" src="images/wye-small-logo.png"/> shows you a visualization of how your candidate/representive (the center circle) is represented in the media.  <br/><br/>
+	By default, the system searches and analyzes all the news sources available and returns the results found.  However, you may select the dates and sources you wish to filter by clicking <img style="width:100px" src="images/wye-date-filter.png"/> and <img style="width:140px" src="images/wye-source-filter.png"/><br/><br/>
+	By hovering over a circle, the number of co-occurrences between that entity and the central candidate/representative will appear.  <br/>
+	<img style="width:300px" src="images/wye-help-screen1.png"/><img style="margin-left:35px; width:470px; margin-bottom:9px;" src="images/wye-entitytype-filters.png"/><br/>
+	For example, in the above left image, we find Rick Perry and Garnet Coleman were mentioned or "co-occurred" in the same sentence, or within 3 sentences, 139 times overall in the articles found for Garnet Coleman.<br/><br/>
+	By clicking on the center circle in the visualization, you'll see information related to your candidate and additionally, a table of the results, which includes clickable links and filtering mechanisms.  For example, in the above right image you can filter by entity type by clicking on any of the headers: <span style="font-size:13px;">POLITICIAN, PERSON, ORGANIZATION, MISC, BILL</span>.<br><br/>
+	<table border='0'><tr style="vertical-align:top"><td>The number of nodes presented in the visualization is controlled by clicking on the following to show more or less nodes, or full details which wil display all additional nodes.</td><td><div style="display:inline;position:relative"><img style="width:400px" src="images/wye-buttons-row.png"/></div></td></tr></table>
+	At any point you may return to the initial results/controls screen by clicking on the following: <div style="display:inline;position:relative;top:8px;"><img style="width:120px" src="images/wye-show-controls.png"/></div><br/><br/>
+        <table border='0'><tr style="vertical-align:top"><td>By clicking on any other circle (also called an entity), the articles between that entity and the central candidate appear.<br/><br/>
+	For instance, to the right, we see the information that appears aftering clicking on the node for Jessica Farrar.<br/><br/>
+	We see that she occurred in 37 instances over 27 articles with Garnet Coleman, and fifteen of these articles are from the Houston Chronicle (HC), one is from the Dallas Morning News (DMN), etc.<br/><br/>
+	After a short description of her, the article urls and text snippets along with highlights are presented.  Again articles may be filtered by clicking on the news source desired.<br/>
+	<div style="display:inline; position:relative; left:275px;"><a style="text-decoration:none;background-color:#3083FB; color:whitesmoke; padding:1px; border:1px #3083FB; font:-webkit-small-control; font-size:24px;" href="javascript: closehelp();">close window</a></div></td><td><img style="width:380px" src="images/wye-node-info.png"/></td></tr></table></div>
+
+<div class="aboutproject">
+	<div style="position:absolute; top:-8px; right:-1px; width:45px; padding-left:5px;"><a href="javascript: closeaboutproject();"><img src="images/close_news.png"/></a></div>
+	<div class="description">
+	    <b>News: See <a href="https://www.newschallenge.org/challenge/elections/entries/whoyouelect-com-the-voter-education-tool-that-automatically-generates-the-network-of-people-and-organizations-surrounding-a-politician-from-various-media-sources-to-gain-a-quick-overview-of-who-they-really-are-via-their-interactions-relationships">our project proposal page</a> along with several other great ones for <a href="https://www.newschallenge.org">the Knight Foundation News Challenge</a></b><br/><br/> 
+            Voter turnout at the state level is very low for offices which hold great power over a citizen’s daily life (the current governor of Texas won by a landslide and was elected by less than 20% of registered voters) and a large part of that is due to voters not feeling that they have sufficient impartial knowledge regarding the candidates. Voters may find it difficult to trust ads placed by politicians, regardless of party affiliation, are unlikely to read or trust news coming from sites they don’t already visit, and even if one has the time to keep up with the news, it is impossible to find and read all the articles referring to the candidates.
+	<br> 
+	<br> 
+	<strong>Why is our approach innovative?</strong>
+	<br> 
+	<br> In particular, we would like to know more about the connections of a politician with other colleagues, businessmen, companies, organizations and other relevant third parties. By doing this, we could learn more about their political agenda and their lobbying activities, and quickly understand who they serve, who they collaborate with and who they oppose. &nbsp;In summary, we are producing a social network that captures the relationships between the different actors of the political landscape in a way that leverages any publically accessible data someone wishes to incorporate.
+	<br> 
+	<br> 
+	<strong>How can we come up with these social networks?</strong>
+	<br> 
+	<br> Social networks have been used in a variety of settings for understanding complex social systems. The problem is coming up with methods to automatically generate these networks from the vast amount of data we are exposed to everyday. &nbsp;&nbsp; 
+	<a href="http://whoyouelect.com">WhoYouElect.com</a> is an automated web app tool to do the heavy lifting and provide you with a quick way to get a better understanding of who the candidates are for an upcoming election. In order to do this, we start with a seed list of candidates/representatives, and then search for them in major news outlets pertaining to your state (a preset list of newspaper sites, blogs, social media, and open gov sources running the political spectrum and including campaign contribution data and representative voter histories, or for more tech savvy users, a subset or list of your choosing). &nbsp;We then create an interactive network visualization that will allow you to see how a given candidate is represented in the media by showing the discovered connections he/she has with other politicians, companies and organizations. Those connections that have more presence in the media, will be shown more prominently so that users can quickly find them. Furthermore, connections will be able to be expanded to show all the source urls and text snippets pertaining to it. This way, users will always be able to go to the media sources that lead to the relations in our visualizations.
+	<br> 
+	<br> 
+	<strong>What else would our tool provide?</strong>
+	<br> 
+	<br> Additionally, we will provide the capability to comment/discuss/enrich parts of our visualizations, thus involving the users in a fruitful way. We expect to engage our users this way so that our tool will not only be used as an information/educational site, but also as a forum for discussing aspects of our politicians’ associations. In a sense, we will provide a crowdsourced platform for the general public to include contrasting data about those relationships.
+	<br> 
+	<br> Finally, we plan to further analyze our generated networks. Leveraging data mining, information retrieval, natural language processing and big data&nbsp;network analysis techniques&nbsp;, we plan to discover distinguishing topics most associated with a given politician, and to find clusters/communities of politicians and companies that usually relate to each other.
+	<br> 
+	<br> 
+	<strong>What is our end goal?</strong>
+	<br> 
+	<br> We believe that a democracy is as healthy as the commitment and participation of its citizens in the political process. That is why we want our users to be more than consumers of information and to actively engage the political debate by providing the means for a focused discussion of the activities of their candidates
+        </div>
+</div>
+<div class="aboutus">
+	<div style="position:absolute; top:-8px; right:-1px; width:45px; padding-left:5px;"><a href="javascript: closeaboutus();"><img src="images/close_news.png"/></a></div>
+	<p style="margin:0"><img style="width:150px" src="images/wye-small-logo.png"/> is a joint research project between the <a href="http://www.dama.upc.edu/">DAMA-UPC</a> and <a href="http://www.cs.upc.edu/recerca-en/larca">LARCA</a> groups being implemented at the <a href="http://www.upc.edu/?set_language=en">UPC</a> in Barcelona, Spain.&nbsp;&nbsp;Team members include: </p>
+	<ul><li><table border="0"><tr>
+		<td><svg width="145" height="142"> <defs> <pattern id="image" x="-5" y="-60" patternUnits="userSpaceOnUse" width="155" height="275"> <image x="0" y="0" width="155" height="275" xlink:href="images/bio-diego.jpg"></image> </pattern> </defs> <circle id="top" cx="71" cy="71" r="70" fill="url(#image)" style="stroke:black; stroke-width:2px"/> </svg></td>
+		<td><b>Diego Olano</b> was born in Argentina, grew up in Texas, and spent a good deal of time moving and doing front end and back end web development for many startups, NGOs, large corporations and even an embassy in places like New York, Toulouse, Austin and Caracas. His undergraduate studies at UT Austin were in Computer Science, Political Science and Hispanic Studies and he is currently in his final semester of the Masters in Innovation and Research at the UPC, which is a fancy way of saying Statistics and Machine Learning, mostly. More information and projects at: <a href="http://www.diegoolano.com">www.diegoolano.com</a></td>
+	       </tr></table></li>
+	   <li><table border="0"><tr>
+                <td><svg width="145" height="142"> <defs> <pattern id="image" x="0" y="-40" patternUnits="userSpaceOnUse" width="155" height="275"> <image x="0" y="0" width="155" height="275" xlink:href="images/bio-chris.png"></image> </pattern> </defs> <circle id="top" cx="71" cy="71" r="70" fill="url(#image)" style="stroke:black; stroke-width:2px"/> </svg></td>
+		<td><b>Chris Valdez</b> is trying to use his powers for good. A serial volunteer, Chris is a court-appointed special advocate in Harris County through Child Advocates and speaks to students on topics like "success", goal-setting, self-education and entrepreneurship. A proponent of open data, design and technology literacy, Chris directs client strategy and creative at Primer Grey, a marketing design team he co-founded in 2009 that is proudly based in the East End of Houston, TX.  More information can be found at <a href="http://www.primergrey.com">www.primergrey.com</a></td>
+		</tr></table></li>
+	   <li><table border="0"><tr>
+                <td><svg width="145" height="142"> <defs> <pattern id="image" x="-5" y="-70" patternUnits="userSpaceOnUse" width="155" height="275"> <image x="0" y="0" width="155" height="275" xlink:href="images/bio-fran.jpg"></image> </pattern> </defs> <circle id="top" cx="71" cy="71" r="70" fill="url(#image)" style="stroke:black; stroke-width:2px"/> </svg></td>
+		<td><b>Francisco Rodríguez Drumond</b> is a student of the Erasmus Mundus Master's in Data Mining and Knowledge management. Originally from Venezuela, he holds degree in Computer Science from Universidad Simón Bolívar, where he discovered his passion for politics after participating in student government activities and several Model United Nations conferences. He's constantly thinking of cool ways to teach computers how to automatically process and understand huge amounts of data to come up with applications for social good.</td>
+		</tr></table></li>
+	   <li><table border="0"><tr>
+                <td><svg width="145" height="142"> <defs> <pattern id="image" x="-5" y="-70" patternUnits="userSpaceOnUse" width="155" height="275"> <image x="0" y="0" width="155" height="275" xlink:href="images/bio-larri.jpg"></image> </pattern> </defs> <circle id="top" cx="71" cy="71" r="70" fill="url(#image)" style="stroke:black; stroke-width:2px"/> </svg></td>
+		<td><b>Josep L. Larriba-Pey</b> is a professor at the Technical University of Catalunya-BarcelonaTech (Barcelona) and has a long experience in Research and Technology Transfer with more than 50 projects on his shoulders. He has managed groups of more than 20 people working on technology and applications in collaboration with companies like IBM, Oracle, CA Technologies, etc.</td>
+		</tr></table></li>
+	   <li><table border="0"><tr>
+                <td><svg width="145" height="142"> <defs> <pattern id="image" x="-5" y="-60" patternUnits="userSpaceOnUse" width="155" height="275"> <image x="0" y="0" width="155" height="275" xlink:href="images/bio-marta.jpg"></image> </pattern> </defs> <circle id="top" cx="71" cy="71" r="70" fill="url(#image)" style="stroke:black; stroke-width:2px"/> </svg></td>
+		<td><b>Marta Arias</b> is an associate professor at the Technical University of Catalunya-BarcelonaTech who specializes in the large-scale analysis of textual and networked data. She has developed applications for predicting failures in an electrical distribution grid, predicting stock market with the aid of Twitter and recommending restaurants for Foursquare users. More information can be found at <a href="http://www.cs.upc.edu/~marias">http://www.cs.upc.edu/~marias</a>.</td>
+		</tr></table></li>
+	</ul>
+</div>
+<div id="firstime" style="display:none;height:50px;width:650px;position:absolute; padding: 0 20px; color:rgba(31, 119, 180, .8); bottom: 10px; left:-10000px; font-size:18px; background-color: white; ">
+	<div style="position:absolute; top:-8px; right:-1px; width:45px; padding-left:5px;"><a href="javascript: closefirstime();"><img src="images/close_news.png"/></a></div>
+	<p>First Time?  Click on yellow information button in bottom left corner for usage details</p>
+</div>
+<div id="showstats">
+	<div style="position:absolute; top:-8px; right:-1px; width:45px; padding-left:5px;"><a href="javascript: closestats();"><img src="images/close_news.png"/></a></div>
+	<div class='results'><img src='images/loading.gif'/></div>
+</div> 
+<script>
+   function filter_by_type( etype ){
+	jQuery(".filterbyentitytype a").css("color","black");
+	if( etype == "ALL"){
+		d3.selectAll("g").style("opacity",function(f){ return 1; }); 
+  		jQuery(".filterbyentitytype a").each(function(f){ if(this.text == "ALL"){ $(this).css("color","blue");}});
+	}
+	else{
+		if( etype == "POLITICIAN" || etype == "REP" || etype == "DEM"){
+			if(etype == "POLITICIAN"){
+				d3.selectAll("g").style("opacity",function(f){ 
+					if(f.entity_type == "politician" || f.full_name == center_node){ return 1; }
+					else{ 
+						if( f.entity_type == 'PERSON' || f.level == 'statewide-inactive'){
+						   if(f.full_name in inactive_pols){ return 1; }
+						   else{ return 0; }
+						}
+						else{ return 0; }
+					}
+				});
+  				jQuery(".filterbyentitytype a").each(function(f){ if(this.text == etype){ $(this).css("color","red");}});
+			}
+			else{
+				if( etype == "REP"){
+					d3.selectAll("g").style("opacity",function(f){ 
+						if(f.entity_type == "politician" || f.full_name == center_node){ 
+							if(f.party == "Republican" || f.full_name == center_node){ return 1;}
+							else{ return 0;}
+						}
+						else{
+							if( f.entity_type == 'PERSON' || f.level == 'statewide-inactive'){
+							   if(f.full_name in inactive_pols){ 
+								if( inactive_pols[f.full_name].party == "Republican"){ return 1; }
+								else{ return 0; }
+							   }
+							   else{ return 0; }
+							}
+							else{ return 0; }
+						}
+					});
+  					jQuery(".filterbyentitytype a").each(function(f){ if(this.text == "REPUBLICAN"){ $(this).css("color","red");}});
+				}
+				if( etype == "DEM"){
+					d3.selectAll("g").style("opacity",function(f){ 
+						if(f.entity_type == "politician" || f.full_name == center_node){ 
+							if(f.party == "Democrat" || f.party == "Democratic" || f.full_name == center_node){ return 1;}
+							else{ return 0;}
+						}
+						else{ 
+							if( f.entity_type == 'PERSON' || f.level == 'statewide-inactive'){
+							   if(f.full_name in inactive_pols){ 
+							   	//console.log("here with",f);
+								if( inactive_pols[f.full_name].party != "Republican"){ return 1; }
+								else{ return 0; }
+							   }
+							   else{ return 0; }
+							}
+							else{ return 0; }
+						}
+					});
+  					jQuery(".filterbyentitytype a").each(function(f){ if(this.text.trim() == "DEMOCRAT"){ $(this).css("color","red");}});
+				}
+			}
+		}
+		else
+		{
+			d3.selectAll("g").style("opacity",function(f){ 
+				if(f.entity_type == etype || f.full_name == center_node){ return 1; }
+				else{ return 0; }
+			}); 
+  			jQuery(".filterbyentitytype a").each(function(f){ if(this.text == etype){ $(this).css("color","red");}});
+		}
+	}
+	
+   }
+
+   var sources_json = [
+			{"sourcelong":"AUSTIN AUSTIN STATESMAN","sourcesmall":"AAS",'url':'statesman.com', 'color':"rgba(31, 180, 92, .8)"},
+			{"sourcelong":"DALLAS MORNING NEWS","sourcesmall":"DMN",'url':'dallasnews.com', 'color':"rgba(180, 31, 45, .8)"},
+			{"sourcelong":"HOUSTON CHRONICLE","sourcesmall":"HC",'url':'chron.com', 'color':"rgba(31, 119, 180, .8)"},
+			{"sourcelong":"NEW YORK TIMES","sourcesmall":"NYT",'url':'nytimes.com', 'color':"rgba(119, 45, 31, .8)"},
+			{"sourcelong":"TEXAS OBSERVER","sourcesmall":"TOB",'url':'texasobserver.org', 'color':"rgba(92, 180, 180, .8)"},
+			{"sourcelong":"TEXAS TRIBUNE","sourcesmall":"TXR",'url':'texastribune.org', 'color':"rgba(180, 92, 31, .8)"}
+		   ];
+  //var sources_json;
+  var sources = {};   //counter 
+  var sourcenames = {};
+  var sourcecolors = {};
+
+  sources_json.forEach(function(d){ sources[d.sourcesmall] = 0; sourcenames[d.sourcesmall] = d.sourcelong; sourcecolors[d.sourcesmall] = d.color; }) 
+
+  var sources_input_boxes = ""
+  sources_json.forEach(function(d){ sources_input_boxes += '<input type="checkbox" name="'+d.sourcesmall+'" checked>'+d.sourcelong+' (<span id="'+d.sourcesmall+'num"></span>)<br>';})
+  jQuery("#sourcesfilter").append(sources_input_boxes);
+
+  jQuery(function() {
+	    jQuery("#datepicker-from, #datepicker-to").datepicker({
+		    showButtonPanel: true,
+		    dateFormat: "yy-mm-dd",
+		    yearRange: "-97:+0",
+		    changeMonth: true,
+		    changeYear: true,
+		    beforeShow: function (input) {
+			    setTimeout(function () {
+				    var buttonPane = jQuery(input)
+					.datepicker("widget")
+					.find(".ui-datepicker-buttonpane");
+
+				    var btn = jQuery('<button class="ui-datepicker-current ui-state-default ui-priority-secondary ui-corner-all" type="button">Custom</button>');
+				    btn.unbind("click")
+				    .bind("click", function () {
+					jQuery(input).datepicker("hide");
+					jQuery(input).val("custom text");
+				    });
+
+				    btn.appendTo(buttonPane);
+
+			   }, 1);
+		    }
+	   });
+  
+ });
+
+function showstats(){ 
+	closefirstime(); closeaboutproject(); closeaboutus(); jQuery("#showstats").show(); showchart(0); 
+	//resize #showstats
+	resheight = jQuery(".results").css("height");
+	jQuery("#showstats").css("height",resheight)
+}
+function closestats(){ jQuery("#showstats").hide(); }
+
+function showhelp(){ closefirstime(); closeaboutproject(); closeaboutus(); jQuery(".helpdisplay").show(); }
+function closehelp(){ jQuery(".helpdisplay").hide(); jQuery(".help").removeClass("helphighlight"); }
+
+function showaboutproject(){ closehelp(); closeaboutus(); jQuery(".aboutproject").show(); }
+function closeaboutproject(){ jQuery(".aboutproject").hide(); }
+
+function showaboutus(){ closehelp(); closeaboutproject(); jQuery(".aboutus").show(); }
+function closeaboutus(){ jQuery(".aboutus").hide(); }
+
+function showfirstime(){ jQuery("#firstime").show(); jQuery("#firstime").animate({left:"100px"}, 3000);}
+function closefirstime(){ jQuery("#firstime").hide(); }
+
+function closeurls(){ jQuery(".urlsdisplay").hide(); }
+
+function clone(obj) {
+    //http://stackoverflow.com/questions/18829099/copy-a-variables-value-into-another
+    if (null == obj || "object" != typeof obj) return obj;
+    if (obj instanceof Date) {
+        var copy = new Date();
+        copy.setTime(obj.getTime());
+        return copy;
+    }
+
+    if (obj instanceof Array) {
+        var copy = [];
+        for (var i = 0, len = obj.length; i < len; i++) { copy[i] = clone(obj[i]); }
+        return copy;
+    }
+
+    if (obj instanceof Object) {
+        var copy = {};
+        for (var attr in obj) { if (obj.hasOwnProperty(attr)) copy[attr] = clone(obj[attr]); }
+        return copy;
+    }
+
+    throw new Error("Unable to copy obj! Its type isn't supported.");
+}
+
+
+var isDate = function(date) {
+  <!-- http://stackoverflow.com/questions/7445328/check-if-a-string-is-a-date-value -->
+    return ( (new Date(date) !== "Invalid Date" && !isNaN(new Date(date)) ));
+}
+
+function applyfilters(){
+	from = jQuery("#datepicker-from").val();
+	to = jQuery("#datepicker-to").val();
+	if(isDate(from) && isDate(to)){
+		//TODO CHANGE THIS FOR LOCAL / PRODUCTION DEV
+		//urlbase = "http://"+document.location.host+"/explorer-view.html";             //for prod
+		urlbase = "http://"+document.location.host + document.location.pathname;	//for local	
+
+		s = getURLParameter("s");
+		show = getURLParameter("show");
+		minor = getURLParameter("minor");
+		exclude = getURLParameter("exclude");
+		dm = getURLParameter("dm");
+		search = "?from="+from+"&to="+to;
+		if(s != "NONE"){search += "&s="+s;}
+		if(show != "NONE"){search += "&show="+show;}
+		if(minor != "NONE"){search += "&minor="+minor;}
+		if(exclude != "NONE"){ search += "&exclude="+exclude;}
+		if(dm != "NONE"){ search += "&dm="+dm;}
+
+		window.location.href = urlbase + search;
+	}
+	else{
+		alert("in valid dates selected! use format yyyy-mm-dd");
+	}
+}
+
+function applysourcefilters(){
+	//determine initial state so you know if there has been a change or not!
+	console.log("initially not checked = " + exclude);
+	if(exclude == "NONE"){ initial = []; }
+	else{ initial = exclude.split(","); }
+
+	unchecked = jQuery("#sourcesfilter input:not(:checked)");
+	if(unchecked != initial){
+		//TODO CHANGE THIS FOR LOCAL / PROD
+		//urlbase = "http://"+document.location.host+"/explorer-view.html";         //for prod
+		urlbase = "http://"+document.location.host + document.location.pathname;    //for local
+		s = getURLParameter("s");
+		show = getURLParameter("show");
+		minor = getURLParameter("minor");
+		from = getURLParameter("from");
+		to = getURLParameter("to");
+		dm = getURLParameter("dm");
+		search = "?x=1";
+		if(from !="NONE" && to != "NONE"){search += "&from="+from+"&to="+to;}
+		if(s != "NONE"){search += "&s="+s;}
+		if(show != "NONE"){search += "&show="+show;}
+		if(minor != "NONE"){search += "&minor="+minor;}
+		if(dm != "NONE"){ search += "&dm="+dm;}
+		exclude = "&exclude=";
+		unchecked.each(function(e){ 
+			//console.log(e);
+			exclude += unchecked[e].name +",";
+		});
+		search += exclude.substr(0, exclude.length -1);
+		window.location.href = urlbase + search;
+	}
+}
+
+function showcontrols(){
+	jQuery(".info").hide();
+	jQuery(".intro").show();
+	jQuery(".buttons").show();
+	jQuery(".controls").hide();
+}
+
+function highlight_text(text,nameone,nametwo){
+	//nameone instances will have background light yellow.  nameone will always be Garnet Coleman
+	//console.log("highlight text called with text: " +text+" and nameone: "+nameone+" and nametwo: "+nametwo);
+	inst1pos = text.indexOf(nameone);
+	if(inst1pos > -1){
+		newtext = text.substr(0,inst1pos - 1)+"&nbsp;<span style='background-color:#FFFF00'>"+nameone+"</span>"+text.substr(inst1pos+nameone.length);
+	}
+	else{ 
+		if(nameone.split(" ").length > 1){
+		  //try last name
+		  ps = nameone.split(" ");
+		  lastn = ps[ps.length-1];
+		  inst1pos = text.indexOf(lastn);
+		  if(inst1pos > -1){
+			newtext = text.substr(0,inst1pos - 1)+"&nbsp;<span style='background-color:#FFFF00'>"+lastn+"</span>"+text.substr(inst1pos+lastn.length);
+		  }
+		  else{ 
+			newtext = text;
+		  }
+		}
+		else{newtext = text;} 
+	}
+
+	//nametwo instances will have background light pink 
+	inst2pos = newtext.indexOf(nametwo);
+	if(inst2pos > -1){  //#FF00FF or #FF69B4 or #b41f77
+		ftext = newtext.substr(0,inst2pos - 1)+"&nbsp;<span style='background-color:#FF69B4'>"+nametwo+"</span>"+newtext.substr(inst2pos+nametwo.length);
+	}
+	else{ 
+		if(nametwo.split(" ").length > 1){
+		  //try last name
+		  ps = nametwo.split(" ");
+		  lastn = ps[ps.length-1];
+		  inst2pos = newtext.indexOf(lastn);
+		  if(inst2pos > -1){
+			ftext = newtext.substr(0,inst2pos - 1)+"&nbsp;<span style='background-color:#FF69B4'>"+lastn+"</span>"+newtext.substr(inst2pos+lastn.length);
+		  }
+		  else{ 
+			ftext = text;
+		  }
+		}
+		else{
+		  ftext = text;
+		} 
+	}
+	return ftext;
+}
+
+
+function getURLParameter(name) {
+  <!-- http://stackoverflow.com/questions/11582512/how-to-get-url-parameters-with-javascript/11582513#11582513 -->
+  return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search)||[,""])[1].replace(/\+/g, '%20'))||"NONE"
+}
+
+//URL PARAMETER FOR POLITICIAN TO LOOKUP
+var center_node = getURLParameter("s");
+var smallnet_jsonfile; 
+var small_urls_file; 
+var small_text_snippets_file;
+var st;
+
+if(center_node == "NONE"){ center_node = "Garnet Coleman"; }
+else{ center_node = center_node.replace("%20"," "); }
+
+//URL PARAM OF NEAR SENTENCE COEFFICIENT FOR COMBINED METRIC
+var near_co = getURLParameter("near_co");
+if(near_co == "NONE"){ near_co = .5; } 
+
+//URL PARAM OF SAME ARTICLE COEFFICIENT FOR COMBINED METRIC
+var same_art_co = getURLParameter("same_art_co");
+if(same_art_co == "NONE"){ same_art_co = .1; } 
+
+
+//URL PARAM OF TYPE OF DISTANCE METRIC TO USE FOR  // ss, sn, all or comb    for same sentence, same or near sentence, all co-occurence, combined metric .. default to all
+var distmetric = getURLParameter("dm");
+if(distmetric == "NONE"){ distmetric = "all"; }
+
+function callWithDistanceMetric(dmt){
+	newurl = window.location.href.replace("dm="+distmetric,"dm="+dmt);
+	if( newurl.indexOf("dm=") == -1 ){ newurl += "&dm="+dmt; }
+	window.location.href = newurl;
+
+} 
+
+//AT THIS POINT IF NOT "all" calculate the new link values?... maybe though this may mess up populateStats so see if you can use a different copy maybe
+//populate_stats_page uses graph2  
+//drawing part uses j
+
+var tooltip = d3.select("body")
+    .append("div")
+    .style("position", "absolute")
+    .style("z-index", "10")
+    .style("visibility", "hidden")
+    .text("a simple tooltip");
+
+var width = 1000,
+    height = 770; //850;
+
+var color = d3.scale.category20();
+
+var j;
+var name_to_index = {};
+var num_links = {};
+var big_size = getURLParameter("show");   // <--- THIS DETERMINES HOW MANY COOCURRENCES MUST BE FOUND IN ORDER FOR AN IMAGE TO APPEAR
+if(big_size == "NONE"){ big_size = 40; }
+big_size = parseInt(big_size);
+
+var numnodes = 0;
+var usenodes = {};
+var show_more;
+var show_less;
+
+var include_small = getURLParameter("minor");
+if(include_small == "NONE"){ include_small = 1; }  // be default do not show them, so minor=1  (include_small = 0 means show small ones weirdly! )
+
+//check if filter by source
+var exclude = getURLParameter("exclude");
+
+if(exclude != "NONE"){
+  ps = exclude.split(",");
+  ps.forEach(function(s){ jQuery("#sourcesfilter input[name='"+s+"']").attr('checked', false); })
+}
+
+
+//check if filter by date
+var from_date = getURLParameter("from");
+var to_date = getURLParameter("to");    
+var dateadd ="";
+if(from_date != "NONE"){
+	dateadd = "&from="+from_date+"&to="+to_date;
+        jQuery("#datepicker-from").val(from_date);
+        jQuery("#datepicker-to").val(to_date);
+
+        //figure out what to do here.. if numnodes < 100, show them all, otherwise figure out reasonble value to set big_size,etc to. 
+	if(big_size == 1){ show_more = 1; show_less = 2;}
+	if(big_size > 1 && big_size < 10  ){ show_more = parseInt(big_size) - 1; show_less = parseInt(big_size) + 1;}
+	if(big_size >= 10 && big_size < 20){ show_more = parseInt(big_size) - 2; show_less = parseInt(big_size) + 2;}
+	if(big_size >= 20 && big_size < 50){ show_more = parseInt(big_size) - 5; show_less = parseInt(big_size) + 5;}
+	if(big_size >= 50){ show_more = parseInt(big_size) - 10; show_less = parseInt(big_size) + 10;}
+	update_buttons(include_small,show_more,show_less,big_size,dateadd);
+}
+else
+{
+	show_more = parseInt(big_size) - 10;
+	if(big_size < 10){ 	
+		show_more = parseInt(big_size) - 1;
+	}
+	else{
+		if(big_size <= 20){
+			show_more = parseInt(big_size) - 1;
+		}
+	}
+	show_less = parseInt(big_size) + 10;
+	if(big_size < 12){ show_less = parseInt(big_size) + 1; }
+
+	//update buttons
+	update_buttons(include_small,show_more,show_less,big_size,dateadd);
+}
+
+
+function update_buttons(include_small,show_more,show_less,big_size,dateadd){
+	if(include_small == 0){ 
+		small_url = 1;
+		include_text = "and showing full details.";
+		minor_text = "Hide Full Details";
+	}
+	else{
+		small_url = 0;
+		include_text = "and hiding full details.";
+		minor_text = "Show Full Details";
+	}
+
+	search = ""
+	exclude = getURLParameter("exclude");
+	if(exclude != "NONE"){ search += "&exclude="+exclude;}
+
+	thiss = getURLParameter("s");
+	if(thiss != "NONE"){ search += "&s="+thiss;}
+
+	thisd = getURLParameter("dm");
+	if(thisd != "NONE"){ search += "&dm="+thisd;}
+
+	moreurl = "explorer-view.html?show="+parseInt(show_more)+"&minor="+include_small+dateadd+search;
+	lessurl = "explorer-view.html?show="+parseInt(show_less)+"&minor="+include_small+dateadd+search;
+	minorurl = "explorer-view.html?show="+parseInt(big_size)+"&minor="+small_url+dateadd+search;
+
+	buttonshtml =  "<span style='font-size:14px; line-height:30px'>Showing nodes with more than <b>"+big_size+"</b> associations "+include_text+"</span><br>";
+	buttonshtml += "<a href='"+moreurl+"' style='text-decoration:none;background-color:rgba(31, 119, 180, .8); color:whitesmoke; font-weight:bold;font-size:14px; padding:3px; line-height:20px;'>Show More Nodes</a>&nbsp;&nbsp;&nbsp;";
+	buttonshtml += "<a href='"+lessurl+"' style='text-decoration:none;background-color:#F15858; color:whitesmoke; font-weight:bold;font-size:14px; padding:3px; line-height:20px;'>Show Less Nodes</a>&nbsp;&nbsp;&nbsp;";
+	buttonshtml += "<a href='"+minorurl+"' style='text-decoration:none;background-color:#C5C5C5; color:whitesmoke; font-weight:bold;font-size:14px; padding:3px;i line-height:20px;'>"+minor_text+"</a>";
+	document.querySelector('.buttons').innerHTML = buttonshtml
+	document.querySelector('.buttons').style.display = "block";
+}
+
+var mongourls;
+var textsnips;
+
+var urlssorted = 0;
+function populate_articles_table(mongourls){
+	mkeys = Object.keys(mongourls);
+	output = '<div class="urlsdisplay" style="display: none; position: absolute; top: 5px; left: 60px; width:90%px; height: 790px; border: 3px solid rgba(31, 119, 180, .8); background: white; opacity: 1; padding: 10px 10px 10px 20px; font-size:15px;"> <div style="position:absolute; top:-11px; right:-30px; width:45px; padding-left:5px;"><a href="javascript: closeurls();"><img src="images/close_news.png"/></a></div>';
+	output += "<table class='urlstable' border='0'><thead style='cursor:pointer; font-size:14px;text-align:left'><th>URL</th><th>DATE</th><th>Sentences</th><th>Entities</th><th>Relations</th></thead><tbody>";
+	
+	for(i = 0; i < mkeys.length; i++){  
+		urldata = mongourls[mkeys[i]];
+		urlname = urldata['url'].replace("http://","").replace("www.","").replace("//","/");	
+		urllink = urldata['url'];
+		if( urllink.indexOf("http://") == -1){ urllink = "http://" + urllink; }
+		output += "<tr class='"+mkeys[i]+"'><td style='width:70%;'><a href='"+urllink+"' target='_blank' style='text-decoration:none; color:rgba(31, 119, 180, .8)'>"+urlname+"</a></td><td>"+urldata['date']+"</td><td>"+urldata['num_sentences']+"</td><td>"+urldata['entities']+"</td><td>"+urldata['relations']+"</td></tr>"; 
+	}
+	output += "</tbody></table></div>";
+	jQuery("body").append(output);
+
+	if(urlssorted == 0){
+		urlssorted = 1;
+		var table = document.getElementsByClassName("urlstable")[0];
+		makeUrlsSortable(table);
+	}
+}
+
+function showstat(n){
+	jQuery(".restable tr td h1 a").css("color","red").css("opacity",1).css("font-weight","bold");
+	if(n == 0){
+		jQuery("#same_sent_results").show();
+		jQuery("#same_sent_and_near_results").hide(); jQuery("#same_combined_results").hide(); jQuery("#same_article_results").hide(); 
+			jQuery("#combinedstats").hide(); jQuery("#new_metric_results").hide();
+		jQuery(".restable tr td:not(:eq(0)) h1 a").css("color","gray").css("opacity",.8).css("font-weight","normal");
+	}
+	if(n == 1){
+		jQuery("#same_sent_and_near_results").show();
+		jQuery("#same_sent_results").hide(); jQuery("#same_combined_results").hide(); jQuery("#same_article_results").hide(); 
+			jQuery("#combinedstats").hide(); jQuery("#new_metric_results").hide();
+		jQuery(".restable tr td:not(:eq(1)) h1 a").css("color","gray").css("opacity",.8).css("font-weight","normal");
+	}
+	if(n == 2){
+		jQuery("#same_combined_results").show();
+		jQuery("#same_sent_and_near_results").hide(); jQuery("#same_sent_results").hide(); jQuery("#same_article_results").hide(); 
+			jQuery("#combinedstats").hide();jQuery("#new_metric_results").hide();
+		jQuery(".restable tr td:not(:eq(2)) h1 a").css("color","gray").css("opacity",.8).css("font-weight","normal");
+	}
+	if(n == 3){
+		jQuery("#same_article_results").show();
+		jQuery("#same_sent_and_near_results").hide(); jQuery("#same_combined_results").hide(); jQuery("#same_sent_results").hide(); 
+			jQuery("#combinedstats").hide(); jQuery("#new_metric_results").hide();
+		jQuery(".restable tr td:not(:eq(3)) h1 a").css("color","gray").css("opacity",.8).css("font-weight","normal");
+	}
+	if(n == 4){
+		jQuery("#new_metric_results").show();
+		jQuery("#same_sent_and_near_results").hide(); jQuery("#same_combined_results").hide(); jQuery("#same_sent_results").hide(); 
+			jQuery("#same_article_results").hide(); jQuery("#combinedstats").hide();
+		jQuery(".restable tr td:not(:eq(4)) h1 a").css("color","gray").css("opacity",.8).css("font-weight","normal");
+	}
+	if(n == 5){
+		jQuery("#combinedstats").show();
+		jQuery("#same_sent_and_near_results").hide(); jQuery("#same_combined_results").hide(); jQuery("#same_sent_results").hide(); 
+			jQuery("#same_article_results").hide(); jQuery("#new_metric_results").hide();
+		jQuery(".restable tr td:not(:eq(5)) h1 a").css("color","gray").css("opacity",.8).css("font-weight","normal");
+	}
+	showchart(n);
+}
+
+var options;
+var datay;
+ 
+//see:  http://localhost/dama-larca/d3/Chart.js-master/samples/line-customTooltips.html
+
+var curevt;
+var years; var months;
+var years_month_url;
+var curmonth; var curyear;
+function goback(){
+	month = curmonth - 1;
+	year = curyear;
+	if(month == -1){ month=11; year = year - 1;}
+
+	if(year in years_month_url){
+		if((month+1) in years_month_url[year]){
+			tooltipcontent = "";
+			years_month_url[year][month+1].forEach(function(d){ 
+				if(d.url != ""){
+					ps= d.url.replace("http://","").replace("www.","").split("/");
+					source = ps[0];
+					if(ps[ps.length - 1] == ""){
+						title = ps[ps.length - 2].replace(".html","").replace(".ece","").replace(/_/g," ").replace(/-/g," ");
+						if(title.length < 8){
+							title = ps[ps.length - 3].replace(".html","").replace(".ece","").replace(/_/g," ").replace(/-/g," ");
+						}
+					}
+					else{
+						title = ps[ps.length - 1].replace(".html","").replace(".ece","").replace(/_/g," ").replace(/-/g," ");
+						if(title.length < 8){
+							title = ps[ps.length - 2].replace(".html","").replace(".ece","").replace(/_/g," ").replace(/-/g," ");
+						}
+					}
+					title = title[0].toUpperCase() + title.substr(1,title.length);									
+
+					tooltipcontent += "<li>"+d['date']+" - "+ source + ' -  ' + title + ' <a style="color:yellow" href="'+d.url+'">link</a></li>';
+					if(typeof(curbb) != "undefined"){ 
+						myBarChart.datasets[0].bars[curbb]['fillColor'] =  "rgba(220,220,220,0.5)";
+						myBarChart.datasets[0].bars[curbb]['strokeColor'] =  "rgba(220,220,220,0.5)";
+						myBarChart.datasets[0].bars[curbb]['z-index'] =  0;
+					}
+					firstind = myBarChart.datasets[0].bars[0];
+					firstind_year = parseInt(firstind['label'].split(" ")[1]);
+					curbb = 12 * ( year - firstind_year ) + month;
+					
+					myBarChart.datasets[0].bars[curbb]['fillColor'] =  "#F15858";
+					myBarChart.datasets[0].bars[curbb]['strokeColor'] =  "#F15858";
+					myBarChart.datasets[0].bars[curbb]['z-index'] =  1000;
+					myBarChart.update();
+				}
+				else{ 
+					console.log("error with d with no url"); console.log(d); 
+				}
+			});
+		}
+		else{ 
+			tooltipcontent = "None"; 
+			years[year][month+1] = 0;
+			if(typeof(curbb) != "undefined"){ 
+				myBarChart.datasets[0].bars[curbb]['fillColor'] =  "rgba(220,220,220,0.5)";
+				myBarChart.datasets[0].bars[curbb]['strokeColor'] =  "rgba(220,220,220,0.5)";
+				myBarChart.datasets[0].bars[curbb]['z-index'] =  0;
+			}
+			firstind = myBarChart.datasets[0].bars[0];
+			firstind_year = parseInt(firstind['label'].split(" ")[1]);
+			curbb = 12 * ( year - firstind_year ) + month;
+			
+			myBarChart.datasets[0].bars[curbb]['fillColor'] =  "#F15858";
+			myBarChart.datasets[0].bars[curbb]['strokeColor'] =  "#F15858";
+			myBarChart.datasets[0].bars[curbb]['z-index'] =  1000;
+			myBarChart.update();
+		}
+	}
+	tooltipEl.html("<table><tr><td style='width: 220px;'><span style='font-size:14px; color:white; font-weight:bold'>"+years[year][month+1]+" articles for "+months[month]+" "+year+"</span></td><td style='width: 380px; text-align:right;'><div style='position: text-align:right'><a class='back' style='width:30px;height:20px; color:yellow; font-size:13px;' href='javascript: goback();'>prior</a>&nbsp;&nbsp;||&nbsp;&nbsp;<a class='forward' style='width:35px;height:20px; color:yellow; font-size:13px;' href='javascript: goforward();'>next</a>&nbsp;&nbsp;||&nbsp;&nbsp;<a href='javascript: closetooltip();'>x</a></div></td></tr></table><br><ul id='tooltipcontent'>"+tooltipcontent+"</ul>");
+	curmonth = month; curyear= year;
+}
+
+function goforward(){
+	month = curmonth + 1;
+	year = curyear;
+	if(month == 12){ month=0; year = year + 1;}
+
+	if(year in years_month_url){
+		if((month + 1) in years_month_url[year]){
+			tooltipcontent = "";
+			years_month_url[year][month+1].forEach(function(d){ 
+				if(d.url != ""){
+					ps= d.url.replace("http://","").replace("www.","").split("/");
+					source = ps[0];
+					if(ps[ps.length - 1] == ""){
+						title = ps[ps.length - 2].replace(".html","").replace(".ece","").replace(/_/g," ").replace(/-/g," ");
+						if(title.length < 8){
+							title = ps[ps.length - 3].replace(".html","").replace(".ece","").replace(/_/g," ").replace(/-/g," ");
+						}
+					}
+					else{
+						title = ps[ps.length - 1].replace(".html","").replace(".ece","").replace(/_/g," ").replace(/-/g," ");
+						if(title.length < 8){
+							title = ps[ps.length - 2].replace(".html","").replace(".ece","").replace(/_/g," ").replace(/-/g," ");
+						}
+
+					}
+					title = title[0].toUpperCase() + title.substr(1,title.length);									
+
+					tooltipcontent += "<li>"+d['date']+" - "+ source + ' -  ' + title + ' <a style="color:yellow" href="'+d.url+'">link</a></li>';
+					//find indice and highlight appropriately
+					if(typeof(curbb) != "undefined"){ 
+						myBarChart.datasets[0].bars[curbb]['fillColor'] =  "rgba(220,220,220,0.5)";
+						myBarChart.datasets[0].bars[curbb]['strokeColor'] =  "rgba(220,220,220,0.5)";
+						myBarChart.datasets[0].bars[curbb]['z-index'] =  0;
+					}
+					firstind = myBarChart.datasets[0].bars[0];
+					firstind_year = parseInt(firstind['label'].split(" ")[1]);
+					curbb = 12 * ( year - firstind_year ) + month;
+					
+					myBarChart.datasets[0].bars[curbb]['fillColor'] =  "#F15858";
+					myBarChart.datasets[0].bars[curbb]['strokeColor'] =  "#F15858";
+					myBarChart.datasets[0].bars[curbb]['z-index'] =  1000;
+					myBarChart.update();
+				}
+				else{ 
+					console.log("error with d with no url"); console.log(d); 
+				}
+			});
+		}
+		else{ 
+			tooltipcontent = "None"; 
+			years[year][month+1] = 0; 
+			if(typeof(curbb) != "undefined"){ 
+				myBarChart.datasets[0].bars[curbb]['fillColor'] =  "rgba(220,220,220,0.5)";
+				myBarChart.datasets[0].bars[curbb]['strokeColor'] =  "rgba(220,220,220,0.5)";
+				myBarChart.datasets[0].bars[curbb]['z-index'] =  0;
+			}
+			firstind = myBarChart.datasets[0].bars[0];
+			firstind_year = parseInt(firstind['label'].split(" ")[1]);
+			curbb = 12 * ( year - firstind_year ) + month;
+			
+			myBarChart.datasets[0].bars[curbb]['fillColor'] =  "#F15858";
+			myBarChart.datasets[0].bars[curbb]['strokeColor'] =  "#F15858";
+			myBarChart.datasets[0].bars[curbb]['z-index'] =  1000;
+			myBarChart.update();
+		}
+	}
+	tooltipEl.html("<table><tr><td style='width: 220px'><span style='font-size:14px; color:white; font-weight:bold'>"+years[year][month+1]+" articles for "+months[month]+" "+year+"</span></td><td style='width: 380px; text-align:right;'><div style='position: text-align:right'><a class='back' style='width:30px;height:20px; color:yellow; font-size:13px;' href='javascript: goback();'>prior</a>&nbsp;&nbsp;||&nbsp;&nbsp;<a class='forward' style='width:35px;height:20px; color:yellow; font-size:13px;' href='javascript: goforward();'>next</a>&nbsp;&nbsp;||&nbsp;&nbsp;<a href='javascript: closetooltip();'>x</a></div></td></tr></table><br><ul id='tooltipcontent'>"+tooltipcontent+"</ul>");
+	curmonth = month; curyear= year;
+
+}
+
+function closetooltip(){ jQuery("#chartjs-tooltip").css("opacity",0); }
+
+var curbb;
+function showchart(n){
+	cid = "#myChart"+n;
+	if(n == 0){
+		//fill in table
+		//link_dates = Object.keys(mongourls).map(function(d){ return [mongourls[d]["date"],mongourls[d]['url']]; });
+		link_dates = Object.keys(mongourls).map(function(d){ return [mongourls[d]["date"],mongourls[d]] });
+		years = {};
+		years_month_url = {};	
+		link_dates.forEach(function(d){ 
+			yr = parseInt(d[0].split("-")[0]); 
+			mth = parseInt(d[0].split("-")[1]);  
+			if( yr != undefined){ 
+				if(yr in years){ 
+					if(mth in years[yr]){ 
+						years[yr][mth] += 1; 
+						years_month_url[yr][mth].push(d[1]);
+					}
+					else{ 
+						years[yr][mth] = 1; 
+						years_month_url[yr][mth] = [d[1]];
+					}
+				}
+				else{ 
+					years[yr] = {};
+					years[yr][mth] = 1;
+					years_month_url[yr] = {};
+					years_month_url[yr][mth] = [d[1]];
+				}
+			}
+		});	
+
+		//years Object  -- 2007: Object, 2008: Object, 2009: Object, ... , 2015: Object
+		yk = Object.keys(years).sort().map(function(d){ return parseInt(d); });
+		months = ["January", "February", "March", "April", "May", "June", "July","August","September","October","November","December"]
+		startyear = yk[0];  endyear = yk[yk.length - 1];
+		dms = [];
+		datad = [];
+		while( startyear <= endyear){
+			months.forEach(function(m){ 
+				if(m == "January"){ dms.push("Jan "+startyear);}
+				else{ 
+					if(m == "July"){ dms.push("Jul");}
+					else{ dms.push("");}
+				}
+				if( startyear in years ){
+					mtoi = months.indexOf(m) + 1;
+					if(mtoi in years[startyear]){ datad.push(years[startyear][mtoi]);}
+					else{ datad.push(0); } 
+				}else{ 
+					//cur year/month has no articles
+					datad.push(0); 
+				}
+				
+			});
+			startyear += 1;
+		}
+		
+		console.log(cid);
+		ctx = jQuery(cid).get(0).getContext("2d");
+		options = {scaleFontSize: 12, scaleFontStyle: "bold", responsive: true, maintainAspectRatio: true, showTooltips: function(d){ }, animation: false};
+
+		datay = {
+		    labels: dms, 
+		    datasets: [
+			{
+			    label: "article distribution",
+			    fillColor: "rgba(220,220,220,0.5)",
+			    strokeColor: "rgba(220,220,220,0.8)",
+			    highlightFill: "rgba(220,220,220,0.75)",
+			    highlightStroke: "rgba(220,220,220,1)",
+			    data: datad
+			}
+		    ]
+		};
+		jQuery(cid).css("width","70%").css("height","200px").css("margin-left","10px");
+		myBarChart = new Chart(ctx).Bar(datay, options);
+
+		if( jQuery("#chartjs-tooltip").length == 0 ){
+			jQuery(cid).parent().prepend('<div id="chartjs-tooltip" class="above" style="opacity: 0; left: 500px; top: 392px; font-family: Helvetica, Arial, sans-serif; font-size: 12px; font-style: normal;"></div>');
+		}
+
+		myBarChart.chart.canvas.onclick = function(evt){
+		    curevt = evt;
+		    myBarChart.datasets[0].bars.forEach( 
+			function(b) { 
+				xdist = Math.abs(b.x - (evt.clientX - 320));  // need to offset because of margin/padding     CLICK
+				if(xdist < 2){ 	
+					indice_clicked = myBarChart.datasets[0].bars.indexOf(b);
+					year = parseInt(Object.keys(years)[0]) + Math.floor(indice_clicked / 12);
+					month = indice_clicked % 12;	
+					tooltipEl = jQuery('#chartjs-tooltip');
+					if(year in years){ 
+						if( (month+1) in years[year] ){ 
+							if(typeof(curbb) != "undefined"){ 
+								myBarChart.datasets[0].bars[curbb]['fillColor'] =  "rgba(220,220,220,0.5)";
+								myBarChart.datasets[0].bars[curbb]['strokeColor'] =  "rgba(220,220,220,0.5)";
+							}
+							curbb = indice_clicked;
+							myBarChart.datasets[0].bars[curbb]['fillColor'] =  "#F15858";
+							myBarChart.datasets[0].bars[curbb]['strokeColor'] =  "#F15858";
+							myBarChart.update();
+
+							//highlight bar
+							jQuery(b).css("fillColor","red");
+	
+							tooltipEl.css("opacity",1);
+							tooltipcontent = "";
+							//url,date,num_sentences,relations,entities
+							curmonth = month; curyear= year;
+							years_month_url[year][month+1].forEach(function(d){ 
+									if(d.url != ""){
+										ps= d.url.replace("http://","").replace("www.","").split("/");
+										source = ps[0];
+										if(ps[ps.length - 1] == ""){
+											title = ps[ps.length - 2].replace(".html","").replace(".ece","").replace(/_/g," ").replace(/-/g," ");
+											if(title.length < 8){
+												title = ps[ps.length - 3].replace(".html","").replace(".ece","").replace(/_/g," ").replace(/-/g," ");
+											}
+										}
+										else{
+											title = ps[ps.length - 1].replace(".html","").replace(".ece","").replace(/_/g," ").replace(/-/g," ");
+											if(title.length < 8){
+												title = ps[ps.length - 2].replace(".html","").replace(".ece","").replace(/_/g," ").replace(/-/g," ");
+											}
+										}
+										title = title[0].toUpperCase() + title.substr(1,title.length);									
+
+										tooltipcontent += "<li>"+d['date']+" - "+ source + ' -  ' + title + ' <a style="color:yellow" href="'+d.url+'">link</a></li>';
+									}
+									else{ console.log("error with d with no url"); console.log(d); }
+							});
+							tooltipEl.html("<table><tr><td style='width: 220px'><span style='font-size:14px; color:white; font-weight:bold'>"+years[year][month+1]+" articles for "+months[month]+" "+year+"</span></td><td style='width: 380px; text-align:right;'><div style='position: text-align:right'><a class='back' style='width:30px;height:20px; color:yellow; font-size:13px;' href='javascript: goback();'>prior</a>&nbsp;&nbsp;||&nbsp;&nbsp;<a class='forward' style='width:35px;height:20px; color:yellow; font-size:13px;' href='javascript: goforward();'>next</a>&nbsp;&nbsp;||&nbsp;&nbsp;<a href='javascript: closetooltip();'>x</a></div></td></tr></table><br><ul id='tooltipcontent'>"+tooltipcontent+"</ul>");
+						}
+					}
+					else{
+						tooltipEl.css("opacity",0);
+						tooltipEl.html("");
+					}
+				}
+			}); 
+		    };   // for canvas.onclick = 
+	}
+	else{ 
+		if( n != 5){
+			cid0 = "#myChart0";
+			cid2 = "#myChart"+n;
+			cont = jQuery("#same_sent_results tr:nth-of-type(1) td:nth-of-type(2)").first().html();
+			jQuery(cid2).html(cont);
+			ctx = jQuery(cid2).get(0).getContext("2d");
+			jQuery(cid2).css("width","70%").css("height","200px").css("margin-left","10px");
+			myBarChart = new Chart(ctx).Bar(datay, options);
+		}
+	}
+	resheight = jQuery(".results").css("height");
+	jQuery("#showstats").css("height",resheight)
+}
+
+//console.log("SET KEY DOWN");
+$(document).keydown(function(e) {
+    switch(e.which) {
+	case 37: // left
+	goback();
+	break;
+
+	case 39: // right
+	goforward();
+	break;
+
+	default: return; // exit this handler for other keys
+    }
+    e.preventDefault(); // prevent the default action (scroll / move caret)
+});	
+
+var op;
+var samesentop;
+var samesentop;
+var samesentandnearop;
+var samesentneararticleop;
+var samearticleop;
+var combinedop;
+var samesentandnearop;
+var samesentneararticleop;
+var samearticleop;
+var combinedop;
+
+var highlightlock;
+var loadingstats;
+function populate_stats_page(centernode){
+	loadingstats = 0;
+	//console.log(search_terms[centernode][0]);
+	if(centernode == "J.D. Sheffield"){centernode = "Sheffield"; }
+	highlightlock = 0;	
+
+	//returns [output,polobj,orgobj,perobj,locobj,billobj,miscobj];
+	if( distmetric == "comb" || distmetric == "ss"){ op = samesentop; }
+	else{ op = get_most_sentences(centernode,"same sentence");}
+	top_objs = "<table class='restable' style='border-bottom:3px dashed; width:950px'><tr style='vertical-align:top'><td width='17%'><h1><a href='javascript: showstat(0);'>Top Associated</a><br/><span class='small'>same sentence</span></h1></td><td width='17%'><h1><a href='javascript: showstat(1);'>Top Associated</a><br/><span class='small'>same sentence/near</span></h1></td><td width='17%'><h1><a href='javascript: showstat(2);'>Top Associated</a><br/><span class='small'>same sentence/near/article</span></h1></td><td width='17%'><h1><a href='javascript: showstat(3);'>Top Associated</a><br/><span class='small'>same article only (not near)</span></h1></td><td width='17%'><h1><a href='javascript: showstat(4);'>Top Associated</a><br/><span class='small'>combined  metric</span></h1></td><td width='17%'><h1><a href='javascript: showstat(5);'>Summary</a><br/><span class='small'>comparison</span></h1></td></tr></table>"+op[0];
+	pol = []; for(p in op[1]){ pol.push([p,op[1][p]]);} pol.sort(function(a, b) {return a[1] - b[1]}).reverse(); 
+	org = []; for(p in op[2]){ org.push([p,op[2][p]]);} org.sort(function(a, b) {return a[1] - b[1]}).reverse();
+	per = []; for(p in op[3]){ per.push([p,op[3][p]]);} per.sort(function(a, b) {return a[1] - b[1]}).reverse();
+	loc = []; for(p in op[4]){ loc.push([p,op[4][p]]);} loc.sort(function(a, b) {return a[1] - b[1]}).reverse();
+	bill = []; for(p in op[5]){ bill.push([p,op[5][p]]);} bill.sort(function(a, b) {return a[1] - b[1]}).reverse();
+	misc = []; for(p in op[6]){ misc.push([p,op[6][p]]);} misc.sort(function(a, b) {return a[1] - b[1]}).reverse();
+
+	billout = ""; miscout = "";
+	polout = "Politicians: <ul>"; pol.forEach(function(d){ polout += "<li class='res"+d[0]+"'><a href='javascript: clicknode("+d[0]+");'>"+j.elements.nodes[parseInt(d[0])].full_name+"</a> - "+d[1]+"</li>"; });
+	orgout = "Organizations: <ul>"; org.forEach(function(d){ orgout += "<li class='res"+d[0]+"'><a href='javascript: clicknode("+d[0]+");'>"+j.elements.nodes[parseInt(d[0])].full_name+"</a> - "+d[1]+"</li>"; });
+	perout = "Persons: <ul>"; per.forEach(function(d){ perout += "<li class='res"+d[0]+"'><a href='javascript: clicknode("+d[0]+");'>"+j.elements.nodes[parseInt(d[0])].full_name+"</a> - "+d[1]+"</li>"; });
+	locout = "Locations: <ul>"; loc.forEach(function(d){ locout += "<li class='res"+d[0]+"'><a href='javascript: clicknode("+d[0]+");'>"+j.elements.nodes[parseInt(d[0])].full_name+"</a> - "+d[1]+"</li>"; });
+	if(Object.keys(op[5]).length > 0){ billout = "Bills: <ul>"; bill.forEach(function(d){ billout += "<li class='res"+d[0]+"'><a href='javascript: clicknode("+d[0]+");'>"+j.elements.nodes[parseInt(d[0])].full_name+"</a> - "+d[1]+"</li>"; }); }
+	if(Object.keys(op[6]).length > 0){ miscout = "Misc: <ul>"; misc.forEach(function(d){ miscout += "<li class='res"+d[0]+"'><a href='javascript: clicknode("+d[0]+");'>"+j.elements.nodes[parseInt(d[0])].full_name+"</a> - "+d[1]+"</li>"; }); }
+
+	colout = "<tr><td colspan=2><table class='innerres'><tr style='vertical-align:top'><td>"+polout+"</td><td>"+orgout+"</td><td>"+perout+"</td><td>"+locout+"</td><td>"+billout+"</td><td>"+miscout+"</td></tr></table></td></tr></table>";
+
+	out = {}
+	out['same sentence'] = [ polout, orgout, perout,locout,billout,miscout];
+
+	newmetric_list = {'pol':{}, 'org':{}, 'per':{}, 'loc':{}, 'bill':{}, 'misc':{}};
+	pol.forEach(function(d){ newmetric_list['pol'][d[0]] = {'same sentence':d[1]};});
+	org.forEach(function(d){ newmetric_list['org'][d[0]] = {'same sentence':d[1]};});
+	per.forEach(function(d){ newmetric_list['per'][d[0]] = {'same sentence':d[1]};});
+	loc.forEach(function(d){ newmetric_list['loc'][d[0]] = {'same sentence':d[1]};});
+	bill.forEach(function(d){ newmetric_list['bill'][d[0]] = {'same sentence':d[1]};});
+	misc.forEach(function(d){ newmetric_list['misc'][d[0]] = {'same sentence':d[1]};});
+
+
+	//same and near
+	if( distmetric == "comb" || distmetric == "sn"){ op = samesentandnearop; }
+	else{ op = get_most_sentences(centernode,"same and near sentence"); }	
+
+	top_objs2 = op[0]
+	pol = []; for(p in op[1]){ pol.push([p,op[1][p]]);} pol.sort(function(a, b) {return a[1] - b[1]}).reverse(); 
+	org = []; for(p in op[2]){ org.push([p,op[2][p]]);} org.sort(function(a, b) {return a[1] - b[1]}).reverse();
+	per = []; for(p in op[3]){ per.push([p,op[3][p]]);} per.sort(function(a, b) {return a[1] - b[1]}).reverse();
+	loc = []; for(p in op[4]){ loc.push([p,op[4][p]]);} loc.sort(function(a, b) {return a[1] - b[1]}).reverse();
+	bill = []; for(p in op[5]){ bill.push([p,op[5][p]]);} bill.sort(function(a, b) {return a[1] - b[1]}).reverse();
+	misc = []; for(p in op[6]){ misc.push([p,op[6][p]]);} misc.sort(function(a, b) {return a[1] - b[1]}).reverse();
+
+	billout = ""; miscout = "";
+	polout = "Politicians: <ul>"; pol.forEach(function(d){ polout += "<li class='res"+d[0]+"'><a href='javascript: clicknode("+d[0]+");'>"+j.elements.nodes[parseInt(d[0])].full_name+"</a> - "+d[1]+"</li>"; });
+	orgout = "Organizations: <ul>"; org.forEach(function(d){ orgout += "<li class='res"+d[0]+"'><a href='javascript: clicknode("+d[0]+");'>"+j.elements.nodes[parseInt(d[0])].full_name+"</a> - "+d[1]+"</li>"; });
+	perout = "Persons: <ul>"; per.forEach(function(d){ perout += "<li class='res"+d[0]+"'><a href='javascript: clicknode("+d[0]+");'>"+j.elements.nodes[parseInt(d[0])].full_name+"</a> - "+d[1]+"</li>"; });
+	locout = "Locations: <ul>"; loc.forEach(function(d){ locout += "<li class='res"+d[0]+"'><a href='javascript: clicknode("+d[0]+");'>"+j.elements.nodes[parseInt(d[0])].full_name+"</a> - "+d[1]+"</li>"; });
+	if(Object.keys(op[5]).length > 0){ billout = "Bills: <ul>"; bill.forEach(function(d){ billout += "<li class='res"+d[0]+"'><a href='javascript: clicknode("+d[0]+");'>"+j.elements.nodes[parseInt(d[0])].full_name+"</a> - "+d[1]+"</li>"; }); }
+	if(Object.keys(op[6]).length > 0){ miscout = "Misc: <ul>"; misc.forEach(function(d){ miscout += "<li class='res"+d[0]+"'><a href='javascript: clicknode("+d[0]+");'>"+j.elements.nodes[parseInt(d[0])].full_name+"</a> - "+d[1]+"</li>"; }); }
+
+	colout2 = "<tr><td colspan=2><table class='innerres'><tr style='vertical-align:top'><td>"+polout+"</td><td>"+orgout+"</td><td>"+perout+"</td><td>"+locout+"</td><td>"+billout+"</td><td>"+miscout+"</td></tr></table></td></tr></table>";
+
+	out['same and near sentence'] = [ polout, orgout, perout,locout,billout,miscout];
+	pol.forEach(function(d){ if(d[0] in newmetric_list['pol']){newmetric_list['pol'][d[0]]['same and near sentence']=d[1];}else{newmetric_list['pol'][d[0]] = {'same and near sentence':d[1]};}});
+	org.forEach(function(d){ if(d[0] in newmetric_list['org']){newmetric_list['org'][d[0]]['same and near sentence']=d[1];}else{newmetric_list['org'][d[0]] = {'same and near sentence':d[1]};}});
+	per.forEach(function(d){ if(d[0] in newmetric_list['per']){newmetric_list['per'][d[0]]['same and near sentence']=d[1];}else{newmetric_list['per'][d[0]] = {'same and near sentence':d[1]};}});
+	loc.forEach(function(d){ if(d[0] in newmetric_list['loc']){newmetric_list['loc'][d[0]]['same and near sentence']=d[1];}else{newmetric_list['loc'][d[0]] = {'same and near sentence':d[1]};}});
+	bill.forEach(function(d){ if(d[0] in newmetric_list['bill']){newmetric_list['bill'][d[0]]['same and near sentence']=d[1];}else{newmetric_list['bill'][d[0]] = {'same and near sentence':d[1]};}});
+	misc.forEach(function(d){ if(d[0] in newmetric_list['misc']){newmetric_list['misc'][d[0]]['same and near sentence']=d[1];}else{newmetric_list['misc'][d[0]] = {'same and near sentence':d[1]};}});
+
+	//same and near sentences and same article
+	if( distmetric == "comb"){ op = samesentneararticleop; }
+	else{ op = get_most_sentences(centernode,"combined same, near, article"); }
+	top_objs3 = op[0]
+	pol = []; for(p in op[1]){ pol.push([p,op[1][p]]);} pol.sort(function(a, b) {return a[1] - b[1]}).reverse(); 
+	org = []; for(p in op[2]){ org.push([p,op[2][p]]);} org.sort(function(a, b) {return a[1] - b[1]}).reverse();
+	per = []; for(p in op[3]){ per.push([p,op[3][p]]);} per.sort(function(a, b) {return a[1] - b[1]}).reverse();
+	loc = []; for(p in op[4]){ loc.push([p,op[4][p]]);} loc.sort(function(a, b) {return a[1] - b[1]}).reverse();
+	bill = []; for(p in op[5]){ bill.push([p,op[5][p]]);} bill.sort(function(a, b) {return a[1] - b[1]}).reverse();
+	misc = []; for(p in op[6]){ misc.push([p,op[6][p]]);} misc.sort(function(a, b) {return a[1] - b[1]}).reverse();
+
+	billout = ""; miscout = "";
+	polout = "Politicians: <ul>"; pol.forEach(function(d){ polout += "<li class='res"+d[0]+"'><a href='javascript: clicknode("+d[0]+");'>"+j.elements.nodes[parseInt(d[0])].full_name+"</a> - "+d[1]+"</li>"; });
+	orgout = "Organizations: <ul>"; org.forEach(function(d){ orgout += "<li class='res"+d[0]+"'><a href='javascript: clicknode("+d[0]+");'>"+j.elements.nodes[parseInt(d[0])].full_name+"</a> - "+d[1]+"</li>"; });
+	perout = "Persons: <ul>"; per.forEach(function(d){ perout += "<li class='res"+d[0]+"'><a href='javascript: clicknode("+d[0]+");'>"+j.elements.nodes[parseInt(d[0])].full_name+"</a> - "+d[1]+"</li>"; });
+	locout = "Locations: <ul>"; loc.forEach(function(d){ locout += "<li class='res"+d[0]+"'><a href='javascript: clicknode("+d[0]+");'>"+j.elements.nodes[parseInt(d[0])].full_name+"</a> - "+d[1]+"</li>"; });
+	if(Object.keys(op[5]).length > 0){ billout = "Bills: <ul>"; bill.forEach(function(d){ billout += "<li class='res"+d[0]+"'><a href='javascript: clicknode("+d[0]+");'>"+j.elements.nodes[parseInt(d[0])].full_name+"</a> - "+d[1]+"</li>"; }); }
+	if(Object.keys(op[6]).length > 0){ miscout = "Misc: <ul>"; misc.forEach(function(d){ miscout += "<li class='res"+d[0]+"'><a href='javascript: clicknode("+d[0]+");'>"+j.elements.nodes[parseInt(d[0])].full_name+"</a> - "+d[1]+"</li>"; }); }
+
+
+	colout3 = "<tr><td colspan=2><table class='innerres'><tr style='vertical-align:top'><td>"+polout+"</td><td>"+orgout+"</td><td>"+perout+"</td><td>"+locout+"</td><td>"+billout+"</td><td>"+miscout+"</td></tr></table></td></tr></table>";
+	out['combined same, near, article'] = [ polout, orgout, perout,locout,billout,miscout];
+
+	pol.forEach(function(d){ if(d[0] in newmetric_list['pol']){newmetric_list['pol'][d[0]]['combined same, near, article']=d[1];}else{newmetric_list['pol'][d[0]] = {'combined same, near, article':d[1]};}});
+	org.forEach(function(d){ if(d[0] in newmetric_list['org']){newmetric_list['org'][d[0]]['combined same, near, article']=d[1];}else{newmetric_list['org'][d[0]] = {'combined same, near, article':d[1]};}});
+	per.forEach(function(d){ if(d[0] in newmetric_list['per']){newmetric_list['per'][d[0]]['combined same, near, article']=d[1];}else{newmetric_list['per'][d[0]] = {'combined same, near, article':d[1]};}});
+	loc.forEach(function(d){ if(d[0] in newmetric_list['loc']){newmetric_list['loc'][d[0]]['combined same, near, article']=d[1];}else{newmetric_list['loc'][d[0]] = {'combined same, near, article':d[1]};}});
+	bill.forEach(function(d){ if(d[0] in newmetric_list['bill']){newmetric_list['bill'][d[0]]['combined same, near, article']=d[1];}else{newmetric_list['bill'][d[0]] = {'combined same, near, article':d[1]};}});
+	misc.forEach(function(d){ if(d[0] in newmetric_list['misc']){newmetric_list['misc'][d[0]]['combined same, near, article']=d[1];}else{newmetric_list['misc'][d[0]] = {'combined same, near, article':d[1]};}});
+
+	//same article only  TODO for efficiency sake possibly redo this as its just:  article_only =    ['combined same, near, article'] - ( ['same and near sentence']) ;
+	if( distmetric == "comb"){ op = samearticleop; }
+	else{ op = get_most_sentences(centernode,"same article"); }	
+
+	top_objs4 = op[0]
+	pol = []; for(p in op[1]){ pol.push([p,op[1][p]]);} pol.sort(function(a, b) {return a[1] - b[1]}).reverse(); 
+	org = []; for(p in op[2]){ org.push([p,op[2][p]]);} org.sort(function(a, b) {return a[1] - b[1]}).reverse();
+	per = []; for(p in op[3]){ per.push([p,op[3][p]]);} per.sort(function(a, b) {return a[1] - b[1]}).reverse();
+	loc = []; for(p in op[4]){ loc.push([p,op[4][p]]);} loc.sort(function(a, b) {return a[1] - b[1]}).reverse();
+	bill = []; for(p in op[5]){ bill.push([p,op[5][p]]);} bill.sort(function(a, b) {return a[1] - b[1]}).reverse();
+	misc = []; for(p in op[6]){ misc.push([p,op[6][p]]);} misc.sort(function(a, b) {return a[1] - b[1]}).reverse();
+
+	billout = ""; miscout = "";
+	polout = "Politicians: <ul>"; pol.forEach(function(d){ polout += "<li class='res"+d[0]+"'><a href='javascript: clicknode("+d[0]+");'>"+j.elements.nodes[parseInt(d[0])].full_name+"</a> - "+d[1]+"</li>"; });
+	orgout = "Organizations: <ul>"; org.forEach(function(d){ orgout += "<li class='res"+d[0]+"'><a href='javascript: clicknode("+d[0]+");'>"+j.elements.nodes[parseInt(d[0])].full_name+"</a> - "+d[1]+"</li>"; });
+	perout = "Persons: <ul>"; per.forEach(function(d){ perout += "<li class='res"+d[0]+"'><a href='javascript: clicknode("+d[0]+");'>"+j.elements.nodes[parseInt(d[0])].full_name+"</a> - "+d[1]+"</li>"; });
+	locout = "Locations: <ul>"; loc.forEach(function(d){ locout += "<li class='res"+d[0]+"'><a href='javascript: clicknode("+d[0]+");'>"+j.elements.nodes[parseInt(d[0])].full_name+"</a> - "+d[1]+"</li>"; });
+	if(Object.keys(op[5]).length > 0){ billout = "Bills: <ul>"; bill.forEach(function(d){ billout += "<li class='res"+d[0]+"'><a href='javascript: clicknode("+d[0]+");'>"+j.elements.nodes[parseInt(d[0])].full_name+"</a> - "+d[1]+"</li>"; }); }
+	if(Object.keys(op[6]).length > 0){ miscout = "Misc: <ul>"; misc.forEach(function(d){ miscout += "<li class='res"+d[0]+"'><a href='javascript: clicknode("+d[0]+");'>"+j.elements.nodes[parseInt(d[0])].full_name+"</a> - "+d[1]+"</li>"; }); }
+
+	colout4 = "<tr><td colspan=2><table class='innerres'><tr style='vertical-align:top'><td>"+polout+"</td><td>"+orgout+"</td><td>"+perout+"</td><td>"+locout+"</td><td>"+billout+"</td><td>"+miscout+"</td></tr></table></td></tr></table>";
+	out['same article'] = [ polout, orgout, perout,locout,billout,miscout];
+	pol.forEach(function(d){ if(d[0] in newmetric_list['pol']){newmetric_list['pol'][d[0]]['same article']=d[1];}else{newmetric_list['pol'][d[0]] = {'same article':d[1]};}});
+	org.forEach(function(d){ if(d[0] in newmetric_list['org']){newmetric_list['org'][d[0]]['same article']=d[1];}else{newmetric_list['org'][d[0]] = {'same article':d[1]};}});
+	per.forEach(function(d){ if(d[0] in newmetric_list['per']){newmetric_list['per'][d[0]]['same article']=d[1];}else{newmetric_list['per'][d[0]] = {'same article':d[1]};}});
+	loc.forEach(function(d){ if(d[0] in newmetric_list['loc']){newmetric_list['loc'][d[0]]['same article']=d[1];}else{newmetric_list['loc'][d[0]] = {'same article':d[1]};}});
+	bill.forEach(function(d){ if(d[0] in newmetric_list['bill']){newmetric_list['bill'][d[0]]['same article']=d[1];}else{newmetric_list['bill'][d[0]] = {'same article':d[1]};}});
+	misc.forEach(function(d){ if(d[0] in newmetric_list['misc']){newmetric_list['misc'][d[0]]['same article']=d[1];}else{newmetric_list['misc'][d[0]] = {'same article':d[1]};}});
+
+	//New Metric is basically (1*samesent + 8/10*near + 1/10same article) * something to penalize based on how many times you are just "same article" as a proportion of your total!
+	//for now, try      (samesent+near+samearticle)/ ( samearticle+samesent+near - samearticle )   <--- this way people who are mostly just same articles will be punished for it 
+	//?? do i need to account for difference between two people who are both largely just samearticle references if one has a whole bunch of mentiones and the other one few?
+	//----- for this last one, i think i'd need to know how much they touch other people..
+
+	nodeweights = {'pol':[], 'org':[], 'per':[], 'loc':[], 'bill':[], 'misc':[]};
+	for( pk in nodeweights ){
+		Object.keys(newmetric_list[pk]).forEach(function(k){ 
+			nk = newmetric_list[pk][k]; 
+			if( typeof(nk['same sentence']) == "undefined"){ newmetric_list[pk][k]['same sentence'] = 0; }
+			if( typeof(nk['same and near sentence']) == "undefined"){ newmetric_list[pk][k]['same and near sentence'] = 0; }
+			if( typeof(nk['combined same, near, article']) == "undefined"){ newmetric_list[pk][k]['combined same, near, article'] = 0; }
+			if( typeof(nk['same article']) == "undefined"){ newmetric_list[pk][k]['same article'] = 0; }
+			nk = newmetric_list[pk][k]; 
+			mnum =   nk['combined same, near, article'];
+			mden = nk['combined same, near, article'] - ( nk['same and near sentence']) ;
+			if(mden == 0){ mden = 1; }   ///TODO:  is this right?
+			//console.log(mden);
+			multiplier = mnum / mden;
+
+			/* THIS IS WHERE I CALCULATE THE METRIC */  
+			nweight = ( nk['same sentence'] + (near_co * (nk['same and near sentence'] - nk['same sentence'])) + (same_art_co * nk['same article'])) * multiplier; 
+			nweight = nweight.toFixed(2);
+			newmetric_list[pk][k]['weight'] = nweight;	
+			nodeweights[pk].push([k,nweight]);
+		});	
+	}
+	
+	for( pk in nodeweights){ nodeweights[pk].sort(function(a, b) {return a[1] - b[1]}).reverse(); }
+
+	//make ul printout for each entity type list and put them in combined view below
+	//then if it looks good make things on main graph based on that!
+
+	billout = ""; miscout = "";
+	polout = "Politicians: <ul>"; nodeweights['pol'].forEach(function(d){ polout += "<li class='res"+d[0]+"'><a href='javascript: clicknode("+d[0]+");'>"+j.elements.nodes[parseInt(d[0])].full_name+"</a> - "+d[1]+"</li>"; });
+	orgout = "Organizations: <ul>"; nodeweights['org'].forEach(function(d){ orgout += "<li class='res"+d[0]+"'><a href='javascript: clicknode("+d[0]+");'>"+j.elements.nodes[parseInt(d[0])].full_name+"</a> - "+d[1]+"</li>"; });
+	perout = "Persons: <ul>"; nodeweights['per'].forEach(function(d){ perout += "<li class='res"+d[0]+"'><a href='javascript: clicknode("+d[0]+");'>"+j.elements.nodes[parseInt(d[0])].full_name+"</a> - "+d[1]+"</li>"; });
+	locout = "Locations: <ul>"; nodeweights['loc'].forEach(function(d){ locout += "<li class='res"+d[0]+"'><a href='javascript: clicknode("+d[0]+");'>"+j.elements.nodes[parseInt(d[0])].full_name+"</a> - "+d[1]+"</li>"; });
+	if(Object.keys(op[5]).length > 0){ billout = "Bills: <ul>"; nodeweights['bill'].forEach(function(d){ billout += "<li class='res"+d[0]+"'><a href='javascript: clicknode("+d[0]+");'>"+j.elements.nodes[parseInt(d[0])].full_name+"</a> - "+d[1]+"</li>"; }); }
+	if(Object.keys(op[6]).length > 0){ miscout = "Misc: <ul>"; nodeweights['misc'].forEach(function(d){ miscout += "<li class='res"+d[0]+"'><a href='javascript: clicknode("+d[0]+");'>"+j.elements.nodes[parseInt(d[0])].full_name+"</a> - "+d[1]+"</li>"; }); }
+
+	out['new metric'] = [ polout, orgout, perout,locout,billout,miscout];
+	matchtype = "new metric";
+	output = "<table id='new_metric_results'><tr><td style='width:30%'><ul>";
+	output += "<li><p style='color:rgba(31, 119, 180, .8); font-size:18px;'>"+centernode+" has most<br/>"+matchtype+" occurrences with</p></li>";
+	output += "<li>Politician <a href='javascript: clicknode("+nodeweights['pol'][0][0]+");'>"+j.elements.nodes[nodeweights['pol'][0][0]]['full_name'] + "</a> - ("+nodeweights['pol'][0][1]+") </li>";
+	output += "<li>Person  <a href='javascript: clicknode("+nodeweights['per'][0][0]+");'>"+j.elements.nodes[nodeweights['per'][0][0]]['full_name'] + "</a> - ("+ nodeweights['per'][0][1]+") </li>";
+	output += "<li>Organization <a href='javascript: clicknode("+nodeweights['org'][0][0]+");'>"+j.elements.nodes[nodeweights['org'][0][0]]['full_name'] + "</a> - ("+nodeweights['org'][0][1]+")</li>";
+	output += "<li>Location <a href='javascript: clicknode("+nodeweights['loc'][0][0]+");'>"+j.elements.nodes[nodeweights['loc'][0][0]]['full_name'] + "</a> - ("+nodeweights['loc'][0][1]+")</li>";
+	if(billout.length > 0){ output += "<li>Bill <a href='javascript: clicknode("+nodeweights['bill'][0][0]+");'>"+j.elements.nodes[nodeweights['bill'][0][0]]['full_name'] + "</a> - ("+nodeweights['bill'][0][1]+")</li>";}
+	output += "<li>Misc <a href='javascript: clicknode("+nodeweights['misc'][0][0]+");'>"+j.elements.nodes[nodeweights['misc'][0][0]]['full_name'] + "</a> - ("+nodeweights['misc'][0][1]+")</li></ul>";
+	output += '</td><td style="width:70%; height:250px; padding-left:10px;"><canvas id="myChart'+4+'"></canvas></td></tr>';
+
+	top_objs5 = output;
+	colout5 = "<tr><td colspan=2><table class='innerres'><tr style='vertical-align:top'><td>"+polout+"</td><td>"+orgout+"</td><td>"+perout+"</td><td>"+locout+"</td><td>"+billout+"</td><td>"+miscout+"</td></tr></table></td></tr></table>";
+
+	newout = {};  //just to remove some formatting to make more compact
+	for(m in out){  
+		newout[m] = [ out[m][0].replace("Politicians: <ul>","<ul>"), out[m][1].replace("Organizations: <ul>","<ul>"), out[m][2].replace("Persons: <ul>","<ul>"), out[m][3].replace("Locations: <ul>","<ul>"), out[m][4].replace("Bills: <ul>","<ul>"), out[m][5].replace("Misc: <ul>","<ul>")]; 
+	}
+	out = newout;
+
+
+	combined = "<table id='combinedstats'>";
+	combined += "<tr class='cstop'><td colspan=5 style='text-align: center'><a style='color:red' href=''>Politicians</a>&nbsp;&nbsp;<a href=''>Organizations</a>&nbsp;&nbsp;<a href=''>People</a>&nbsp;&nbsp;<a href=''>Locations</a>&nbsp;&nbsp;<a href=''>Bills</a>&nbsp;&nbsp;<a href=''>Misc</a>";
+	combined += "<tr class='pol'><td style='font-weight: bold; font-size: 18px; text-align: center;' colspan=4>Top Politicians</td></tr><tr class='header pol'><td>same sent</td><td>same sent or near</td><td>same sent,near or same article</td><td>same article only</td><td>combined metric</td></tr>";
+	combined += "<tr class='pol'><td>"+out['same sentence'][0]+"</td><td>"+out['same and near sentence'][0]+"</td><td>"+out['combined same, near, article'][0]+"</td><td>"+out['same article'][0]+"</td><td>"+out['new metric'][0]+"</td></tr>";
+	combined += "<tr class='org'><td style='font-weight: bold; font-size: 18px; text-align: center;' colspan=4>Top Organizations</td></tr><tr class='header org'><td>same sent</td><td>same sent or near</td><td>same sent,near or same article</td><td>same article only</td><td>combined metric</td></tr>";
+	combined += "<tr class='org'><td>"+out['same sentence'][1]+"</td><td>"+out['same and near sentence'][1]+"</td><td>"+out['combined same, near, article'][1]+"</td><td>"+out['same article'][1]+"</td><td>"+out['new metric'][1]+"</td></tr>";
+	combined += "<tr class='per'><td style='font-weight: bold; font-size: 18px; text-align: center;' colspan=4>Top Persons</td></tr><tr class='header per'><td>same sent</td><td>same sent or near</td><td>same sent,near or same article</td><td>same article only</td><td>combined metric</td></tr>";
+	combined += "<tr class='per'><td>"+out['same sentence'][2]+"</td><td>"+out['same and near sentence'][2]+"</td><td>"+out['combined same, near, article'][2]+"</td><td>"+out['same article'][2]+"</td><td>"+out['new metric'][2]+"</td></tr>";
+	combined += "<tr class='loc'><td style='font-weight: bold; font-size: 18px; text-align: center;' colspan=4>Top Locations</td></tr><tr class='header loc'><td>same sent</td><td>same sent or near</td><td>same sent,near or same article</td><td>same article only</td><td>combined metric</td></tr>";
+	combined += "<tr class='loc'><td>"+out['same sentence'][3]+"</td><td>"+out['same and near sentence'][3]+"</td><td>"+out['combined same, near, article'][3]+"</td><td>"+out['same article'][3]+"</td><td>"+out['new metric'][3]+"</td></tr>";
+	combined += "<tr class='bill'><td style='font-weight: bold; font-size: 18px; text-align: center;' colspan=4>Top Bills</td></tr><tr class='header bill'><td>same sent</td><td>same sent or near</td><td>same sent,near or same article</td><td>same article only</td><td>combined metric</td></tr>";
+	combined += "<tr class='bill'><td>"+out['same sentence'][4]+"</td><td>"+out['same and near sentence'][4]+"</td><td>"+out['combined same, near, article'][4]+"</td><td>"+out['same article'][4]+"</td><td>"+out['new metric'][4]+"</td></tr>";
+	combined += "<tr class='misc'><td style='font-weight: bold; font-size: 18px; text-align: center;' colspan=4>Top Misc</td></tr><tr class='header misc'><td>same sent</td><td>same sent or near</td><td>same sent,near or same article</td><td>same article only</td><td>combined metric</td></tr>";
+	combined += "<tr class='misc'><td>"+out['same sentence'][5]+"</td><td>"+out['same and near sentence'][5]+"</td><td>"+out['combined same, near, article'][5]+"</td><td>"+out['same article'][5]+"</td><td>"+out['new metric'][5]+"</td></tr>";
+	combined += "</table>"; 
+
+	//jQuery("#showstats .results").html(top_objs+"<br>"+colout+top_objs2+"<br>"+colout2+top_objs3+"<br>"+colout3+top_objs4+"<br>"+colout4);
+	jQuery("#showstats .results").html(top_objs+colout+top_objs2+colout2+top_objs3+colout3+top_objs4+colout4+top_objs5+colout5+combined);
+
+	showstat(0);
+
+	//hide other sections in summary by default and resize
+	jQuery("#combinedstats tr").not(':first').hide();
+	jQuery("#combinedstats tr.pol").show();
+
+
+	//HIGHLIGHT INTERESTING RELATIONS!!! 
+	jQuery('.cstop a').click(function(e) {
+		dict = {'Politicians':'pol','Organizations':'org','People':'per','Locations':'loc','Bills':'bill','Misc':'misc'};
+	  	txt = $(e.target).text();
+	  	jQuery("#combinedstats tr").not(':first').hide();
+		jQuery("#combinedstats tr."+dict[txt]).show();
+		jQuery("#combinedstats tr.cstop a").css("color","gray");
+		$(e.target).css("color","red");
+
+		//resize #showstats
+		resheight = jQuery(".results").css("height");
+		jQuery("#showstats").css("height",resheight);
+		e.preventDefault();
+		return false;
+	});
+	
+	jQuery('#combinedstats ul li').click(function(e){
+		//console.log("in highlight lock with highlightlock: "+highlightlock);
+		if(highlightlock == 1){ 
+			highlightlock = 0;
+		}
+		else{ 	
+			highlightlock = 1; 
+			highlightid = e.currentTarget.className;
+			jQuery('#combinedstats ul li.'+highlightid).css('background','#FFFF00');  //lock it
+		}			
+		//console.log(highlightlock
+	});
+
+	jQuery('#combinedstats ul li').hover(function(e){
+		if( highlightlock == 0){
+			highlightid = e.currentTarget.className;
+			jQuery('#combinedstats ul li').css('background','white');
+			jQuery('#combinedstats ul li.'+highlightid).css('background','#C5C5C5');
+		}
+	});
+
+	jQuery('#showstats').draggable().resizable();
+	loadingstats = 1;
+}
+
+
+function get_x_y_for( distaway, sep ){
+	//positioning of nodes precalculated
+	startx = 450 - distaway;
+	ret = {}
+	if(distaway == 150){   
+		dist = [ 300, 320, 375, 450, 525, 580, 600]
+		dist2 = [ 580, 525, 450, 375, 320 ]
+		tot = dist.length;
+		tot2 = tot -2;
+	}
+	else{
+		if(distaway == 245){  //not 255
+			dist = [ startx+2, 225, 260, 310, 375, 450, 530, 590, 640, 674, 450 + distaway-3]
+			dist2 = [ 694, 679, 650, 600, 530, 450, 370, 310, 260, 230, 208 ];
+			tot = dist.length;
+			tot2 = tot;
+		}
+		else
+		{
+			if(distaway == 320){  //not 330
+				dist = [startx+1, 136, 148, 165, 195, 230, 260, 300, 350, 400, 450, 500, 550, 600, 640, 670, 700, 723, 744, 760, 770-1] 
+				dist2 = [769,760,744,723, 700, 670, 640, 600, 550, 500,450, 400,350,300,255,230,190,165,148,137,131] 
+				tot = dist.length;
+				tot2 = tot
+			}
+			else
+			{
+				if(distaway == 372)
+				{
+					dist = [startx+.1, 81, 88, 98, 110, 123, 138, 156, 175, 195, 220, 250, 280, 310, 340, 370, 410, 450, 490,530,560,590,620,650,680,705,725,744,761,776,789,801,811,818,821] 
+					dist2 = [821.5, 818, 811, 801, 789, 776, 761, 744, 725, 705, 680, 650, 620, 590, 560, 530, 490, 450, 410, 370, 340, 310, 280, 250, 220, 195, 175, 156, 138, 123, 110, 98, 88, 81, 79] ; 
+					tot = dist.length;
+					tot2 = tot;
+				}
+				else{
+					tot = Math.round(2 * distaway/sep);
+					dist = []
+					dist2 = []	
+					tot2 = tot;
+				}
+			}
+		}
+	}
+	
+	for(i =0; i < tot; i++){ 		
+		xpos = (450 + distaway) - ((2 * distaway) - (i * sep));
+		if(i in dist){ xpos = dist[i];}
+		ypos = -1 * ( Math.round( Math.sqrt(Math.pow(distaway,2) - Math.pow(450 - xpos,2))) - 380);
+		ret[i] = {'x':xpos,'y':ypos};
+	}
+
+	for(i = 0; i < tot2; i++){
+		xpos = 450 + distaway - (i * sep);
+		if(i in dist2){xpos = dist2[i];}
+		yup = -1 * ( Math.round( Math.sqrt(Math.pow(distaway,2) - Math.pow(450 - xpos,2))) - 380);
+		ypos = 380 + (380 - yup)
+		index = i + tot
+		ret[index] = {'x':xpos,'y':ypos};  
+	}
+	return ret
+}
+
+
+
+var desc = "";
+
+function show(source){
+	if(source == "ALL"){
+		jQuery(".info ul li").show();
+		jQuery("#infoheader a").css("text-decoration","none");
+		jQuery("#sourceALL").css("text-decoration","underline");
+	}
+	else{
+		jQuery(".info ul li").hide();
+		jQuery(".info ul li."+source).show();
+		jQuery("#infoheader a").css("text-decoration","none");
+		jQuery("#source"+source).css("text-decoration","underline");
+	}
+}
+
+function showentity(source){
+	if(source == "ALL"){
+		jQuery(".info table.mostassoc tr").show();
+		jQuery("#assocheader a").css("text-decoration","none");
+		jQuery("#entitytypeALL").css("text-decoration","underline");
+	}
+	else{
+		jQuery(".info table.mostassoc tr").hide();
+		jQuery(".info table.mostassoc tr."+source.toLowerCase()).show();
+		jQuery("#assocheader a").css("text-decoration","none");
+		jQuery("#entitytype"+source.toLowerCase()).css("text-decoration","underline");
+	}
+	jQuery(".info table thead tr").show();
+}
+
+
+function add_source_counts(mongourls){
+	//construct source breakdown
+	//sources = {'HC':0,'DMN':0,'TXR':0,'AAS':0, 'TOB':0};   
+
+	for(i = 0; i < Object.keys(mongourls).length; i++)
+	{
+		curl = mongourls[Object.keys(mongourls)[i]]['url'];
+   		//sources_json.forEach(function(d){ sources_input_boxes += '<input type="checkbox" name="'+d.sourcesmall+'" checked>'+d.sourcelong+' (<span id="'+d.sourcesmall+'num"></span>)<br>';})
+		for(surl=0; surl < sources_json.length; surl++)
+		{
+			if(curl.indexOf(sources_json[surl]["url"]) > -1 ){
+				found = Object.keys(sources)[surl];
+				sources[found] += 1;
+			}
+		}
+	}
+
+	//now update spans 
+	for(s = 0; s < Object.keys(sources).length; s++)
+	{
+		sp = "#"+Object.keys(sources)[s] + "num";
+		jQuery(sp).html(sources[Object.keys(sources)[s]]);
+	}
+}
+
+
+
+var graph2;
+var newnodes = [];
+var ent_to_link_index = {};
+var nnn = "";   //solely for debugging
+var centerrightimage = "";
+
+function clicknode(d){
+   if(isFinite(d)){  d = j.elements.nodes[d]; }	
+
+   jQuery(".intro").hide();
+   jQuery(".buttons").hide();
+   jQuery(".controls").show();
+
+   if(d['full_name'] == center_node){
+        output = "";
+	output += '<div style="position:absolute; top:0%; left:10%; margin-top:40px;"><span style="font-weight:bold">'+center_node.toUpperCase()+'</span></div>';
+	
+	//in order to get Center Image correct, the json node must have a "photo_url" set.  
+	cna = center_node_attrs[center_node];
+	centerrightimage = cna["image"]
+	cna["info1"] = cna["info1"].replace(",","<br/>");
+	if( cna["info1"].indexOf("Democrat") > -1){
+		output +='<div style="position:absolute; top:0%; left:7%; margin-top:60px;"><span style="font-weight:bold; color:rgba(31, 119, 180, .8)">'+cna["info1"]+'</span></div>'
+	}
+	else{
+		output +='<div style="position:absolute; top:0%; left:7%; margin-top:60px;"><span style="font-weight:bold; color:rgba(180,31,45,.8)">'+cna["info1"]+'</span></div>'
+	}
+	output +='<div style="position:absolute; top:0%; left:10%; margin-top:80px; "><span style="font-weight:bold;">'+cna["info2"]+'</span></div>'
+	output +='<div style="position:absolute; top:0%; left:62%;"><svg width="140" height="140"> <defs> <pattern id="image" x="10" y="0" patternUnits="userSpaceOnUse" width="125" height="175"> <image x="0" y="0" width="125" height="175" xlink:href="'+cna["image"]+'"></image> </pattern> </defs> <circle id="top" cx="71" cy="71" r="60" fill="url(#image)" style="stroke:black; stroke-width:2px"/> </svg></div>';
+	output += "<div style='margin-top:140px; font-style:italic; font-size:13px;'><p>"+cna['snippet']+"</p></div>";
+	
+	
+	if(cna['showmap'] == 1){
+		if( cna["info1"].indexOf("Federal") > -1){
+			//add federal govtrack.us map
+			output += '<div id="container" style="width:430px;"><p style="text-align:right; margin:0px 20px 5px"><a style="color:rgba(31, 119, 180, .8); text-decoration:none" href="javascript:togglemap();">hide map</a></p><div><iframe width="430" height="220" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="http://www.govtrack.us/congress/members/embed/mapframe?state=tx&district='+cna["info2"].split(": ")[1]+'&bounds=-99.5,33,-97.5,29"></iframe></div></div>';
+		}
+		else
+		{
+			//add maplet div
+			output += '<div id="container" style="width:430px;"><p style="text-align:right; margin:0px 20px 5px"><a style="color:rgba(31, 119, 180, .8); text-decoration:none" href="javascript:togglemap();">hide map</a><div class="mapbox leaflet-container leaflet-fade-anim" id="mapbox-tx" style="width: 100%; height: 150px; position: relative;"></div></div>';
+		}
+
+	}
+	output += "<a style='color:rgba(31, 119, 180, .8); text-decoration:none' href='javascript: showstats();'>CLICK HERE to show stats summary popup</a>&nbsp;&nbsp;<br/><span style='font-style:italic; font-size:13px;'>Topic Frequency And Extended Network Analysis Coming Soon!</span><br/><br/>Most Associated with: <div id='assocheader'>[&nbsp;&nbsp;";
+	
+	entitycolors = {"politician":"rgba(31, 119, 180, .8)","PERSON":"rgba(180,31,45,.8)","ORGANIZATION":"rgba(180,92,31,.8)","MISC":"rgba(31,180,92,.8)","BILL":"purple","LOCATION":"gray"};
+	for(sc=0; sc < Object.keys(entitycolors).length; sc++){
+		ff = Object.keys(entitycolors)[sc];
+		ffshow = ff.toUpperCase();
+		if(ffshow == "ORGANIZATION"){ ffshow = "ORG"; }
+		if(ffshow == "LOCATION"){ ffshow = "LOC"; }
+		if(sc == Object.keys(entitycolors).length - 1){
+			output += "<a id='entitytype"+ff+"'href='javascript: showentity(\""+ff+"\");' style='color:"+entitycolors[ff]+";'>"+ffshow+"</a>&nbsp;&nbsp;|&nbsp;&nbsp;";
+			output += "<a id='entitytypeALL' href='javascript: showentity(\"ALL\");' style='color:black'>ALL</a>&nbsp;&nbsp;]</div>";
+		}
+		else{
+			output += "<a id='entitytype"+ff+"' href='javascript: showentity(\""+ff+"\");' style='color:"+entitycolors[ff]+";'>"+ffshow+"</a>&nbsp;&nbsp;|&nbsp;&nbsp;";
+		}
+		
+	}
+
+	output += "<table class='mostassoc' border='0'><thead style='font-size:14px;'><th>Name</th><th>Occurrences</th><th>Type</th></thead><tbody>";
+	if(dateadd == "" && exclude == "NONE"){
+		j.elements.nodes.forEach(function(n){ 
+			thirdcol = n['entity_type'].toLowerCase();
+			if(thirdcol == "politician"){ 
+				if('party' in n){
+					if( 'position' in n){
+						nnn = n;
+						if( typeof(n['position']) == 'string' ){ thirdcol = n['party']+', '+n['position'];} 
+						else{ thirdcol = n['party']+', '+n['position'].join(', '); }
+					}else{
+						if('chamber' in n){
+							if( n['chamber'] == null){ n['chamber'] = ""; }
+							thirdcol = n['party']+" Representative in "+ n['chamber'] + " chamber of Congress";
+						}
+						else{ thirdcol = n['party'] }
+					}
+				}else{  
+					if( 'position' in n){ thirdcol = n['position'].join(', '); }
+					else{ thirdcol = "politician" }
+				}
+			}
+			output += "<tr class='"+n['entity_type'].toLowerCase()+"'><td width='40%'><a style='font-size:14px; font-weight:normal; color:"+entitycolors[n['entity_type']]+"' href='javascript: clicknode("+n['index']+");'>"+n['full_name']+"</a></td><td style='font-size:14px; font-weight:normal;'>"+num_links[n['index']]+"</td><td style='font-size:12px; font-weight:normal;'>"+thirdcol+"</td></tr>"; })
+	}
+	else{
+		    acounts = [];
+		    newnodes.forEach(function(d){ acounts.push([ d, num_links[d]]); });
+		    ans = acounts.sort(function(a, b) {return b[1] - a[1]});
+		    aks = [] 
+		    ans.forEach(function(d){ aks.push(d[0]); });
+		    //now aks has all nodes ordered (even ones not displaying, but that show up in counts on controls intro page)
+
+		    aks.forEach(function(n){ 
+			thirdcol = j.elements.nodes[n]['entity_type'].toLowerCase();
+			if(thirdcol == "politician"){ 
+				if('party' in j.elements.nodes[n]){
+					if('position' in j.elements.nodes[n]){ 
+						if( typeof(j.elements.nodes[n]['position']) == 'object'){ thirdcol = j.elements.nodes[n]['party']+', '+ j.elements.nodes[n]['position'].join(', '); }
+						else{ thirdcol = j.elements.nodes[n]['party']+', '+ j.elements.nodes[n]['position']; }
+					}
+					else{
+						if('chamber' in j.elements.nodes[n]){
+							if( j.elements.nodes[n]['chamber'] == null){ j.elements.nodes[n]['chamber'] = ""; }
+                                                        thirdcol = j.elements.nodes[n]['party']+' Representative in '+j.elements.nodes[n]['chamber']+' chamber of Congress';
+                                                }
+                                                else{ thirdcol = j.elements.nodes[n]['party'] }
+					}
+				}else{ 
+					if('position' in j.elements.nodes[n]){ thirdcol = j.elements.nodes[n]['position'].join(', '); }
+					else{ thirdcol = "politician" }
+				}
+			}
+			output += "<tr class='"+j.elements.nodes[n]['entity_type'].toLowerCase()+"'><td width='40%'><a style='font-size:14px; font-weight:normal; color:"+entitycolors[j.elements.nodes[n]['entity_type']]+"' href='javascript: clicknode("+j.elements.nodes[n]['index']+");'>"+j.elements.nodes[n]['full_name']+"</a></td><td style='font-size:14px; font-weight:normal;'>"+num_links[j.elements.nodes[n]['index']]+"</td><td style='font-size:12px; font-weight:normal;'>"+thirdcol+"</td></tr>"; })
+	}	
+	output += "</tbody></table>";
+
+	document.querySelector(".info").style.display = "block";
+	document.querySelector(".info").innerHTML = output;
+	jQuery("#entitytypeALL").css("text-decoration","underline");
+	
+	var table = document.getElementsByClassName("mostassoc")[0];
+	makeSortable(table);
+
+	if(cna['showmap'] == 1){
+		//add maplet js TODO:expand to others
+		if( cna["info2"].indexOf("District") > -1 ){
+			if( cna["info1"].indexOf("Representative") > -1){ ch = "lower"; }else{ ch = "upper"; }
+			addMap(ch,cna["info2"].split(": ")[1]);
+		}
+		else{ addMap("lower",147); }
+	}
+   }
+   else{
+	tid = name_to_index[d['full_name']];
+	found = 0;
+	listarticles = "<ul>";
+
+	//console.log("Looking for "+d['full_name']+" ("+tid+")Articles..");
+	for(i=0; i < j.elements.links.length; i++)
+	{
+	   if(dateadd != ""){ 
+		//check = (j.elements.links[i]['target']['index'] == tid);
+		check = (j.elements.links[i]['target'] == tid);
+	   }
+	   else{ check = (j.elements.links[i]['target'] == tid); }
+
+	   if(check == true && found == 0)
+	   {
+		var jj = j.elements.links[i];
+		//aggregate based on url
+		jurls = {}
+		jj['inst'].forEach(function(l){ 
+			if(l['mongoid'] in jurls){ jurls[l['mongoid']]['inst'].push(l); }
+			else{ 
+				if(center_node != "Garnet Coleman"){
+					//this is fixed in backend and shouldn't be reached.. mongourls needs to have correct integer indexes and not internal mongoids	
+					jurls[l['mongoid']] = {'date': '2008-02-04', inst:[l]}; 
+				}
+				else{
+					jurls[l['mongoid']] = {'date': mongourls[l['mongoid']].date, inst:[l]}; 
+				}
+			} 
+		});
+
+		var ll = [];
+		Object.keys(jurls).forEach(function(d){ ll.push(jurls[d]); })
+		ll = ll.sort(function(a,b) { return a['date'] > b['date']?-1:1; });
+		
+		//reset sources counters
+		Object.keys(sources).forEach(function(d){ sources[d] = 0; });
+
+		for(ji = 0; ji < ll.length; ji++)
+		{
+			mongoid = ll[ji]['inst'][0].mongoid;
+			//just skip articles for now, until we correct this in the generation of the json file itself in python code
+			if(!(mongoid in mongourls)){ continue; }
+			curarticle = mongourls[mongoid];	
+			cururl = curarticle['url'];
+			curdate = curarticle['date'];
+
+			//find newssource and add to counter
+			for(surl=0; surl < sources_json.length; surl++)
+			{
+				if(cururl.indexOf(sources_json[surl]["url"]) > -1 ){
+					found = Object.keys(sources)[surl];
+					sources[found] += 1;
+				}
+			}
+	
+			//get title
+			if(found == 'HC'){
+				ps = cururl.split("/");
+				ps1 = ps[ps.length -1];
+				ps2 = ps1.split(".php")[0].split("-");
+				ps2.pop();
+				ps3 = ps2.join(" ");
+				niceurl = ps3.charAt(0).toUpperCase() + ps3.slice(1);
+			}
+			else{
+				if(found == "AAS"){ 
+					ps = cururl.split("/");
+					ps1 = ps[ps.length -3];
+					ps2 = ps1.split("-").join(" ");
+					niceurl = ps2.charAt(0).toUpperCase() + ps2.slice(1);
+				}
+				else
+				{
+					ps = cururl.split("/");
+					ps1 = ps[ps.length -1];
+					ps2 = ps1.split("-").join(" ");
+					niceurl = ps2.charAt(0).toUpperCase() + ps2.slice(1);
+					
+					if(ps1 == ""){
+						ps1 = ps[ps.length -2];
+						ps2 = ps1.split("-").join(" ");
+						niceurl = ps2.charAt(0).toUpperCase() + ps2.slice(1);
+					}
+				}
+
+				if(found == "DMN"){ curdate = curdate.split("T")[0]; }
+				if(found == "TXR"){ cururl = "http://"+cururl; }
+			}
+
+			//get source name/color
+			add = '&nbsp;&nbsp;<span style="font-size:14px; font-weight:normal; color:gray">'+sourcenames[found]+'</span>';
+
+			localfind = "<li class='"+found+"'><a href='"+cururl+"' target='_blank' style='text-decoration:none; color:"+sourcecolors[found]+"'>"+niceurl+"</a><br><span style='font-size:13px; color:gray'>"+curdate.split(" ")[0]+"&nbsp;&nbsp;|"+add+"</span><br>";
+
+			for(ai = 0; ai < ll[ji]['inst'].length; ai++){
+				//highlight entities
+				if( typeof(textsnippets[ll[ji]['inst'][ai]['textid']]) == 'undefined'){ localfind += "<i>same article</i><br/><br/>"; }
+				else{
+					textsn = highlight_text(textsnippets[ll[ji]['inst'][ai]['textid']],center_node,d['full_name']);
+					localfind += "<i>"+textsn.substr(0,1600)+"</i><br/><br/>";
+				}
+			}
+			localfind += "</li>";
+			listarticles += localfind;
+		}
+	   }
+	}
+	
+	output ="";
+	var sourcetotal = 0;
+	for(sc=0; sc < Object.keys(sources).length; sc++){
+		ff = Object.keys(sources)[sc];
+		if(sc == Object.keys(sources).length - 1){
+			sourcetotal += parseInt(sources[ff]);
+			output += "<a id='source"+ff+"'href='javascript: show(\""+ff+"\");' style='text-decoration:none;font-size:12px; font-weight:normal; color:"+sourcecolors[ff]+";'>"+ff+": "+sources[ff]+"</a>&nbsp;&nbsp;|&nbsp;&nbsp;";
+			output += "<a id='sourceALL' href='javascript: show(\"ALL\");' style='font-size:12px; font-weight:bold; color:black'>ALL: "+sourcetotal+"</a>&nbsp;&nbsp;)</div>";
+		}
+		else{
+			output += "<a id='source"+ff+"' href='javascript: show(\""+ff+"\");' style='text-decoration:none;font-size:12px; font-weight:normal; color:"+sourcecolors[ff]+";'>"+ff+": "+sources[ff]+"</a>&nbsp;&nbsp;|&nbsp;&nbsp;";
+			sourcetotal += parseInt(sources[ff]);
+		}
+	}
+
+	output = "<div id='infoheader'> Relationship between <b>"+center_node+"</b> and <b>"+d['full_name']+"</b><br>&nbsp;&nbsp;&nbsp;&nbsp;"+num_links[name_to_index[d['full_name']]]+" co-occurances found in "+sourcetotal+" articles.<br/>(&nbsp;&nbsp;"+output;
+
+
+	//add photo if any
+	pictureurl = $("#img"+tid+" image").attr("href");
+	if(pictureurl == undefined){ 
+		pictureurl = "images/bluedot.png"; 
+		output +='<div id="wikiphoto" style="float:left;"><svg width="120" height="100"> <defs> <pattern id="image" x="10" y="0" patternUnits="userSpaceOnUse" width="120" height="112"> <image x="-5" y="0" width="120" height="112" xlink:href="'+pictureurl+'"></image> </pattern> </defs> <circle id="top" cx="51" cy="51" r="40" fill="url(#image)" style="stroke:black; stroke-width:2px"/> </svg></div>';
+	}
+	else{
+		output +='<div id="wikiphoto" style="float:left;"><svg width="120" height="100"> <defs> <pattern id="image" x="10" y="0" patternUnits="userSpaceOnUse" width="80" height="112"> <image x="0" y="0" width="80" height="112" xlink:href="'+pictureurl+'"></image> </pattern> </defs> <circle id="top" cx="51" cy="51" r="40" fill="url(#image)" style="stroke:black; stroke-width:2px"/> </svg></div>';
+	}
+
+	output += "<div id='wiki'></div><div style='clear:both'></div>";
+	addmap = 0;
+	if( 'district' in d && 'chamber' in d)
+		if( d['district'] != null && d['chamber'] != null){
+		{	
+			//add maplet div
+			output += '<div id="container" style="width:440px;"><p style="text-align:right; margin:0px 20px 5px"><a style="color:rgba(31, 119, 180, .8); text-decoration:none" href="javascript:togglemap();">hide map</a></p><div class="mapbox leaflet-container leaflet-fade-anim" id="mapbox-tx" style="width: 100%; height: 200px; position: relative;"></div></div>';
+			addmap = 1;
+		}
+	}
+
+	output += listarticles + "</ul>";
+	document.querySelector(".info").style.display = "block";
+	document.querySelector(".info").innerHTML = output;
+
+	//get wiki stuff
+	var lang="en";
+	var page=d["full_name"];
+
+	var url = d['wiki_stub'];
+	if(typeof(url) != "undefined" && url != "none"){
+		//console.log(d);
+		//console.log(url);
+		ps =  d['wiki_stub'].split("/");
+		page = ps[ps.length -1 ];
+	}
+
+	if( 'ballot_desc' in d){
+		$("#wiki").html("<p style='margin:8px 0 2px;'><span style='font-size:13px; font-style:italic'>"+d['ballot_desc']+"&nbsp;&nbsp;<a href='"+d['ballot_url']+"'>source url</a></span></p>");
+	}
+	else{
+		url = "http://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro=&explaintext=&titles="+page;
+		$.ajax({type:'GET',url:url,data:{},async:true,contentType:'application/json; charset=utf-8',dataType:'jsonp',
+			success:function(response){
+				//console.log(response);
+				wikiurl = "http://en.wikipedia.org/wiki/"+page;
+				desc = response;
+				d = response.query.pages;
+				t = d[Object.keys(d)[0]].extract.split("\n")[0];
+				t = t.substr(0,320)+ " &hellip;";
+				$("#wiki").html("<p style='margin:8px 0 2px;'><span style='font-size:13px; font-style:italic'>"+t+"&nbsp;&nbsp;<a href='"+wikiurl+"'>wiki</a></span></p>");
+			}
+			})
+	}
+
+	if( addmap == 1)
+	{
+		addMap(d['chamber'],d['district']);
+	}
+   }
+}
+
+function sortTable(table, col, reverse) {
+    var tb = table.tBodies[0], // use `<tbody>` to ignore `<thead>` and `<tfoot>` rows
+        tr = Array.prototype.slice.call(tb.rows, 0), // put rows into array
+        i;
+    reverse = -((+reverse) || -1);
+  
+    if(col == 1){
+	//occurrences column is numeric so sort accordingly and not by text comparison
+        tr = tr.sort(function(a,b){ return reverse * (parseInt(a.cells[col].textContent) - parseInt(b.cells[col].textContent)); });
+    }
+    else{
+	    tr = tr.sort(function (a, b) { // sort rows
+		return reverse // `-1 *` if want opposite order
+		    * (a.cells[col].textContent.trim() // using `.textContent.trim()` for test
+			.localeCompare(b.cells[col].textContent.trim())
+		       );
+	    });
+    }
+    for(i = 0; i < tr.length; ++i) tb.appendChild(tr[i]); // append each row in order
+}
+
+function makeSortable(table) {
+    var th = table.tHead, i;
+    th && (th = th.rows[0]) && (th = th.cells);
+    if (th) i = th.length;
+    else return; // if no `<thead>` then do nothing
+    while (--i >= 0) (function (i) {
+        var dir = 1;
+        th[i].addEventListener('click', function () {sortTable(table, i, (dir = 1 - dir))});
+    }(i));
+}
+
+
+function sortUrlsTable(table, col, reverse) {
+    console.log("sorturlstable",col);
+    var tb = table.tBodies[0], // use `<tbody>` to ignore `<thead>` and `<tfoot>` rows
+        tr = Array.prototype.slice.call(tb.rows, 0), // put rows into array
+        i;
+    reverse = -((+reverse) || -1);
+  
+    if(col == 2 || col == 3 || col == 4){
+	//TODO handle how to sort dates properly
+	//occurrences column is numeric so sort accordingly and not by text comparison
+	console.log('numeric');
+        tr = tr.sort(function(a,b){ return reverse * (parseInt(a.cells[col].textContent) - parseInt(b.cells[col].textContent)); });
+    }
+    else{
+	if(col == 1){
+		console.log('text');
+        	tr = tr.sort(function(a,b){ 
+			adata = Date.parse(a.cells[col].textContent);
+			bdata = Date.parse(b.cells[col].textContent);
+			return reverse * (adata - bdata); 
+		});
+	    	
+	}
+	else
+	{
+	   console.log('other');
+	    tr = tr.sort(function (a, b) { // sort rows
+		return reverse // `-1 *` if want opposite order
+		    * (a.cells[col].textContent.trim() // using `.textContent.trim()` for test
+			.localeCompare(b.cells[col].textContent.trim())
+		       );
+	    });
+	}
+    }
+    for(i = 0; i < tr.length; ++i) tb.appendChild(tr[i]); // append each row in order
+}
+
+function makeUrlsSortable(table) {
+    console.log('make urls sortable',table);
+    var th = table.tHead, i;
+    th && (th = th.rows[0]) && (th = th.cells);
+    if (th) i = th.length;
+    else return; // if no `<thead>` then do nothing
+
+    console.log("add event listeners",i);
+    while (--i >= 0) (function (i) {
+        var dir = 1;
+        th[i].addEventListener('click', function () {sortUrlsTable(table, i, (dir = 1 - dir))});
+    }(i));
+}
+
+function addMap(chamber,did){
+    var map_url = 'http://a.tiles.mapbox.com/v3/sunlight.map-1c9njt8o,sunlight.txlower.jsonp';
+    var map = new L.Map('mapbox-tx',
+      { attributionControl:true, dragging:false, touchZoom: false,
+	scrollWheelZoom: false, doubleClickZoom: false, boxZoom: false,
+	keyboard: false, zoomControl: false, attributionControl: false
+    });
+    var wax_cb = function(tilejson) {
+	var layer = new wax.leaf.connector(tilejson);
+	map.addLayer(layer);
+
+	//TODO MUCH FASTER TO JUST DOWNLOAD ALL LOCALLY FIRST AS OPPOSED TO USING PROXY
+	if(chamber == "lower"){ chm = "l";}else{ chm = "u";}
+        var url = "http://openstates.org/get_district/ocd-division/country:us/state:tx/sld"+chm+":"+did+"/";
+	if( did != 147){
+		$.ajax({	
+		   type: "GET",
+		   url: "mapproxy.php?did="+did+"&chamber="+chm,
+		   dataType: "json",
+		   success: function(payload){
+			map.fitBounds(payload.bbox);
+			new L.Marker([payload.region.center_lat, payload.region.center_lon]).addTo(map);
+		   },
+		   error : function(httpReq,status,exception){
+        		alert(status+" "+exception);
+    		   }});
+	}
+	else{
+		console.log("failed load:  did= "+did+" and chm= "+chm);
+		$.getJSON('maplets/sldl147.json', function(payload) {
+			map.fitBounds(payload.bbox);
+			new L.Marker([payload.region.center_lat, payload.region.center_lon]).addTo(map);
+		});
+	}
+    }
+    wax.tilejson(map_url, wax_cb);
+}
+
+function togglemap(){
+	if(jQuery("#container a").text() == "hide map"){
+		jQuery("#container div").hide();
+		jQuery("#container a").text("show map");
+	}
+	else{
+		jQuery("#container div").show();
+		jQuery("#container a").text("hide map");
+	}
+}
+
+function get_most_sentences(center_name,matchtype){
+	//instead of using j, use graph2
+
+	nodetypes = graph2.elements.nodes.map(function(d){ 
+			if( d['full_name']  != center_name ){ 
+				curid = name_to_index[d['full_name']];  
+				clinks = graph2.elements.links.filter(function(e){ return e['target'] == curid }); 
+				tctypes = {}; 
+				if( clinks.length > 0){
+					clinks[0]['inst'].forEach(function(f){ if(f['type'] in tctypes){tctypes[f['type']].push(f);}else{ tctypes[f['type']] = [f];}});
+				}
+				return tctypes; 
+			}
+			else { return {}; }
+		})
+	if(matchtype == "same sentence"){ node_same = nodetypes.map(function(m){ if('same sentence' in m){ return m['same sentence'].length }else{ return 0; }}); }
+	if(matchtype == "same article"){ node_same = nodetypes.map(function(m){ if('same article' in m){ return m['same article'].length }else{ return 0; }}); }
+	if(matchtype == "same and near sentence"){ node_same = nodetypes.map(function(m){ 
+			if('same sentence' in m && 'near' in m){	return m['same sentence'].length + m['near'].length; }
+			else{
+				if('same sentence' in m){	return m['same sentence'].length ; }
+				else{
+					if('near' in m){	return m['near'].length; }
+					else{ return 0; }
+				}
+			}
+		}); 
+	}
+	if(matchtype == "combined same, near, article"){ node_same = nodetypes.map(function(m){ 
+			if ('same sentence' in m && 'near' in m && 'same article' in m){ return m['same sentence'].length + m['near'].length + m['same article'].length;}
+			else{ 
+				if('same article' in m){
+					if('same article' in m && 'near' in m){	return m['same article'].length + m['near'].length; }
+					else{
+						if('same sentence' in m && 'same article' in m){	return m['same sentence'].length + m['same article'].length; }
+						else{ return m['same article'].length; }
+					}
+				}
+				else{
+					if('same sentence' in m && 'near' in m){	return m['same sentence'].length + m['near'].length; }
+					else{
+						if('same sentence' in m){	return m['same sentence'].length ; }
+						else{
+							if('near' in m){	return m['near'].length; }
+							else{ return 0; }
+						}
+					}
+				}
+			}
+		}); 
+	}
+
+	polmaxind = -1; polmaxval = -1; permaxind = -1; permaxval = -1; locmaxind = -1; locmaxval = -1; 
+	orgmaxind = -1; orgmaxval = -1; billmaxind = -1; billmaxval = -1; miscmaxind = -1; miscmaxval = -1; 
+
+	polobj = {}; perobj = {}; locobj = {}; orgobj = {}; billobj = {}; miscobj = {};
+	Object.keys(node_same).forEach(function(d){ 
+		curtype = graph2.elements.nodes[d]['entity_type'];
+		if( curtype == 'politician') { if(node_same[d] > polmaxval ){ polmaxind = d; polmaxval = node_same[d]; } if(node_same[d] > 0){polobj[d] = node_same[d];} }
+		if( curtype == 'ORGANIZATION') { if(node_same[d] > orgmaxval ){ orgmaxind = d; orgmaxval = node_same[d]; } if(node_same[d] > 0){orgobj[d] = node_same[d];}}
+		if( curtype == 'PERSON') { if(node_same[d] > permaxval ){ permaxind = d; permaxval = node_same[d]; } if(node_same[d] > 0){perobj[d] = node_same[d];}}
+		if( curtype == 'LOCATION') { if(node_same[d] > locmaxval ){ locmaxind = d; locmaxval = node_same[d]; } if(node_same[d] > 0){locobj[d] = node_same[d];}}
+		if( curtype == 'BILL') { if(node_same[d] > billmaxval ){ billmaxind = d; billmaxval = node_same[d]; } if(node_same[d] > 0){billobj[d] = node_same[d];}}
+		if( curtype == 'MISC') { if(node_same[d] > miscmaxval ){ miscmaxind = d; miscmaxval = node_same[d]; } if(node_same[d] > 0){miscobj[d] = node_same[d];}}
+
+	});
+
+	if(matchtype == "same sentence"){ output = "<table id='same_sent_results'><tr><td style='width:30%'><ul>";}
+	if(matchtype == "same article"){ output = "<table id='same_article_results'><tr><td style='width:30%'><ul>";}
+	if(matchtype == "same and near sentence"){ output = "<table id='same_sent_and_near_results'><tr><td style='width:30%'><ul>";}
+	if(matchtype == "combined same, near, article"){ output = "<table id='same_combined_results'><tr><td style='width:30%'><ul>";}
+	output += "<li><p style='color:rgba(31, 119, 180, .8); font-size:18px;'>"+center_name+" has most<br/>"+matchtype+" occurrences with</p></li>";
+	output += "<li>Politician <a href='javascript: clicknode("+polmaxind+");'>"+graph2.elements.nodes[polmaxind]['full_name'] + "</a> - ("+polmaxval+") </li>";
+	output += "<li>Person  <a href='javascript: clicknode("+permaxind+");'>"+graph2.elements.nodes[permaxind]['full_name'] + "</a> - ("+ permaxval+") </li>";
+	output += "<li>Organization <a href='javascript: clicknode("+orgmaxind+");'>"+graph2.elements.nodes[orgmaxind]['full_name'] + "</a> - ("+orgmaxval+")</li>";
+	output += "<li>Location <a href='javascript: clicknode("+locmaxind+");'>"+graph2.elements.nodes[locmaxind]['full_name'] + "</a> - ("+locmaxval+")</li>";
+	if(billmaxind > -1 ){output += "<li>Bill <a href='javascript: clicknode("+billmaxind+");'>"+graph2.elements.nodes[billmaxind]['full_name'] + "</a> - ("+billmaxval+")</li>"; }
+	output += "<li>Misc <a href='javascript: clicknode("+miscmaxind+");'>"+graph2.elements.nodes[miscmaxind]['full_name'] + "</a> - ("+miscmaxval+")</li></ul>";
+	if(matchtype == "same sentence"){ n = 0;}
+	if(matchtype == "same article"){ n = 3;}
+	if(matchtype == "same and near sentence"){ n = 1;}
+	if(matchtype == "combined same, near, article"){ n = 2;}
+	output += '</td><td style="width:70%; height:250px; padding-left:10px;"><canvas id="myChart'+n+'"></canvas></td></tr>';
+
+	return [output ,polobj,orgobj,perobj,locobj,billobj,miscobj];
+}
+
+/* ----------------------------------------------------------------------------D3 ---------------------------------------------------*/
+/* ----------------------------------------------------------------------------D3 ---------------------------------------------------*/
+/* ----------------------------------------------------------------------------D3 ---------------------------------------------------*/
+//START HERE
+
+
+
+jQuery("body").append("<div id='loading' style='position:absolute;top:5px;width:60%;text-align:center;'><img style='width:80px' src='images/loading.gif'/></div>");
+jQuery("#loading").append("<p style='font-size:12px;'>loading config file and meta data for "+center_node+"</p>");
+jQuery("#loading").append("<p style='font-size:12px;'>loading network .. be patient</p>");
+
+var inactive_pols;
+d3.json("js/config.json", function(error, stfile) {
+	search_terms = stfile;
+	st = search_terms[center_node];
+	smallnet_jsonfile= st[0];
+	small_urls_file = st[1];
+	small_text_snippets_file = st[2];
+
+	jQuery.get("js/inactive-politicians.json ", function(data){ 
+		inactive_pols = data; 
+	});
+
+	d3.json("js/configdesc.json", function(error, cd){
+		center_node_attrs = cd;	
+		handlesmallnet(smallnet_jsonfile,small_urls_file,small_text_snippets_file); 
+	});  
+});  
+
+			
+//currently bug testing here !
+var mmurls;
+function handlesmallnet(smallnet_jsonfile,smll_urls_file,small_text_snippets_file){
+	d3.json("data/"+smallnet_jsonfile, function(error, graph) {
+	  graph2 = graph;
+	  j = clone(graph);
+	  
+	   jQuery("#loading").append("<p style='font-size:12px;'>network with "+graph.elements.nodes.length+" nodes and "+graph.elements.links.length+" links loaded!</p>");
+	   jQuery("#loading").append("<p style='font-size:12px;'>loading associated article urls, and filtering if necessary</p>");
+
+	  
+	  //IF WE ACTUALL GET A DATE THING WE NEED TO FILTER OUT DATES (articles/nodes) THAT DON'T FALL IN BETWEEN THESE!
+	  if(dateadd != "" || exclude != "NONE"){
+	     d3.json("data/"+small_urls_file, function(error, murls) {
+		mongourls = murls;
+		mmurls = murls;
+		console.log("At beginning mongourls is of length: "+ Object.keys(mongourls).length);
+
+		if(exclude != "NONE"){
+			//0. Don't include articles which are in exclude
+			console.log("HERE//");
+			sourcedict = {'HC':'chron.com','DMN':'dallasnews.com','TXR':'texastribune.org','AAS':'statesman.com','NYT':'nytimes.com','TOB':'texasobserver.org'};   
+			excludedict = []
+			ps = exclude.split(",")
+			ps.forEach(function(s){ excludedict.push(sourcedict[s]); })
+		
+			newurls = {}	
+			for(i = 0; i < Object.keys(mongourls).length; i++)
+			{
+				curl = mongourls[Object.keys(mongourls)[i]]['url'];
+				found = 0;
+				for(surl=0; surl < excludedict.length; surl++)
+				{
+					if(curl.indexOf(excludedict[surl]) > -1 ){
+						found = 1;
+					}
+				}
+				if( found == 0){ 
+					mid = Object.keys(mongourls)[i];
+					//newurls[i] = mongourls[Object.keys(mongourls)[i]]; 
+					newurls[mid] = mongourls[Object.keys(mongourls)[i]]; 
+				}
+			}
+			mongourls = newurls;
+			console.log("After filter sources mongourls is of length: "+ Object.keys(mongourls).length);
+
+		}
+
+		if(dateadd != ""){
+			//1. Filter this to only include urls inbetween 
+			newurls = {}
+			Object.keys(mongourls).forEach(function(d){ thisd = mongourls[d]['date'].split("T")[0]; if(thisd >= from_date && thisd <= to_date){ newurls[d] = mongourls[d];}});
+			mongourls = newurls
+			//console.log("After filter date mongourls is of length: "+ Object.keys(mongourls).length);
+		}
+		
+
+	        jQuery("#loading").append("<p style='font-size:12px;'>pre-loading text snippets</p>");
+		d3.json("data/"+small_text_snippets_file , function(error, smt) {
+			//2. remove links which have textsnippets which are in urls that don't exist anymore  (this is going to be expensive!!!!)
+			textsnippets = smt
+		        //console.log("text snippets loaded for filtered view.",Object.keys(textsnippets).length);
+
+			//with no date filter there are 6796 links
+			nt = 0;
+			j.elements.links.forEach(function(d){ 
+				//console.log(d);
+				filtered = d['inst'].filter(function(l){
+					//console.log(l["mongoid"]);
+					if(l["mongoid"] in mongourls){ 
+						//console.log("TRUE",l);
+						return true; 
+					}
+					else{ 
+						//console.log("FALSE",l);
+						return false;
+					}
+				});
+				nt += filtered.length;
+				d['inst'] = filtered;
+			});
+			
+			newlinks = j.elements.links.filter(function(li){ 
+				if(li["inst"].length > 0){return true;}
+				else{ return false;}
+			});
+			j.elements.links = newlinks;
+			console.log("After filter, num of links is : "+j.elements.links.length);  //before this is 662, now its 59!
+		
+			//3. NO NEED TO change node counts (remove nodes which no longer exist), but make sure to only add nodes which have links?
+			artlens = [];
+			j.elements.links.forEach(function(l){ 
+				if(l['inst'].length > 0){
+					//console.log("Found "+l['inst'].length+" articles for "+j.elements.nodes[l['target']]['full_name']+" ("+l['target']+")");
+					newnodes.push(l['target']);
+					artlens.push(l['inst'].length);
+					ent_to_link_index[l['target']] = j.elements.links.indexOf(l);
+				}
+			});
+			console.log("Number of nodes now: "+newnodes.length);
+			
+			//Based on artlens, should we change big_size as well?
+			//function sortNumber(a,b){ return a - b; }
+			//console.log(artlens.sort(sortNumber).join(" ,"));
+
+
+			//TODO:  change to show top 10, 20, etc.. instead of based on how many associations because as of now thats not as useful
+			//TODO: also make run_viz totally dependent on j and not graph!! hmm..
+
+			//update article list via mongourls
+			console.log(mongourls);
+			populate_articles_table(mongourls);
+
+			run_viz();
+		});
+		
+	     });
+	  }
+	  else{
+		run_viz();
+	  }
+	});    //smallnet
+}
+
+var et_to_index = {'politician':1, 'ORGANIZATION':2, 'PERSON':3, 'LOCATION':4, 'BILL':5, 'MISC':6 };
+var gcoleman;
+
+function ab2str(buf) {
+  //return String.fromCharCode.apply(null, new Uint16Array(buf));
+  var dataView = new DataView(buf);
+  var decoder = new TextDecoder('utf-8');
+  var decodedString = decoder.decode(dataView);
+  return decodedString;
+}
+
+//html5 load async
+var worker = new Worker('webworker.js');
+var emess;
+worker.addEventListener('message', function(e) { 
+	emess = e;
+	//textsnippets = JSON.parse(ab2str(e.data)); 
+	textsnippets = JSON.parse(e.data);  //to load text async wise
+}, false);
+
+
+var sworker = new Worker('statsworker.js');
+var smess;
+sworker.addEventListener('message', function(e) { 
+	smess = e;
+	//console.log('here with',e); // TODO
+	//need top_objs, colout, top_objs2, colout2, top_objs3, colout3, top_objs4, colout4, top_objs5, colout5, combined
+	top_objs = e.data[0], colout = e.data[1], top_objs2= e.data[2], colout2 = e.data[3], top_objs3 = e.data[4], colout3 = e.data[5], top_objs4 = e.data[6], colout4 = e.data[7], top_objs5 = e.data[8], colout5 = e.data[9], combined = e.data[10];
+
+	jQuery("#showstats .results").html(top_objs+colout+top_objs2+colout2+top_objs3+colout3+top_objs4+colout4+top_objs5+colout5+combined).promise().done(function(){
+		showstat(0);
+
+		//hide other sections in summary by default and resize
+		jQuery("#combinedstats tr").not(':first').hide();
+		jQuery("#combinedstats tr.pol").show();
+
+		//HIGHLIGHT INTERESTING RELATIONS!!! 
+		jQuery('.cstop a').click(function(e) {
+			dict = {'Politicians':'pol','Organizations':'org','People':'per','Locations':'loc','Bills':'bill','Misc':'misc'};
+			txt = $(e.target).text();
+			jQuery("#combinedstats tr").not(':first').hide();
+			jQuery("#combinedstats tr."+dict[txt]).show();
+			jQuery("#combinedstats tr.cstop a").css("color","gray");
+			$(e.target).css("color","red");
+
+			//resize #showstats
+			resheight = jQuery(".results").css("height");
+			jQuery("#showstats").css("height",resheight);
+			e.preventDefault();
+			return false;
+		});
+		
+		jQuery('#combinedstats ul li').click(function(e){
+			//console.log("in highlight lock with highlightlock: "+highlightlock);
+			if(highlightlock == 1){ highlightlock = 0; }
+			else{ 	
+				highlightlock = 1; 
+				highlightid = e.currentTarget.className;
+				jQuery('#combinedstats ul li.'+highlightid).css('background','#FFFF00');  //lock it
+			}			
+		});
+
+		jQuery('#combinedstats ul li').hover(function(e){
+			if( highlightlock == 0){
+				highlightid = e.currentTarget.className;
+				jQuery('#combinedstats ul li').css('background','white');
+				jQuery('#combinedstats ul li.'+highlightid).css('background','#C5C5C5');
+			}
+		});
+
+		jQuery('#showstats').draggable().resizable();
+  	});
+}, false);
+
+var dworker = new Worker('defworker.js');
+var dmess;
+
+
+function run_viz(){
+   jQuery("#loading").append("<p style='font-size:12px;'>constructing visualization</p>");
+  //graph2 holds original
+  graph = j;
+  var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("display","none")
+    .attr("height", height);
+    
+
+  var maxlinks = 236;  //Rick Perry has most connections so make him biggest and make others a fraction of his size!  
+
+  //generate name to id dict
+  for(i=0; i < j.elements.nodes.length; i++){ name_to_index[j.elements.nodes[i]["full_name"]] = i; }
+  gcoleman = name_to_index[center_node];
+  if( typeof(gcoleman) == "undefined" && center_node == "J.D. Sheffield"){  gcoleman = name_to_index["Sheffield"]; }
+
+  //generate lookup for number of links between GC and a given person
+  
+  jQuery(".usedistancemetric a").css("color","black");
+  if( distmetric == "all" ){
+  	  jQuery(".usedistancemetric a").each(function(f){ if(this.text == "ALL"){ $(this).css("color","blue");}});
+	  for(i=0; i < j.elements.links.length; i++){
+	    num_links[j.elements.links[i]['target']] = j.elements.links[i]['inst'].length;
+	    if(j.elements.links[i]['inst'].length >= big_size){
+		if(dateadd == "" && exclude == "NONE"){
+			if(j.elements.links[i]['inst'].length >= 1){
+				numnodes += 1;
+				usenodes[j.elements.links[i]['target']] = j.elements.links[i]['inst'].length;
+			}
+		}
+		else{
+			//filtered results, include as many as you can
+			numnodes += 1;
+			usenodes[j.elements.links[i]['target']] = j.elements.links[i]['inst'].length;
+		}
+	    }
+	  }
+ }
+ else{
+	//return [output ,polobj,orgobj,perobj,locobj,billobj,miscobj];
+	//each obj is indexed by nodeid  
+	if( distmetric == "ss" || distmetric == "sn" ){ 
+		  if(distmetric == "ss"){ 
+			op = get_most_sentences(center_node,"same sentence");	
+			samesentop = op;
+  			jQuery(".usedistancemetric a").each(function(f){ if(this.text == "SAME SENTENCE"){ $(this).css("color","blue");}});
+		  }
+		  else{ 
+			op = get_most_sentences(center_node,"same and near sentence"); 
+			samesentandnearop = op;
+  			jQuery(".usedistancemetric a").each(function(f){ if(this.text == "SAME SENTENCE"){ $(this).css("color","blue");}});
+		  }
+		  for(i=0; i < j.elements.links.length; i++){
+		    thistid = j.elements.links[i]['target'];
+		    thiset = j.elements.nodes[thistid].entity_type;
+		    thisweight = op[et_to_index[thiset]][thistid];
+		    num_links[thistid] = thisweight
+		    if( thisweight >= big_size){  //big_size is in reference to co-occurences but now we are using 
+			if(dateadd == "" && exclude == "NONE"){
+				if(j.elements.links[i]['inst'].length >= 1){
+					numnodes += 1;
+					usenodes[thistid] = thisweight;
+				}
+			}
+			else{
+				//filtered results, include as many as you can
+				numnodes += 1;
+				usenodes[thistid] = thisweight;
+			}
+		    }
+		  }
+	}
+
+	if( distmetric == "comb"){ 
+		op = get_most_sentences(center_node,"same sentence");	samesentop = op;
+		op = get_most_sentences(center_node,"same and near sentence"); samesentandnearop = op;
+		op = get_most_sentences(center_node,"combined same, near, article");	samesentneararticleop = op;
+		op = get_most_sentences(center_node,"same article");	samearticleop = op;
+
+		
+  		jQuery(".usedistancemetric a").each(function(f){ if(this.text == "COMBINED"){ $(this).css("color","blue");}});
+
+		var et_to_nm = {'politician':'pol', 'ORGANIZATION':'org', 'PERSON':'per', 'LOCATION':'loc', 'BILL':'bill', 'MISC':'misc' };
+		newmetric_list = {'pol':{}, 'org':{}, 'per':{}, 'loc':{}, 'bill':{}, 'misc':{}};
+		//pol.forEach(function(d){ newmetric_list['pol'][d[0]] = {'same sentence':d[1]};});
+		Object.keys(samesentop).forEach(function(i){ 
+			if( i > 0){
+				theseobjs = samesentop[i];
+				Object.keys(theseobjs).forEach(function(f){
+					//console.log(f);
+					thiset = et_to_nm[j.elements.nodes[f].entity_type];
+					//console.log(thiset);
+					//console.log(newmetric_list[thiset]);
+					if( f in newmetric_list[thiset]){ newmetric_list[thiset][f]['same sentence'] = theseobjs[f]; }
+					else{ newmetric_list[thiset][f] = {}; newmetric_list[thiset][f]['same sentence'] = theseobjs[f]; }
+				});
+			}
+
+		}); 
+
+		Object.keys(samesentandnearop).forEach(function(i){ 
+			if( i > 0){
+				theseobjs = samesentandnearop[i];
+				Object.keys(theseobjs).forEach(function(f){
+					thiset = et_to_nm[j.elements.nodes[f].entity_type];
+					if( f in newmetric_list[thiset]){ newmetric_list[thiset][f]['same and near sentence'] = theseobjs[f]; }
+					else{ newmetric_list[thiset][f] = {}; newmetric_list[thiset][f]['same and near sentence'] = theseobjs[f]; }
+				});
+			}
+		}); 
+
+		Object.keys(samesentneararticleop).forEach(function(i){ 
+			if( i > 0){
+				theseobjs = samesentneararticleop[i];
+				Object.keys(theseobjs).forEach(function(f){
+					thiset = et_to_nm[j.elements.nodes[f].entity_type];
+					if( f in newmetric_list[thiset]){ newmetric_list[thiset][f]['combined same, near, article'] = theseobjs[f]; }
+					else{ newmetric_list[thiset][f] = {}; newmetric_list[thiset][f]['combined same, near, article'] = theseobjs[f]; }
+				})
+			}
+		}); 
+
+		Object.keys(samearticleop).forEach(function(i){ 
+			if( i > 0){
+				theseobjs = samearticleop[i];
+				Object.keys(theseobjs).forEach(function(f){
+					thiset = et_to_nm[j.elements.nodes[f].entity_type];
+					if( f in newmetric_list[thiset]){ newmetric_list[thiset][f]['same article'] = theseobjs[f]; }
+					else{ newmetric_list[thiset][f] = {}; newmetric_list[thiset][f]['same article'] = theseobjs[f]; }
+				})
+			}
+		}); 
+
+		nodeweights = {'pol':[], 'org':[], 'per':[], 'loc':[], 'bill':[], 'misc':[]};
+                combweights = {}
+		for( pk in nodeweights ){
+			Object.keys(newmetric_list[pk]).forEach(function(k){ 
+				nk = newmetric_list[pk][k]; 
+				if( typeof(nk['same sentence']) == "undefined"){ newmetric_list[pk][k]['same sentence'] = 0; }
+				if( typeof(nk['same and near sentence']) == "undefined"){ newmetric_list[pk][k]['same and near sentence'] = 0; }
+				if( typeof(nk['combined same, near, article']) == "undefined"){ newmetric_list[pk][k]['combined same, near, article'] = 0; }
+				if( typeof(nk['same article']) == "undefined"){ newmetric_list[pk][k]['same article'] = 0; }
+				nk = newmetric_list[pk][k]; 
+				mnum =   nk['combined same, near, article'];
+				mden = nk['combined same, near, article'] - ( nk['same and near sentence']) ;
+				if(mden == 0){ mden = 1; }   ///TODO:  is this right?
+				multiplier = mnum / mden;
+
+				/* THIS IS WHERE I CALCULATE THE METRIC */  
+				nweight = ( nk['same sentence'] + (near_co * (nk['same and near sentence'] - nk['same sentence'])) + (same_art_co * nk['same article'])) * multiplier; 
+				nweight = nweight.toFixed(2);
+				newmetric_list[pk][k]['weight'] = nweight;	
+				nodeweights[pk].push([k,nweight]);
+				combweights[k] = nweight;
+			});	
+		}
+		
+		for( pk in nodeweights){ nodeweights[pk].sort(function(a, b) {return a[1] - b[1]}).reverse(); }
+
+		//console.log("in comb");
+		for(i=0; i < j.elements.links.length; i++){
+		    thistid = j.elements.links[i]['target'];
+		    thisweight = combweights[thistid];
+		    num_links[thistid] = thisweight
+		    if( thisweight >= big_size){  //big_size is in reference to co-occurences but now we are using 
+			if(dateadd == "" && exclude == "NONE"){
+				if(j.elements.links[i]['inst'].length >= 1){
+					numnodes += 1;
+					usenodes[thistid] = thisweight;
+				}
+			}
+			else{
+				//filtered results, include as many as you can
+				numnodes += 1;
+				usenodes[thistid] = thisweight;
+			}
+		    }
+		  }
+	}
+ }
+  
+  photonodes = []
+  for(i=0; i < j.elements.nodes.length; i++){
+     if("photo_url" in j.elements.nodes[i])
+     {
+ 	// for here only include photos for NODES you can see to save on page load!!!
+	if( i == gcoleman){
+		//console.log(i+" equal to gcoleman "+gcoleman);
+		if( j.elements.nodes[i]["photo_url"] == "images/bluedot.png" || j.elements.nodes[i]["photo_url"] == ""){
+			if( centerrightimage != ""){ j.elements.nodes[i]["photo_url"] = centerrightimage; }
+			else{
+				cna = center_node_attrs[center_node];
+				centerrightimage = cna["image"]
+				if( centerrightimage != ""){ j.elements.nodes[i]["photo_url"] = centerrightimage; }
+			}
+		}
+		photonodes.push(j.elements.nodes[i]);
+	}
+	else{
+		if( distmetric == "all"){
+			//console.log("here with "+i);
+			if( num_links[i] >= big_size ){ 
+				//console.log("distmet == all");
+				photonodes.push(j.elements.nodes[i]); 
+			}
+		}
+		else{
+		    thistid = i;
+		    if( distmetric == "comb"){ thisweight = combweights[thistid]; }
+		    else{ thisweight = op[et_to_index[thiset]][thistid]; }
+		    if( parseFloat(thisweight) >= big_size ){ photonodes.push(j.elements.nodes[thistid]); }
+		}
+	}
+    }
+    else{
+	if( i == gcoleman){
+		//console.log(i+" no photo but its garnet");
+		//console.log("if centernode had no photourl in json so change photo_url for centernode to: "+centerrightimage);
+		if( centerrightimage != ""){ j.elements.nodes[i]["photo_url"] = centerrightimage; }
+		else{
+			if( center_node_attrs[center_node]['image'] != ''){ j.elements.nodes[i]["photo_url"] = center_node_attrs[center_node]['image']; }
+		}
+		photonodes.push(j.elements.nodes[i]);
+	}
+	else{
+		if( j.elements.nodes[i].full_name in inactive_pols ){  
+			photonodes.push(j.elements.nodes[i]);
+		}
+	}
+    }
+  }
+  
+    defs = svg.append("defs").attr("class","photodef");
+
+    dworker.onmessage = function(event) {
+	  dmess = event;
+	  var url = event.data[1];
+
+	  thisid = event.data[0].split("img")[1];
+	  thisadd = [j.elements.nodes[thisid]];
+	  defs     
+	     .selectAll(".photodef")
+	     .data(thisadd)
+	     .enter()
+	     .append("pattern")
+	     .attr("id", function(d){ return "img"+name_to_index[d['full_name']]; })
+	     .attr("patternUnits","userSpaceOnUse")
+	     .attr("width",80).attr("height",112)
+	     .attr("x",-40).attr("y",-50)
+	     .append("image")
+	     .attr("xlink:href", function(d){ 
+			//console.log(d);
+			if(d.entity_type == 'PERSON'){  
+				if( d.full_name in inactive_pols ){  
+					en = name_to_index[d.full_name];
+					j.elements.nodes[en].entity_type = "politician";
+					j.elements.nodes[en].party = inactive_pols[d.full_name].party;
+					return inactive_pols[d.full_name]['photo_url'];
+				}
+				else{
+					if( d.full_name == graph2.elements.nodes[gcoleman].full_name){ 
+						midimg = center_node_attrs[d['full_name']].image
+						return midimg;
+					} 
+				}
+			}
+			else{
+				if(d.level == 'statewide-inactive'){  
+					if( d.full_name in inactive_pols ){  
+						return inactive_pols[d.full_name]['photo_url']; 
+					}
+				}
+				else{ 
+					if( "photo_url" in d){ return d['photo_url']; } 
+					else{
+						if( d.full_name == graph2.elements.nodes[gcoleman].full_name){ 
+							return center_node_attrs[d['full_name']].image;
+						} 
+					}
+				}
+			}
+	      })
+	     .attr("width",80).attr("height",112).attr("x",0).attr("y",0);
+
+
+		//node add text etc
+		  selectthis = "g.nodephoto#id"+thisid;
+		  //console.log(selectthis);
+		  var thisphoto = d3.select(selectthis);
+		  //console.log("thisphoto",thisphoto);
+		  if(String(thisphoto) == "undefined"){ console.log("ERRROR"); }
+
+		  thisphoto.append("circle")
+		      .attr("id", function(d){ return "circle"+name_to_index[d['full_name']];})
+		      .attr("r", function(d){ 
+				ent = name_to_index[d['full_name']];
+				if(ent == gcoleman){ 
+					return 42;
+				}
+				else{
+					num = num_links[ent];
+					rad = Math.round((20*((num/maxlinks))) + 25);
+					if(ent in usenodes) { return usenodes[ent].r; }
+					else{ return 40 }
+				} 
+		       })
+		      .attr("fill", function(d){ return "url(#img" + name_to_index[d['full_name']] + ")"})
+		      .attr("stroke", function(d){
+			en = name_to_index[d['full_name']];
+			ent = j.elements.nodes[en];
+			if(ent['entity_type'] == 'politician' || ent['entity_type'] == 'PERSON'){
+				if("party" in ent){
+					if(ent['party'] == "Republican"){return "red"}
+					else{return "#2F2F4F"};  //to make blue darker
+				}
+				else{ 
+					if(d['full_name'] in inactive_pols){
+						ent = inactive_pols[d['full_name']];
+						j.elements.nodes[en].entity_type = "politician";
+						j.elements.nodes[en].party = ent.party;
+						if(ent['party'] == "Republican"){return "red"}
+						else{return "#2F2F4F"};  //to make blue darker
+					}
+					return "white" 
+				}
+			}
+			else{ return "white";}
+		      })
+		      .attr("cx",1).attr("cy",1);
+
+		//NICE!  NOW JUST FIX CENTER NODE!!!
+
+
+		  thisphoto.append("text")
+		      .attr("id", function(d){ return "text"+name_to_index[d['full_name']];})
+		      .attr("dx", function(d){
+			 ent = name_to_index[d['full_name']];
+			 if(d['full_name'] == center_node){ return -48; }
+			 num = num_links[ent];
+			 if(num >= big_size){ 
+				if("photo_url" in d){ return -3 * d['full_name'].length; }
+				else { return -3.5 * d['full_name'].length; }
+			 }
+			 else{ return -22 }
+		       })
+		      .attr("dy", function(d){
+			 ent = name_to_index[d['full_name']];
+			 if(d['full_name'] == center_node){ return "4em"; }
+			 num = num_links[ent];
+			 if(num >= big_size){ 
+				if(ent in usenodes){
+					r = usenodes[ent].r;
+					if( r == 35){
+						if("photo_url" in d){ return "3.5em"; }
+						else{ return ".5em"}
+					}
+					if( r == 30){
+						if("photo_url" in d){ return "3em"; }
+						else{ return ".5em"}
+					}
+					if( r == 20){
+						if("photo_url" in d){ return "2em"; }
+						else{ return ".5em"}
+					}
+				}
+				else{
+					if("photo_url" in d){ return "4em"; }
+					else{ return "2em"}
+				}
+			 }
+			 else{ return "5em" }
+		      })
+		      .text(function(d){ 
+			 ent = name_to_index[d['full_name']];
+			 if(d['full_name'] == center_node){ return center_node; }
+			 num = num_links[ent];
+			 if(num >= big_size){ return d['full_name'] }
+			 else{ return "" }
+		      }) 
+		      .style("stroke",function(d){
+			 ent = name_to_index[d['full_name']];
+			 if(d['full_name'] == center_node){ return "red"; }
+			 num = num_links[ent];
+			 if(num >= big_size){ 
+				return "#999"; //"red"; 
+			 }
+			 else{ return "black"; }
+		      })
+		      .style("font-size",function(d){
+			 ent = name_to_index[d['full_name']];
+			 if(d['full_name'] == center_node){ return "14px"; }
+			 if(ent in usenodes){
+				r = usenodes[ent].r
+				if( r == 35){ return "14px";}
+				if( r == 30){ return "13px";}
+				if( r == 20){ return "12px";}
+				if( r == 15){ return "11px";}
+			 }
+			 else{ return '14px';}
+		      });
+
+		
+		      if( thisid == gcoleman){
+			     //console.log("THISID CALLED",thisid);
+			      centerid = "#id" + name_to_index[center_node];
+			      d3.select(centerid).append("text")
+			      .attr("id", "counter")
+			      .attr("dx", "400")
+			      .attr("dy", "0.3em")
+			      .text("") 
+			      .style("stroke","black")
+			      .style("stroke-width","2px")
+			      .style("font-size",'30px');
+
+		      }
+
+       // }                          
+    };
+
+    worker.onerror = function(e) {
+	alert('Error: Line ' + e.lineno + ' in ' + e.filename + ': ' + e.message);
+    };
+
+	 
+	for(var i=0;i < photonodes.length;i++){
+		d = photonodes[i];
+		//console.log(d.full_name);
+		if(d.entity_type == 'PERSON'){  
+			if( d.full_name in inactive_pols ){  
+				en = name_to_index[d.full_name];
+				//j.elements.nodes[en].entity_type = "politician";
+				//j.elements.nodes[en].party = inactive_pols[d.full_name].party;
+				dworker.postMessage(["img"+name_to_index[d['full_name']], inactive_pols[d.full_name]['photo_url']]); 
+			}
+			else{
+				if( d.full_name == graph2.elements.nodes[gcoleman].full_name){ 
+					midimg = center_node_attrs[d['full_name']].image
+					//console.log("addmid",midimg);
+					dworker.postMessage(["img"+name_to_index[d['full_name']], midimg] );
+				} 
+			}
+		}
+		else{
+			if(d.level == 'statewide-inactive'){  
+				if( d.full_name in inactive_pols ){  
+					dworker.postMessage(["img"+name_to_index[d['full_name']], inactive_pols[d.full_name]['photo_url']]); 
+				}
+			}
+			else{ 
+				if( "photo_url" in d){ dworker.postMessage(["img"+name_to_index[d['full_name']], d['photo_url']] ); } 
+				else{
+					if( d.full_name == graph2.elements.nodes[gcoleman].full_name){ 
+						//console.log("add middle dude");
+						dworker.postMessage(["img"+name_to_index[d['full_name']], center_node_attrs[name_to_index[d['full_name']].image]] );
+					} 
+				}
+			}
+		}
+	}
+
+
+
+  //use j instead of graphs and during the rest of the script since we are potentially filtering!
+  if(include_small == 1){ 
+	  //if we filter here, we can't click on names that are not showing on viz from complete list within central node
+	  //so INSTEAD DO THIS BEFORE ADDING LINKS
+	  //genereate lookup for number of links between GC and a given person
+	  
+	  keepnodes = {}
+	  if( distmetric == "all"){
+		  for(i=0; i < j.elements.links.length; i++){
+		    if(j.elements.links[i]['inst'].length >= big_size){
+			if(j.elements.links[i]['inst'].length >= 1){
+				keepnodes[j.elements.links[i]['target']] = j.elements.links[i]['inst'].length;
+			}
+		    }
+		  }
+	  }
+	  else{
+		  for(i=0; i < j.elements.links.length; i++){
+		    thistid = j.elements.links[i]['target'];
+		    thiset = j.elements.nodes[thistid].entity_type;
+		    if( distmetric == 'comb'){ thisweight = combweights[thistid]; }
+		    else{ thisweight = op[et_to_index[thiset]][thistid];}
+		    if( thisweight  >= big_size){
+			if(thisweight >= 1){
+				keepnodes[thistid] = thisweight;
+			}
+		    }
+		  }
+	  }
+	  
+	///THIS IS NEW FROM explorer.html
+	//now remove all which are not in usenodes
+	nn = clone(j.elements.links);
+	newlinks = nn.filter(function(li){ 
+		if(li["target"] in keepnodes){return true;}
+		else{ return false;}
+	});
+		
+  }
+  else{ newlinks = j.elements.links; }
+
+  //should i change this to only allow nodes in keep nodes?
+  var force = d3.layout.force()
+    .nodes(graph.elements.nodes)
+    .links(newlinks)
+    .charge(function(d){
+       if(big_size > 50){ return -250 }
+       else{  return -400; }	
+	return 0;
+     })
+    .linkDistance(function(d){
+       if(big_size > 50){ return 120 }
+       else{  return 150; }
+    })
+    .size([width, height]);   
+				
+
+  //SET MAIN PERSONs POSITION TO BE MIDDLE
+  //http://stackoverflow.com/questions/28816946/force-network-how-to-set-initial-position-for-select-nodes
+  graph.elements.nodes[gcoleman].x=450;
+  graph.elements.nodes[gcoleman].y=380;
+  graph.elements.nodes[gcoleman].fixed=true;
+  graph.elements.nodes[gcoleman].r=40;
+
+
+  ks = Object.keys(usenodes);
+  onedistaway = get_x_y_for( 150, 80);   //not 180
+  twodistaway = get_x_y_for( 245, 40); //not 255
+  threedistaway = get_x_y_for( 320, 40);  //not 330
+  fourdistaway = get_x_y_for( 372, 40); //not 400
+
+  //12 in first layer
+  //20 in second layer
+  //40 in third layer ( make this more! )
+
+	//sort nodes
+	    oldks = clone(ks);
+	    ncounts = [];
+	    uk = Object.keys(usenodes);
+	    uk.forEach(function(d){ ncounts.push([ d, parseFloat(usenodes[d])]); });
+	    ns = ncounts.sort(function(a, b) {return b[1] - a[1]});
+	    k = [] 
+	    ns.forEach(function(d){ k.push(d[0]); });
+	    oldk = clone(k);
+	    ks = k;
+  
+	  curd = 0;
+	  ks.forEach(function(d){ 
+		d = parseInt(d);   // d is an index number
+		numlinks = parseFloat(usenodes[d]) 
+		r = 35;
+
+  		if(dateadd != "" || exclude != "NONE"){
+			//we need d to be the position we want, normally its 0 - whatever, but if the date is filtered, its not
+			val = parseFloat(d);
+			d = ks.indexOf(d);
+		}
+
+		if(numnodes < Object.keys(onedistaway).length) { pos = onedistaway[curd]; }
+		else{ 
+			if( curd < Object.keys(onedistaway).length){ pos = onedistaway[curd]; }
+			else{ 
+				if( curd < Object.keys(twodistaway).length + Object.keys(onedistaway).length){
+					thisind = curd - Object.keys(onedistaway).length;
+					pos = twodistaway[thisind]; 
+					r = 30;
+				}
+				else{
+					
+					if( curd < Object.keys(twodistaway).length + Object.keys(onedistaway).length + Object.keys(threedistaway).length){
+						thisind = curd - Object.keys(onedistaway).length - Object.keys(twodistaway).length;
+						pos = threedistaway[thisind]; 
+						r = 20;
+					}
+					else{
+						if( curd < Object.keys(twodistaway).length + Object.keys(onedistaway).length + Object.keys(threedistaway).length + Object.keys(fourdistaway).length){
+							thisind = curd - Object.keys(onedistaway).length - Object.keys(twodistaway).length - Object.keys(threedistaway).length;
+							pos = fourdistaway[thisind]; 
+							r = 15;
+						}
+						else {
+							//graph is too big to show
+							r = -1;
+							//delete graph.elements.nodes[d]; noo
+						}
+					}
+				}
+			}
+		}
+
+		if( r != -1) {
+			if(dateadd != "" || exclude != "NONE"){ d = val; }
+
+			usenodes[d] = {'numlinks':numlinks,'x':pos.x,'y':pos.y,'fixed':true,'r':r}
+			graph.elements.nodes[d].x = pos.x;
+			graph.elements.nodes[d].y = pos.y;
+			graph.elements.nodes[d].fixed = true;
+		}
+		curd = curd + 1;	
+        })
+
+
+  var link = svg.selectAll(".link")
+      .data(newlinks)
+      .enter().append("line")
+      .attr("class", "link")
+      .style("stroke-width", function(d){ 
+                ent = d['target']
+		if(dateadd != "" || exclude != "NONE"){
+			//if filtered don't show
+			if(!(ent in newnodes || ent in keepnodes)){ return 0;}
+		} 	
+	
+		num = parseFloat(num_links[ent]);
+		//if(d.inst.length >= big_size){
+		if(num >= big_size){
+			if(ent in usenodes) { 
+				r = usenodes[ent].r;
+				if( r == 35){ return 2; }
+				else{ return 1;}
+			}else{ return 1; }
+		}else{
+		     if(include_small == 0){ return 1;}
+		     else{ return 0;}
+		}
+      } )  
+      .style("stroke",function(d){ 
+                ent = d['target']
+		num = parseFloat(num_links[ent]);
+		//if(d.inst.length >= big_size){
+		if(num >= big_size){
+			if(ent in usenodes) { 
+				r = usenodes[ent].r;
+				if( r == 35){ return "#999"; }
+				else{ return "#999";}
+			}else{ return "#999"; }
+		}
+		else{ return "#999";}
+	})
+
+ //here filter nodes too!  maybe 
+   
+  
+  priorcolor = "";
+  priortextcolor = "";
+  prioropacity = "";
+  var node = svg.selectAll(".node")
+      .data(graph.elements.nodes)
+      .enter().append("g")
+      .attr("class", function(d){ 
+	ret="node"; 
+        if("photo_url" in d){ 
+	  ent = name_to_index[d['full_name']];
+	  if(ent == gcoleman){ ret="nodephoto"; }
+	  else{
+	    num = parseFloat(num_links[ent]);
+	    if(num >= big_size){ ret="nodephoto"; }
+	  }
+	} 
+	else{
+	   if( d['full_name'] in inactive_pols){
+	  	ent = name_to_index[d['full_name']];
+	    	num = parseFloat(num_links[ent]);
+	    	if(num >= big_size){ ret="nodephoto"; }
+	   }
+	}
+        return ret;
+      })
+      .attr("id", function(d){return "id"+name_to_index[d.full_name];})
+       .on("mouseover", function(d)
+	 {
+            se = "#id" + name_to_index[d['full_name']];
+            sel = "#circle" + name_to_index[d['full_name']];
+            selt = "#text" + name_to_index[d['full_name']];
+	    prioropacity = d3.select(se).style("opacity");
+	    priorcolor = d3.select(sel).style("stroke");
+	    priortextcolor = d3.select(selt).style("stroke");
+
+	    d3.select(se).style("opacity",1);
+	    d3.select(sel).style("stroke","black")
+	    d3.select(selt).style("stroke","black").style("font-size","16px").style("fill","black")
+
+	    //tooltip add for small guys
+	    //http://stackoverflow.com/questions/10805184/d3-show-data-on-mouseover-of-circle
+	    ent = name_to_index[d['full_name']];
+	    if(d['full_name'] != center_node)
+	    {
+	       num = parseFloat(num_links[ent]);
+		
+	       //set number of coocurrances   3.1, 2.1 and 2.5 originally
+	       if(num > 99){ dx = "-3.5em"; }
+	       else{
+	         if(num < 10){ dx = "-3.0em"; }
+		 else{ dx = "-3.5em"; }
+	       }
+		
+               d3.select("#counter").attr("dx", dx);
+	       d3.select("#counter").text(num);	
+
+               if(num < big_size){
+			//show tool tip
+			tooltip.text(d['full_name']);
+			return tooltip.style("visibility", "visible");
+	       }
+	    }
+
+	 })
+       .on("mousemove", function(){return tooltip.style("top",
+    		(d3.event.pageY-10)+"px").style("left",(d3.event.pageX+10)+"px");})
+       .on("mouseout", function(d)
+	 {
+            se = "#id" + name_to_index[d['full_name']];
+            sel = "#circle"+name_to_index[d['full_name']];
+            selt = "#text" + name_to_index[d['full_name']];
+
+	    d3.select(se).style("opacity",prioropacity);
+	    d3.select(sel).style("stroke",priorcolor)
+	    d3.select(selt).style("stroke",priortextcolor).style("font-size","14px")
+		
+	    //tooltip remove for small guys
+	    ent = name_to_index[d['full_name']];
+	    //if(d['full_name'] != "Garnet Coleman")
+	    if(d['full_name'] != center_node)
+	    {
+	       num = num_links[ent];
+		
+	       //remove counter
+	       d3.select("#counter").text("");	
+               if(num < big_size){
+			//hide tool tip
+			return tooltip.style("visibility", "hidden");
+	       }
+	    }
+	 })
+	.on("click",function(d){
+	    clicknode(d);
+	});
+
+ 
+  //http://stackoverflow.com/questions/17418527/how-do-i-replace-a-node-with-an-image-using-d3-and-coffeescript-for-a-network-vi
+  //so now instead of using image, we'll use circle and instead of using xlink:href, we'll before hand create a defs section under svg
+  //and include an image for each node we have 
+
+
+  //add cirlces without photos
+  var nophotos = d3.selectAll("g.node");
+  var nophotos_showing = 0;
+  
+  nophotos
+      .append("circle")
+      .attr("id", function(d){ return "circle"+name_to_index[d['full_name']];})
+      .attr("r", function(d){ 
+                ent = name_to_index[d['full_name']];
+
+		if(dateadd != "" || exclude != "NONE"){
+			//if filtered date, don't show if not part of list
+			if(!(ent in newnodes || ent in keepnodes)){ return 0;}
+		} 	
+
+		num = num_links[ent];
+		if( num == undefined){ 
+			if (typeof keepnodes !== 'undefined'){
+			}
+			num = 0; 
+		}
+
+		//console.log("In NOPHOTOS WITH: "+d['full_name']+" , entid: "+ent+", numlinks: "+num+", bigsize: "+big_size);
+		if(num >= big_size){ 
+			nophotos_showing += 1;
+			if(ent in usenodes) { return usenodes[ent].r; }
+			else{ return 40 }
+		}
+		else{ 
+			if(include_small == 0){
+				nophotos_showing += 1;
+				return Math.round((20*((num/maxlinks))) + 5);
+			}
+			else{ return 0;}
+		}
+       })
+      .style("fill", function(d) { return color(1); })
+      .style("opacity",0.5)
+
+  force.on("tick", function() {
+    link.attr("x1", function(d) { return d.source.x; })
+        .attr("y1", function(d) { return d.source.y; })
+        .attr("x2", function(d) { return d.target.x; })
+        .attr("y2", function(d) { return d.target.y; });
+
+
+    node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+  });
+
+  
+  //IN ORDER TO MAKE TEXT COME ABOVE THE CIRCLE/PHOTO IT MUST BE THE LAST ELEMENT
+  nophotos.append("text")
+      .attr("id", function(d){ return "text"+name_to_index[d['full_name']];})
+      .attr("dx", function(d){
+	 ent = name_to_index[d['full_name']];
+         //if(d['full_name'] == 'Garnet Coleman'){ return -48; }
+         if(d['full_name'] == center_node){ return -48; }
+         num = num_links[ent];
+         if(num >= big_size){ 
+		if("photo_url" in d){ return -3 * d['full_name'].length; }
+		else { return -3.5 * d['full_name'].length; }
+	 }
+         else{ return -22 }
+       })
+      .attr("dy", function(d){
+	 ent = name_to_index[d['full_name']];
+         //if(d['full_name'] == 'Garnet Coleman'){ return "4em"; }
+         if(d['full_name'] == center_node){ return "4em"; }
+         num = num_links[ent];
+         if(num >= big_size){ 
+		if(ent in usenodes){
+			r = usenodes[ent].r;
+			if( r == 35){
+				if("photo_url" in d){ return "3.5em"; }
+				else{ return ".5em"}
+			}
+			if( r == 30){
+				if("photo_url" in d){ return "3em"; }
+				else{ return ".5em"}
+			}
+			if( r == 20){
+				if("photo_url" in d){ return "2em"; }
+				else{ return ".5em"}
+			}
+		}
+		else{
+			if("photo_url" in d){ return "4em"; }
+			else{ return "2em"}
+		}
+	 }
+         else{ return "5em" }
+      })
+      .text(function(d){ 
+         ent = name_to_index[d['full_name']];
+         //if(d['full_name'] == 'Garnet Coleman'){ return "Garnet Coleman"; }
+         if(d['full_name'] == center_node){ return center_node; }
+         num = num_links[ent];
+         if(num >= big_size){ return d['full_name'] }
+         else{ return "" }
+      }) 
+      .style("stroke",function(d){
+	 ent = name_to_index[d['full_name']];
+         //if(d['full_name'] == 'Garnet Coleman'){ return "red"; }
+         if(d['full_name'] == center_node){ return "red"; }
+	 num = num_links[ent];
+	 if(num >= big_size){ 
+		return "#999"; //"red"; 
+	 }
+	 else{ return "black"; }
+      })
+      .style("font-size",function(d){
+	 ent = name_to_index[d['full_name']];
+         //if(d['full_name'] == 'Garnet Coleman'){ return "14px"; }
+         if(d['full_name'] == center_node){ return "14px"; }
+	 if(ent in usenodes){
+		r = usenodes[ent].r
+		if( r == 35){ return "14px";}
+		if( r == 30){ return "13px";}
+		if( r == 20){ return "12px";}
+		if( r == 15){ return "11px";}
+	 }
+         else{ return '14px';}
+      });
+
+
+     
+	  //USE THIS TO KEEP STATIC, if so comment out force.start after block
+	 /*
+	  var n = 1000;
+	  setTimeout(function() {
+		force.start();    //alpha is to disallow movement
+		for (var i = n * n; i > 0; --i) force.tick();
+		force.stop();
+	  }, 10);
+	  */
+	  force.start();
+    
+
+     //now load mongourls and textsnippets if not already loaded
+  
+     jQuery("#loading").fadeOut("fast");
+     if(dateadd == "" && exclude == "NONE"){
+	     d3.json("data/"+small_urls_file, function(error, murls) {
+		mongourls = murls;
+		
+		//construct entity breakdown
+		entity_summary = {};
+		j.elements.nodes.forEach(function(n){
+			if(n['entity_type'] in entity_summary){ entity_summary[n['entity_type']] += 1;}
+			else{ entity_summary[n['entity_type']] = 1;}
+		});
+		estring = ""
+		Object.keys(entity_summary).forEach(function(e){ estring += " "+e.toUpperCase()+": "+entity_summary[e]+", ";});
+
+		totalshowing = nophotos_showing + photonodes.length - 1;
+		jQuery("#search-results").html("<b>SEARCH RESULTS:</b><br/>FOR \""+center_node.toUpperCase()+"\" FOUND:<ul><li>"+Object.keys(mongourls).length+" ARTICLES FROM</li><li>6 DIFFERENT SOURCES AND</li><li>"+j.elements.nodes.length+" ENTITIES DISCOVERED</li><li>[<span class='entypes'>"+estring.substr(0,estring.length -2)+"</span>]</li><li>OF WHICH "+totalshowing+" ARE CURRENTLY SHOWING</li></ul>");
+
+		//add source counters
+		add_source_counts(mongourls);
+
+     		jQuery("svg").show();
+		//update article list via mongourls
+		populate_articles_table(mongourls);
+
+		//TRY DOING THIS ASYNC
+		//populate_stats_page(center_node);	
+		//sworker.postMessage(center_node); //needs other "global variables"
+		if(distmetric == "comb"){
+			populate_stats_page(center_node);
+			
+			setTimeout(function() {
+				if( loadingstats == 0 ){
+					setTimeout(function() {
+						sworker.postMessage([center_node,distmetric,graph2,name_to_index,  near_co,same_art_co, samesentop, samesentandnearop, samesentneararticleop, samearticleop]);
+					}, 2000);
+				}
+				else{
+					sworker.postMessage([center_node,distmetric,graph2,name_to_index,  near_co,same_art_co, samesentop, samesentandnearop, samesentneararticleop, samearticleop]);
+				}
+			 }, 2000);
+		}
+		else{
+			sworker.postMessage([center_node,distmetric,graph2,name_to_index, near_co, same_art_co, samesentop, samesentandnearop, samesentneararticleop, samearticleop]);
+		}
+
+
+	        if(dateadd == "" && exclude == "NONE"){
+			//goes slow even without text snippets, try to make SHOW STATS calculation in a webworker <-- HERE
+			
+		     //NOW TRY DOING THIS WEBWORKERS INSTEAD SO THAT IT LOADS ASYNC AND DOESN'T BLOCK
+		     //d3.json("data/"+small_text_snippets_file, function(error, smt) { textsnippets = smt });
+		     worker.postMessage('data/'+small_text_snippets_file);
+	        }
+	   });
+
+		
+     }
+     else{
+		//CHANGE STATS TO SHOW BASED ON DATE FILTER
+
+		//construct entity breakdown
+		entity_summary = {}
+		newnodes.forEach(function(n){
+			if(j.elements.nodes[n]['entity_type'] in entity_summary){ entity_summary[j.elements.nodes[n]['entity_type']] += 1;}
+			else{ entity_summary[j.elements.nodes[n]['entity_type']] = 1;}
+		});
+		estring = ""
+		Object.keys(entity_summary).forEach(function(e){ estring += " "+e.toUpperCase()+": "+entity_summary[e]+", ";});
+
+		//num sources
+		numsources = 6 - exclude.split(",").length;
+
+		totalshowing = nophotos_showing + photonodes.length - 1;  //minus since you don't include center node
+		jQuery("#search-results").html("<b>SEARCH RESULTS:</b><br/>FOR \""+center_node.toUpperCase()+"\" FOUND:<ul><li>"+Object.keys(mongourls).length+" ARTICLES FROM</li><li>"+numsources+" DIFFERENT SOURCES </li><li>BETWEEN "+from_date+" AND "+to_date+" AND</li><li>"+newnodes.length+" ENTITIES DISCOVERED</li><li>[<span class='entypes'>"+estring.substr(0,estring.length -2)+"</span>]</li><li>OF WHICH "+totalshowing+" ARE CURRENTLY SHOWING</li></ul>");
+
+		//add source counters
+		add_source_counts(mongourls);
+
+     		jQuery("svg").show();
+		//update article list via mongourls
+		populate_articles_table(mongourls);
+		populate_stats_page(center_node);
+
+
+     }
+
+
+     if(big_size == 23 && include_small == 1 && from_date == "NONE"){
+     	showfirstime();
+     }
+
+     //set opacity
+     jQuery("#id"+gcoleman).css("opacity",1);
+}
+</script>

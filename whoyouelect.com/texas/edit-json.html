@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<head>
+<meta charset="utf-8">
+<script type="text/javascript" src="js/jquery-2.1.3.min.js"></script>
+<script src="js/d3.v3.min.js"></script>
+<style>
+table th{text-align:left;}
+.fn {   position: fixed; background: white; top: 10px; z-index:100;}
+.history { position: absolute; top:50px; right:2px; width:450px; height:100%; border: 2px dashed gray; display:none; font-size:18px; padding: 2px; }
+ul#historyul { list-style-type:decimal; font-size:13px; }
+.info { position:absolute; top:45px; }
+.suggestions { position: absolute; top:10%; left:10%; background: white; border: 2px dashed blue; width: 55%; font-size: 13px; }
+.suggestions ul{ list-style-type:decimal; }
+</style>
+</head>
+<body>
+<!--
+<div class="f">Filename: <span id='fname'></span><br/>Type to filter rows:  <input id="searchInput" value="Type To Filter">&nbsp;&nbsp;<b>||</b>
+&nbsp;&nbsp;Merge rows: <input id="mergeInput" value=""><button onclick="javascript: merge();">go</button>(comma seperated list of IDs the first of which will be used)&nbsp;&nbsp;<b>||</b>
+<br/><span id='white' style='color:white'>Type to filter rows:  <input id="searchnput" value="" style="border: 2px solid white;">&nbsp;&nbsp;</span><b>||</b>
+&nbsp;&nbsp;Rename row id: <input id="rowID" value="" style="width:20px"> to <input id="rowName" value=""><button onclick="javascript: rename();">go</button>&nbsp;&nbsp;<b>||</b>&nbsp;&nbsp;
+--------------------------------- Save Edited Json?<button onclick="javascript: save();">go</button></div>
+-->
+<div class="fn">Filename: <span id='fname'></span>&nbsp;&nbsp;<b>||</b>&nbsp;&nbsp;Type to filter rows:  <input id="searchInput" value="Type To Filter">&nbsp;&nbsp;<b>||</b>&nbsp;&nbsp;Delete rows: <input id="deleteInput" value=""><button onclick="javascript: deleterow();">go</button>&nbsp;&nbsp;<b>||</b>&nbsp;&nbsp;Suggest Merges<button onclick="javascript: suggestmerges();">go</button>
+<br/>Merge rows: <input id="mergeInput" value=""><button onclick="javascript: merge('0');">go</button>(comma seperated list of IDs the first of which will be used)&nbsp;&nbsp;<b>||</b>
+&nbsp;&nbsp;Rename row id: <input id="rowID" value="" style="width:20px"> to <input id="rowName" value=""><button onclick="javascript: rename();">go</button>&nbsp;&nbsp;</div>
+<div class="info"></div>
+<div class="history" >List of Edits: <ul id='historyul'></ul>Save Edited Json?<button onclick="javascript: save();">go</button> </div>
+</body>
+<script>
+  //http://localhost/dama-larca/d3/whoyouelect-april27/edit-json.html?f=kyle_janek-largenet-04-28_03-18-14
+  var entitycolors = {"politician":"rgba(31, 119, 180, .8)","PERSON":"rgba(180,31,45,.8)","ORGANIZATION":"rgba(180,92,31,.8)","MISC":"rgba(31,180,92,.8)","BILL":"yellow"};
+  var num_links;
+  var gr;
+  var name_to_index = {};
+  var file;
+  
+  function searchStringInArray(str) {
+    id = name_to_index[str];
+    node = gr.elements.nodes[id];
+
+    searchfor = [str]
+    strspl = str.split(" ");
+    if(strspl.length > 1 && node.entity_type != "ORGANIZATION"){ 
+	searchfor.push( strspl[strspl.length - 1] );
+    }
+
+    retu = {};
+    for (var j=0; j< gr.elements.nodes.length; j++) {
+	for(s=0; s < searchfor.length; s++){
+		curfname = gr.elements.nodes[j].full_name;
+		if (curfname.indexOf(searchfor[s]) > -1 && curfname.indexOf("MERGED") == -1 && curfname.indexOf("DELETED") == -1 && j != id){ 
+			retu[j] = gr.elements.nodes[j].full_name;
+		}
+	}
+    }
+    return retu;
+  }
+  
+  function clicknode(d){
+        console.log("In click node with "+d);
+	tid = d;
+	found = 0;
+	listarticles = "<ul>";
+
+	for(i=0; i < gr.elements.links.length; i++)
+	{
+	   check = (gr.elements.links[i]['target'] == tid || gr.elements.links[i]['source'] == tid);
+
+	   if(check == true && found == 0)
+	   {
+		console.log("Found at i: "+i);
+		var jj = gr.elements.links[i];
+
+		//aggregate based on url
+		jurls = {}
+		jj['inst'].forEach(function(l){ 
+			if(l['mongoid'] in jurls){ jurls[l['mongoid']]['inst'].push(l); }
+			else{ 
+				console.log(l);
+				//jurls[l['mongoid']] = {'date': '2008-02-04', inst:[l]}; 
+				
+				//FIX THIS IN PYTHON!
+				//jurls[l['mongoid']] = {'date': mongourls[l['mongoid']].date, inst:[l]}; 
+			} 
+		});
+
+		var ll = [];
+		Object.keys(jurls).forEach(function(d){ ll.push(jurls[d]); })
+		ll = ll.sort(function(a,b) { return a['date'] > b['date']?-1:1; });
+
+		for(ji = 0; ji < ll.length; ji++)
+		{
+			mongoid = ll[ji]['inst'][0].mongoid;
+			
+			//THIS IS ANOTHER HACK  just skip articles for now, until we correct this in the generation of the json file itself in python code
+			if(!(mongoid in mongourls)){
+				continue;
+			}
+			curarticle = mongourls[mongoid];	
+			cururl = curarticle['url'];
+			curdate = curarticle['date'];
+
+			console.log(curarticle);
+		}
+	}
+      }
+
+  }
+
+  function removerow(id){ jQuery(".suggestions ul li#id"+id).remove(); }
+  function closesuggestions(){ jQuery('.suggestions').hide();}  
+  function suggestmerges(){
+	seen = [];
+	ret = {}
+	for(i=0; i < gr.elements.nodes.length; i++)
+	{
+		if(seen.indexOf(i) == -1){
+			fname = gr.elements.nodes[i].full_name;
+			if( fname.indexOf("MERGED") == -1 && fname.indexOf("DELETED") == -1){
+				//console.log("---CHECK: "+i +", "+fname);
+				res = searchStringInArray(fname);	
+				//console.log(res);
+				Object.keys(res).forEach(function(d){ 
+					//console.log("--------PUSH: "+d);
+					seen.push(parseInt(d)); 
+				});	
+				//console.log(seen);
+				if(Object.keys(res).length > 0){
+					ret[i] = res;
+				}
+			}
+		}
+	}
+	//console.log(ret);
+	//now make little pop up with results
+	keys = Object.keys(ret);
+	output = "<div class='suggestions'>"+'<div style="position:absolute; top:-8px; right:-1px; width:45px; padding-left:5px;"><a href="javascript: closesuggestions();"><img src="images/close_news.png"/></a></div><ul>';
+	for(k=0; k < keys.length; k++)
+	{
+		curid = keys[k];
+		curname = gr.elements.nodes[curid].full_name;
+		curlist = ret[curid];
+		listto = "";
+		lkeys = Object.keys(curlist);
+		lkeys.forEach(function(d){ listto += ret[curid][d] + "("+d+"), "; })		
+
+		lkeys.unshift(curid);
+		output += "<li id='id"+curid+"'>"+curname+" ("+curid+") ,"+listto+"&nbsp;&nbsp;<a href=\"javascript: merge('"+lkeys+"');\">MERGE</a>&nbsp;&nbsp;<a href=\"javascript: removerow("+curid+")\">REMOVE</a></li>";
+	}
+	output += "</ul></div>";
+	jQuery("body").append(output);
+	
+  }  
+
+  function deleterow(){
+	rid = jQuery("#deleteInput").val();
+	var r = confirm("Are you sure you want to delete row#"+rid+" (current: "+gr.elements.nodes[parseInt(rid)].full_name+")?")
+	if (r == true) {
+		gr.elements.nodes[rid].full_name  = "DELETED: "+gr.elements.nodes[rid].full_name;
+		//remove any links that point to this rid
+		for(i = 0; i < gr.elements.links.length; i++){
+			curlink = gr.elements.links[l];
+			if(curlink.target == rid){ delete gr.elements.links[l]; }
+			if(curlink.source == rid){ delete gr.elements.links[l]; }
+		}
+		add_to_history("deleted row#"+rid+" ("+gr.elements.nodes[parseInt(rid)].full_name+")");
+		paint_table(gr);
+	}
+  }
+
+  function save(){
+	var r = confirm("Are you sure you want to save the edits you have made?");
+	if( r == true )
+	{
+		//gather up json from gr and send to php file which will read it and save it!
+		//var data = "{name: 'Bob', occupation: 'Plumber'}";
+		/* this crashes since the json object is too big
+		var url = 'data:text/json;charset=utf8,' + encodeURIComponent(JSON.stringify(gr));
+		window.open(url, '_blank');
+		window.focus();
+		*/
+		jQuery.post("save-json.php", {'json':JSON.stringify(gr), 'fname':file}, function(d){ 
+			//alert(d);
+			alert("Success");
+		});
+	}
+  }
+
+  function rename(){
+	rid = jQuery("#rowID").val();
+	newname = jQuery("#rowName").val();
+	var r = confirm("Are you sure you want to rename row#"+rid+" (current: "+gr.elements.nodes[parseInt(rid)].full_name+") to the following: "+newname);
+	if (r == true) {
+		gr.elements.nodes[rid].full_name = newname;
+		add_to_history("rename row#"+rid+" (current: "+gr.elements.nodes[parseInt(rid)].full_name+") to the following: "+newname);
+		paint_table(gr);
+	}
+  }
+
+
+  function merge(vals){
+	removeline = 0;
+	if(vals == "0"){
+		vals = jQuery("#mergeInput").val();
+	}
+	else{
+		//vals = Array(vals);
+		removeline = 1;
+	}
+	valsarr = vals.split(",");
+	out = ""; valsarr.forEach( function(d){ out += gr.elements.nodes[parseInt(d)].full_name + ", " });
+	var r = confirm("Are you sure you want to merge the following: "+out + " (ids: "+vals+" )");
+	if (r == true) {
+		//MERGE gr and repaint
+		//1.  change all links so they point to first id
+		main = parseInt(valsarr[0])
+		for(i = 1; i < valsarr.length; i++)
+		{
+			cur = parseInt(valsarr[i]);
+			for(l = 0; l < gr.elements.links.length; l++)
+			{
+				curlink = gr.elements.links[l];
+				if(curlink.target == cur){ gr.elements.links[l].target = main; }
+				if(curlink.source == cur){ gr.elements.links[l].source = main; }
+			}	
+			
+			//2. rename merged for now, but we'll probably need to delete them at the end, and rename all ids accordingly
+			gr.elements.nodes[cur].full_name = "MERGED (into id-"+main+"): "+gr.elements.nodes[cur].full_name;
+		}
+		add_to_history("merge the following: "+out + " (ids: "+vals+" )");
+		paint_table(gr); 
+	
+		if(removeline == 1){ jQuery(".suggestions ul li#id"+valsarr[0]).remove(); }
+	} 
+  }
+
+  function add_to_history(line){
+	console.log("in add_to_history with "+line);
+	jQuery(".history").show();
+	jQuery("#historyul").append("<li>"+line+"</li>");
+  }
+
+
+  //http://jsfiddle.net/ukW2C/3/
+  $("#searchInput").keyup(function () {
+    //split the current value of searchInput
+    //var data = this.value.split(" ");
+    var data = [this.value];  //search for exact hit
+    //create a jquery object of the rows
+    var jo = $("#fbody").find("tr");
+    if (this.value == "") {
+        jo.show();
+        return;
+    }
+    jo.hide();  //hide all the rows
+
+    //Recusively filter the jquery object to get results.
+    jo.filter(function (i, v) {
+        var $t = $(this);
+        for (var d = 0; d < data.length; ++d) {
+            if ($t.is(":contains('" + data[d] + "')")) {
+                return true;
+            }
+        }
+        return false;
+    })
+    .show();    //show the rows that match.
+}).focus(function () {
+    this.value = "";
+    $(this).css({ "color": "black" });
+    $(this).unbind('focus');
+}).css({ "color": "#C0C0C0" });
+
+
+
+  //https://labs.mbrooks.info/demos/Tidy-Table/
+   function sortTable(table, col, reverse) {
+    var tb = table.tBodies[0], // use `<tbody>` to ignore `<thead>` and `<tfoot>` rows
+        tr = Array.prototype.slice.call(tb.rows, 0), // put rows into array
+        i;
+    reverse = -((+reverse) || -1);
+  
+    if(col == 0 || col == 2){
+	//id and occurrences columns are numeric so sort accordingly and not by text comparison
+        tr = tr.sort(function(a,b){ return reverse * (parseInt(a.cells[col].textContent) - parseInt(b.cells[col].textContent)); });
+    }
+    else{
+	    tr = tr.sort(function (a, b) { // sort rows
+		return reverse // `-1 *` if want opposite order
+		    * (a.cells[col].textContent.trim() // using `.textContent.trim()` for test
+			.localeCompare(b.cells[col].textContent.trim())
+		       );
+	    });
+    }
+    for(i = 0; i < tr.length; ++i) tb.appendChild(tr[i]); // append each row in order
+  }  
+
+  function makeSortable(table) {
+    var th = table.tHead, i;
+    th && (th = th.rows[0]) && (th = th.cells);
+    if (th) i = th.length;
+    else return; // if no `<thead>` then do nothing
+    while (--i >= 0) (function (i) {
+        var dir = 1;
+        th[i].addEventListener('click', function () {sortTable(table, i, (dir = 1 - dir))});
+    }(i));
+  }
+
+
+  function getURLParameter(name) {
+     return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search)||[,""])[1].replace(/\+/g, '%20'))||"NONE"
+  }
+
+  function paint_table(gr){
+	$("#searchInput").val("");
+	$("#mergeInput").val("");
+	$("#rowID").val("");
+	$("#rowName").val("");
+
+	//make name_to_index
+	for(i=0; i < gr.elements.nodes.length; i++){
+	    name_to_index[gr.elements.nodes[i]["full_name"]] = i;
+	}
+
+	//make num_links for each node (fix so its not just target centric)
+	num_links = {};
+	for(i=0; i < gr.elements.links.length; i++){
+	   ts = ["target","source"];
+	   for(tc =0; tc < ts.length; tc++)
+	   {
+		   t = ts[tc]; 
+		   if(gr.elements.links[i][t] in num_links){
+			num_links[gr.elements.links[i][t]]++;
+		   } 
+		   else{
+			num_links[gr.elements.links[i][t]] = 1
+		   }
+	   }
+	}
+
+	output = "<table class='mostassoc' border='0'><thead style='font-size:14px;'><th>ID</th><th width='40%'>Name</th><th>Num Links</th><th>Type</th></thead><tbody id='fbody'>";
+	
+	gr.elements.nodes.forEach(function(n){ 
+		thirdcol = n['entity_type'].toLowerCase();
+		if(thirdcol == "politician"){ 
+			if('party' in n){
+				if( 'position' in n){
+					if(typeof(n['position']) != "string"){ thirdcol = n['party']+', '+n['position'].join(', ');}
+					else{ thirdcol = n['party']+', '+n['position']; }
+					
+				}else{
+					if('chamber' in n){
+						if( n['chamber'] == null){ n['chamber'] = ""; }
+						thirdcol = n['party']+" Representative in "+ n['chamber'] + " chamber of Congress";
+					}
+					else{
+						thirdcol = n['party']
+					}
+				}
+			}else{  
+				if( 'position' in n){
+					thirdcol = n['position'].join(', ');
+				}
+				else{
+					thirdcol = "politician"
+				}
+			}
+		}
+		n['index'] = name_to_index[n['full_name']];
+		output += "<tr class='"+n['entity_type'].toLowerCase()+"'>";
+		output += "<td style='font-size:14px; font-weight:normal'>"+n['index']+"</td>";
+		output += "<td width='40%'><a style='font-size:14px; font-weight:normal; color:"+entitycolors[n['entity_type']]+"' href='javascript: clicknode("+n['index']+");'>"+n['full_name']+"</a></td>";
+		output += "<td style='font-size:14px; font-weight:normal;'>"+num_links[n['index']]+"</td>";
+		output += "<td style='font-size:12px; font-weight:normal;'>"+thirdcol+"</td></tr>"; 
+	});
+
+	output += "</tbody></table>";
+	
+	document.querySelector(".info").style.display = "block";
+	document.querySelector(".info").innerHTML = output;
+
+	var table = document.getElementsByClassName("mostassoc")[0];
+	makeSortable(table);
+  }
+
+  var mongourls;
+  var loadstatus;
+  var s;   //holds center node name passed in via GET
+  var urlsurl;
+  var largeneturl;
+
+  function setloadstatus(v){
+	console.log("in set load status with current loadstatus of "+loadstatus+" and passed in v of "+v);
+	if( v == -1 && loadstatus == -1){
+		console.log("failed to load original files or uncompress ones");
+	}
+	else{
+		if(v == -1 && loadstatus == 0){
+			loadstatus = -1;
+			console.log("failed to find initial url or largenet file so try to uncompress tar to find them!");
+			//check for tar.gz file first and if not check for just json file
+			uncompress = "tar-utility.php?person="+s+"&action=retrieve&net=large";
+			console.log("uncompresssing: ");
+			console.log(uncompress);
+
+			jQuery("#loading").append("<p style='font-size:12px;'>uncompressing and retrieving files</p>");
+			$.ajax({ url: uncompress, 
+			    error: function(r) { console.log("error uncompressing"); },
+			    success: function(r) {
+				r = JSON.parse(r);;
+				console.log(r); 
+				console.log(r["success"] == 'true');
+
+				if(r["success"] == true)
+				{
+					loadjson(urlsurl,largeneturl);   //found files via uncompress so now load!
+				}
+				else{
+					setloadstatus(-1);	//second strike and you are out!
+				}
+			    }
+			});	
+		}
+	}
+  }
+
+  function loadjson(urlsurl,largeneturl){
+	//load urls json
+	$.ajax({
+	  dataType: "json",
+	  url: urlsurl,
+	  success: function(j){
+ 		mongourls = j;
+		//load file json
+		$.ajax({
+		  dataType: "json",
+		  url: largeneturl,
+		  success: function(j){
+			gr = j;
+			paint_table(gr);
+		  },
+		  error: function(d){
+			console.log("error loading largeneturl: "+largeneturl);
+			setloadstatus(-1);
+		  }
+		});
+	  },
+	  error: function(d){
+		console.log("error loading urlsurl: "+urlsurl);
+		setloadstatus(-1);
+	  }
+	});
+
+  }
+
+  var search_terms;
+  //when the page is loaded, this will be called to run
+  jQuery(function() {
+	loadstatus = 0;
+	s = getURLParameter("s");
+	//NO LONGER BASED ON FILE NAME BUT RATHER PERSON NAME AND WE LOOK UP THERE LARGE JSON FILE FROM SEARCH TERMS
+	d3.json("js/config.json", function(error, st) {
+
+		search_terms = st;
+		urlsurl = "data/"+search_terms[s][1];
+		largeneturl = "data/"+search_terms[s][3];
+
+		jQuery("#fname").html(largeneturl);
+		loadjson(urlsurl,largeneturl);
+
+	});
+  });
+</script>
+</html>

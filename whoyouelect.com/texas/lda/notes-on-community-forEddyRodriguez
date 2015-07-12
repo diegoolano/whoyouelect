@@ -1,0 +1,349 @@
+USING ALL ARTICLES FROM COMMUNITY  - single words
+Topic 10,8.33,food,farmers,farm,caucus,milk,farms,urban,foore,markets,regulations        
+Topic 16,8.33,program,sanchez,investors,leffingwell,foreign,jobs,chinese,investment,project,immigration        
+Topic 18,8.33,redistricting,turnout,travis,population,zaffirini,seliger,school,complaint,contestants,montford           
+Topic 5,6.67,environmental,contested,measures,proposals,rister,amendment,permit,permitting,solar,bonds              
+Topic 8,6.67,school,taxes,college,renewable,schools,students,carry,straus,spent,campus             
+Topic 17,6.67,redistricting,marriage,math,reform,students,conferees,amendment,delay,english,gay                
+Topic 1,5,craddick,loans,lenders,loan,norcross,owned,payday,customers,fees,municipally        
+Topic 7,5,program,environmental,school,animal,animals,drinks,milk,students,schools,alvarado           
+Topic 9,5,straus,craddick,school,morales,runoff,fulltime,taxes,coppedge,sanchez,sanders            
+Topic 11,5,students,school,student,contract,population,charter,college,eastside,schools,tribune            
+Topic 14,5,redistricting,cause,lane,neighborhood,partisan,schwarzenegger,vision,crain,eastland,police             
+Topic 20,5,school,zuniga,identification,east,license,lorenz,cenizo,molina,registered,spring             
+Topic 3,3.33,spent,coal,waste,hand,expenses,included,jeht,offenders,onstaffprofessional,parole             
+Topic 4,3.33,chair,vice,cbo,partisan,craddick,school,vicechair,taxes,schools,reform             
+Topic 6,3.33,uber,tesla,epa,tribune,dealers,lyft,permit,gray,permits,tceq               
+Topic 12,3.33,farm,urban,farmers,exemption,police,farms,foore,foores,east,food               
+Topic 13,3.33,breakfast,school,tesla,kids,schools,car,students,sell,franchise,eating             
+Topic 15,3.33,food,map,farmers,markets,zaffirini,seliger,cottage,foods,redistricting,producers          
+Topic 19,3.33,guns,gun,dec,food,restaurant,handgun,hosting,location,patterson,sunday             
+Topic 2,1.67,dist,gopst,demst,gopapp,oneill,app,berlanga,bland,cargill,carolyn            
+
+
+USING ALL ARTICLES FROM COMMUNITY  - bi-grams model
+Topic 13,15,bills,to his,the contract,charter school,an abortion,announced today,board is,board meeting,board members,board president       
+Topic 6,10,bush got,statewide republicans,uber and,and lyft,raw milk,tesla motors,cars directly,may be,paddie said,small farms           
+Topic 8,10,the program,he and,the amendment,the eb,a measure,eating breakfast,has passed,nocharge breakfast,the chisum,that was              
+Topic 18,8.33,may be,college campuses,rate increase,municipally owned,of silence,on college,owned utilities,to carry,a gun,carry a               
+Topic 20,8.33,an id,district,seliger said,senate districts,el cenizo,her district,minority voters,identification card,into austin,molina said           
+Topic 14,6.67,cottage food,springdale farm,the epa,unpasteurized milk,milk to,agricultural tax,at springdale,difficult for,food law,health regulations    
+Topic 11,5,dec,on dec,urban farmers,the foores,springdale farm,hosting a,the exemption,beer and,location of,the restaurant        
+Topic 19,5,vice chair,coal waste,a freshman,coal combustion,redistricting reform,capital murder,coalfired power,combustion waste,life without,of toxic              
+Topic 2,3.33,lorenz said,the campaign,affordable housing,campaign to,cause to,community leaders,families in,leaders and,left us,over in               
+Topic 3,3.33,bell county,officials said,police said,there were,charged with,free breakfast,man was,the affidavit, arrests,a voice               
+Topic 5,3.33, on,on hand,spent,expenses included,hand spent,spent the, has,most money,daustin spent,services expenses     
+Topic 7,3.33,caucus will, on,and rural,austin energy,austin neighborhoods,city staffers,electric rates,energy officials,homestead preservation,it easier             
+Topic 10,3.33,the program,immigration services,foreign investors,leffingwell said,an eb,and immigration,the eb,city to,program has,the mayor             
+Topic 12,3.33,where representative,challenged by,faces democrat,is challenged,and libertarian,the green,people with,with disabilities,breakfast program,businesses owned      
+Topic 15,3.33,and go,set a,then he, rodriguez,a break,a fix,a heck,a licensed,a looming,a movie               
+Topic 1,1.67,split,partisan split,vice chair,property taxes,district,have put,local control,perry set,require a,worked with           
+Topic 4,1.67,many others,he and,springdale farm,dist,representative dist,i demst,demst representative,i gopst,gopst representative,i gopapp              
+Topic 9,1.67,animal rights,require a,a bitter,a license,american society,animals and,antifreeze to,cruelty to,endorsed by,humane legislation    
+Topic 16,1.67,gay marriage,amendment to,chisum said,happen in,one man,one woman,president bush,said tuesday, sponsored,a measure             
+Topic 17,1.67,dist,representative dist,i gopst,gopst representative,demst representative,i demst,gopapp ct,i gopapp,pl,ct th                 
+
+
+
+
+
+
+
+###################################################################################START FROM HERE
+dats = jQuery("td","#articlesinfo table tr")
+newdats = dats.map(function(f){ return dats[f].textContent; })
+
+sum = 0 newdats.each(function(e){ if( (e+1) % 3 == 0){ sum += parseInt(newdats[e]); }})
+sumgr1 = 0;  numgr1 = 0 newdats.each(function(e){ if( (e+1) % 3 == 0){ num = parseInt(newdats[e]); if(num > 1){  sumgr1 += num; numgr1 += 1; }}})
+
+*********USING NEW CSV ( NOT ONE IN BACK )
+//data in /Users/dolano/htdocs/dama-larca/d3/whoyouelect-april27/lda/community-articles-lda.csv"
+we start with 189 articles whose sum of how many entities from the community are found in the artile is 299
+there are 70 articles with more than one entity,    and they add to 180
+there are 27 articles with more than two entities,  and they add to 94
+there are  9 articles with more than three entities and they add to 40
+there are  3 articles with more than four entities  and they add to 16
+there is   1 article  with more than five entities  and it  adds to 1
+
+The best is to remove enough noise, but not too much.  
+
+
+
+
+USING ALL ARTICLES ( of which there are 189 )  ... single words
+[1] "eddie_rodriguez 294 13686 0.01591 third_quartile_cutoffval 178 3354"
+Topic 16,9.55,doggett,nomination,defeated,workman,police,map,sheets,woman,immigration,doggetts      
+Topic 17,8.43,maps,plaintiffs,doggett,morales,map,latino,abbotts,compromise,caucus,payday        
+Topic 2,7.87,craddick,straus,seniority,mansion,saturday,utility,fulltime,gambling,preservation,bonds         
+Topic 13,6.18,gun,map,standards,background,simpson,tsa,checks,workman,airports,antigroping   
+Topic 20,6.18,police,indictments,contribution,families,arrested,charged,environment,trmpac,arrest,cruz          
+Topic 1,5.62,food,farmers,farm,markets,caucus,urban,farms,milk,foore,regulations   
+Topic 6,5.62,ammonium,nitrate,fire,craddick,fertilizer,explosion,storage,kacal,loans,facilities    
+Topic 7,5.06,gambling,sanchez,license,drivers,casinos,craddick,proponents,provision,resolution,maps          
+Topic 19,5.06,students,college,fitness,renewable,mexico,tuition,veto,undocumented,standards,cardiovascular
+Topic 3,4.49,wage,theft,metal,detectors,immigration,handgun,concealed,police,gun,chvez         
+Topic 11,4.49,tesla,dealers,cars,sell,car,dealerships,musk,consumers,manufacturers,uber          
+Topic 15,4.49,gun,concealed,census,guns,handgun,expenses,college,campuses,handguns,students      
+Topic 5,3.93,cbo,zaffirini,seliger,students,map,latin,fashion,math,conferees,english       
+Topic 10,3.93,utility,beer,metro,epa,dec,craft,brewing,distributors,tceq,billys        
+Topic 12,3.93,leffingwell,investors,foreign,chinese,renters,immigration,relief,exemption,apartment,homeowners    
+Topic 8,3.37,fitness,students,campo,certified,marathon,classes,college,healthy,pilates,reagan        
+Topic 9,3.37,students,testing,skinner,dna,morton,eastside,execution,lorenz,charter,trustee       
+Topic 14,3.37,dogs,dog,animal,dangerous,cameras,grant,incentives,noble,utility,customers     
+Topic 18,2.81,lane,ideological,shoes,stores,scores,suits,tie,favorite,fashion,reduced       
+Topic 4,2.25,chairwoman,recommendation,delegates,acevedo,clerk,cortez,frullo,naomi,omalley,precinct  
+
+
+USING ALL ARTICLES .. bigram model
+[1] "eddie_rodriguez 294 96515 0.0169101967378515 third_plus_mean_cutoffval 178 4951"
+Topic 13,11.24,metal detectors,district,dream act,favorite designers,and stores,designers and, hometown,goodluck charm,instate tuition,the contract             
+Topic 14,8.99,district,animal control,drivers license,high school,gun show,seliger said,cardiovascular fitness,the dogs,the drivers,animal services          
+Topic 11,8.43,where representative,district,challenged by,faces democrat,is challenged,springdale farm,on june,unpasteurized milk,musk said,allen said               
+Topic 18,7.3,capital metro,payday lenders,interest rates,board members,the loans,norcross said,the standards,us history,annual interest,college campuses         
+Topic 19,7.3,d hd,r hd,energy efficiency,the epa,certified by,environment texas,austin energy,spent,thirdworld country,district                 
+Topic 15,6.74,ammonium nitrate,bush got,dec,the chemical,state fire,on dec,the town,urban farmers,fire marshals,the foores               
+Topic 3,5.62,uber and,and lyft,home sales,an abortion,interest rates,economic incentives,paddie said,with disabilities,announced today,east seventh             
+Topic 8,5.62,vice chairman,ammonium nitrate,fire marshal,the census,an id,vice chairwoman,state fire,austin energy,the utility,affairs chairman         
+Topic 10,5.06,wage theft,feb,re feb,the wage,theft is,homestead exemption,hurtt said,metropolitan organization,the metropolitan,theft law                
+Topic 7,4.49,leffingwell said,foreign investors,immigration services,land uses,samesex marriage,unincorporated areas,landuse authority,of ovarian,ovarian cancer,plaintiffs lawyers       
+Topic 1,3.37,the mansion,the addition,preservation board,on crime,the preservation,disciplinary system,high school,most likely,my property,re jan                   
+Topic 2,3.37,the ideological,voting records,conservative than,ideological spectrum,redistricting reform,clothing line,conservative voting,fellow republicans,is sold,latin market             
+Topic 4,3.37,until,farmers markets,pm today,reduced to,today through,us,am until,fm,pm until,any firearm              
+Topic 5,2.81,americanstatesman staff,board members,campo board,consumers more,its cars,latino districts,tesla motors,the boards,the compromise,agreement with           
+Topic 6,2.81,uncle billys,feb,lorenz said,re feb,texas craft,brewers guild,craft brewers,craft brewing,distributors and,the colorado             
+Topic 9,2.81,community schools,police said,students and,their families,living wage,schools that,are at,and social,austin interfaith,college high             
+Topic 12,2.81,vice chair,split,partisan split,district,house district,for house,nomination for,democrat district,republican nomination,precinct                 
+Topic 17,2.81,dna testing,de jesus,maria de,re jan,when politicians,and fishes,loaves and,mexican government,mobile loaves,the ayotzinapa           
+Topic 20,2.81,farmers markets,expenses included,hand spent,spent the, has,spent,cottage food,most money,raw milk,daustin spent            
+Topic 16,2.25,th district,district,no,place,mens wearhouse,dry cleaning,house district, jason,bell county,independent school       
+
+
+
+#USING ARTICLE WITH ENTITY GREATER THAN 1, single words
+[1] "eddie_rodriguez 294 9599 0.009245 third_quartile_cutoffval 64 2393"
+Topic  6,10.94,tax,percent,rates,runoff,races,craddick,west,strayhorn,benefits,credit        
+Topic 15,9.38,students,tax,undocumented,dream,exemption,tuition,feb,homestead,instate,relief        
+Topic  5,7.81,races,craddick,challenged,turnout,campo,planning,craddicks,eissler,hays,precinct      
+Topic  9,6.25,plaintiffs,students,maps,map,redistricting,fitness,percent,maldef,kids,doggett       
+Topic 11,6.25,west,ammonium,nitrate,fire,explosion,chemical,kacal,pickett,fertilizer,plant         
+Topic 16,6.25,straus,immigration,sanctuary,tax,committees,abortion,driving,isaac,program,schwertner    
+Topic 18,6.25,sanchez,loans,interest,craddick,lenders,loan,percent,rates,maps,consumers     
+Topic  3,4.69,energy,doggett,program,renewable,efficiency,redistricting,maps,solar,committees,races         
+Topic  4,4.69,food,farm,dec,jobs,sustainable,creates,ikea,movies,panels,restaurant    
+Topic  7,4.69,doggett,maps,redistricting,compromise,latino,plaintiffs,doggetts,kleinschmidt,maldonado,caucus        
+Topic 10,4.69,utility,energy,rate,owned,electric,governance,rates,accountability,breakfast,customers     
+Topic 12,4.69,farmers,food,markets,caucus,wic,market,snap,program,farms,pilot         
+Topic 13,4.69,strayhorn,tax,gambling,percent,craddick,latino,agreement,straus,jobs,rister        
+Topic  1,3.12,shoes,suits,tie,families,fashion,favorite,stores,designers,dress,goodluck      
+Topic  8,3.12,incentives,percent,jobs,lenders,interest,ordinance,rates,authority,craddick,dochen        
+Topic 14,3.12,tesla,uber,cars,dealers,car,auto,teslas,directly,musk,lyft          
+Topic 17,3.12,program,investors,foreign,chinese,investment,leffingwell,jobs,investments,project,immigration   
+Topic 19,3.12,beer,craft,distributors,billys,brewing,detectors,industry,metal,uncle,brewpubs      
+Topic  2,1.56,gambling,casinos,proponents,expanded,indian,montford,sullivan,gaming,racetracks,las           
+Topic 20,1.56,latin,market,fashion,sold,clothing,culture,stores,clothes,designer,influences    
+
+
+#USING ARTICLES WITH ENTITY GREATER THAN 1, and then weighing by number of entities an article has
+[1] "eddie_rodriguez 294 9599 0.009295 third_quartile_cutoffval 165 2394"
+Topic 3,9.7,tax,rates,strayhorn,craddick,gambling,credit,religious,program,statewides,tickets       
+Topic 7,9.7,doggett,plaintiffs,redistricting,maps,map,latino,maldef,abbotts,agreement,compromise    
+Topic 6,7.88,tesla,uber,cars,dealers,car,auto,teslas,directly,musk,families      
+Topic 10,7.88,challenged,turnout,campo,montford,sanctuary,planning,breaks,lehmberg,lykos,neighborhood  
+Topic 4,6.06,food,caucus,farmers,milk,raw,farms,markets,regulations,tax,farm          
+Topic 1,5.45,gambling,tax,strayhorn,casinos,craddick,proponents,measures,fulltime,program,abortion      
+Topic 13,5.45,beer,craft,distributors,billys,brewing,industry,uncle,brewpubs,sell,bonds         
+Topic 2,4.85,energy,program,craddick,renewable,solar,efficiency,jobs,devices,panels,homeowners    
+Topic 8,4.85,loans,interest,lenders,craddick,loan,sanchez,rates,payday,consumers,annual        
+Topic 12,4.85,jobs,incentives,program,investors,foreign,chinese,leffingwell,investments,dochen,market        
+Topic 17,4.85,students,ammonium,nitrate,fire,fitness,explosion,chemical,kacal,fertilizer,plant         
+Topic 16,4.24,markets,farmers,wic,program,snap,pilot,market,food,medina,yard          
+Topic 20,4.24,tax,morales,coppedge,sanchez,canalesblack,wareing,windcrest,kleinschmidt,maldonado,farm          
+Topic 5,3.64,utility,energy,governance,rates,changing,ordinance,accountability,authority,electric,nuclear       
+Topic 9,3.64,maps,compromise,monday,latino,redistricting,abbotts,plaintiffs,caucus,map,boundaries    
+Topic 18,3.64,shoes,favorite,suits,tie,fashion,stores,designers,dress,goodluck,style         
+Topic 19,3.03,latin,line,market,fashion,sold,clothing,culture,stores,clothes,designer      
+Topic 11,2.42,precinct,hays,monday,abstain,bond,daughter,debt,exceed,tax,farthest      
+Topic 14,2.42,utility,owned,energy,municipally,rates,utilities,appropriations,assignments,player,suburban      
+Topic 15,1.21,dec,food,restaurant,hosting,location,sunday,wine,beer,blvd,chef 
+
+
+#USING ARTICLES WITH ENTITY GREATER THAN 1, weighing and using k=10 topics
+[1] "eddie_rodriguez 294 9599 0.009295 third_quartile_cutoffval 165 2394"
+Topic 10,14.55,program,tax,rates,campo,chinese,montford,foreign,sanctuary,super,planning     
+Topic 7,12.12,maps,redistricting,doggett,plaintiffs,latino,map,compromise,abbotts,maldef,caucus       
+Topic 3,11.52,tax,strayhorn,rates,craddick,gambling,credit,students,redistricting,religious,morales      
+Topic 6,11.52,tesla,uber,cars,dealers,car,challenged,ammonium,nitrate,auto,teslas       
+Topic 2,9.7,line,latin,energy,market,fashion,sold,craddick,clothing,culture,families     
+Topic 5,9.7,energy,utility,program,leffingwell,shoes,favorite,jobs,stores,governance,suits        
+Topic 9,9.7,incentives,jobs,owned,utility,bonds,market,program,dochen,energy,kleinschmidt 
+Topic 8,7.88,lenders,loans,interest,craddick,rates,sanchez,students,industry,loan,payday       
+Topic 1,7.27,gambling,markets,farmers,program,wic,snap,pilot,casinos,market,food         
+Topic 4,6.06,food,caucus,farmers,milk,raw,tax,farms,markets,regulations,farm     
+
+
+#SAME AS PRIOR WITH JUST 5 TOPICS
+Topic 3, 25.45, tax, strayhorn, rates, students, craddick, car, tesla, gambling, industry, cars         
+Topic 4, 21.82, food, farmers, maps, markets, caucus, redistricting, doggett, plaintiffs, latino, map          
+Topic 1, 18.79, craddick, gambling, interest, lenders, loans, loan, rates, tax, incentives, annual       
+Topic 2, 18.79, energy, program, line, latin, market, sanchez, craddick, jobs, fashion, foreign      
+Topic 5, 15.15, utility, uber, energy, tesla, rates, dealers, lyft, shoes, electric, stores 
+
+#SAME AS ABOVE EXCEPT WITH BIGRAMS INSTEAD OF SINGLE TERSM
+Topic 1, 25.32, district, farmers markets, bush got, statewide republicans, home sales, democrat district, economic incentives, antonio court, dc court, pilot program        
+Topic 2, 25.32, ammonium nitrate, austin energy, district, the utility, on june, compromise maps, council members, fire marshals, kacal said, the chemical         
+Topic 4, 24.05, d hd, r hd, raw milk, farmers markets, uber and, and lyft, at farmers, small farms, the industry, agricultural land    
+Topic 3, 13.92, where representative, challenged by, faces democrat, is challenged, and libertarian, dec, latino districts, the compromise, interest rates, favorite designers   
+Topic 5, 11.39, sold at, interest rates, clothing line, is sold, latin market, the latin, renewable energy, of latina, line that, annual interest     
+
+
+#USING ARTICLES WITH ENTITY GREATER THAN 1, bigrams
+[1] "eddie_rodriguez 294 54792 0.00990257399807719 third_plus_mean_cutoffval 63 4443"
+Topic 11,12.7,district,bush got,statewide republicans,dream act,on june,antonio court,dc court,instate tuition,abbotts office,other plaintiffs           
+Topic 16,9.52,renewable energy,austin energy,the industry,energy efficiency,the utility,council members,craddick said,norcross said,payday lenders,sanctuary city             
+Topic 19,9.52,district,dec,on dec,a travis,travis countycentered,hosting a,beer and,coalition districts,compromise maps,county plaintiffs          
+Topic 20,9.52,ammonium nitrate,favorite designers,and stores,designers and,fire marshals,kacal said,the chemical,the explosion,the town, hometown                  
+Topic 5,6.35,expanded gambling,local food,metal detectors,its time,tesla motors,a farm,cars directly,concealed handgun,for tesla,gambling interests         
+Topic 6,6.35,local officials,the eb,appropriations committee,criminal jurisprudence,eb program,foreign investors,house criminal,jurisprudence committee,martin said,the appropriations         
+Topic 7,4.76,district,democrat district,precinct,the caucus,caucus will,commissioner precinct,court judge,hays county,place,republican texas           
+Topic 8,4.76,rate increase,municipally owned,owned utilities,the rate,my property,utilities that,with my,a portion,attending a,christian said             
+Topic 10,4.76,d hd,r hd,farmers markets,sold at,pilot program,the pilot,the wic,clothing line,is sold,latin market               
+Topic 12,4.76,uber and,and lyft,home sales,economic incentives,feb,homestead exemption,paddie said,re feb, lobbyists,texas home                 
+Topic 15,4.76,the caucus,raw milk,farmers markets,at farmers,small farms,the consolidation,agricultural land,congressional redistricting,doggett is,fischer said               
+Topic 1,3.17,energy efficiency,austin energy,money will,the loan,will pay,a cost,and rehabilitation,federal money,for energy,homeowners will            
+Topic 4,3.17,latino districts,the compromise,abbotts office,agreement with,people with,qualify for,some plaintiffs,with disabilities,and latinos,are protected              
+Topic 9,3.17,interest rates,annual interest,payday lenders,vowing to,be illegal,beyond what,cash america,copelin reported,craddicks top,fair and                   
+Topic 13,3.17,cardiovascular fitness,high school,dell center,kids are,physical education,the dell,the fitnessgram,all six,deemed unfit,pate said                  
+Topic 17,3.17,where representative,challenged by,faces democrat,is challenged,and libertarian,ammonium nitrate,another bill,bill by,could prevent,fire marshal               
+Topic 2,1.59,interest rates,the ordinance, feet,also bar,bar new,different set,feet of,from locating,hesitate to,its authority              
+Topic 3,1.59,uncle billys,texas craft,brewers guild,craft brewers,craft brewing,distributors and,and sellers,beer distributors,beer industry,new laws                   
+Topic 14,1.59,chamber of,of commerce,barnes noble,greater austin,the greater, ikea, stores,and mobile,citizen panel,closure of                 
+Topic 18,1.59,board members,campo board,the boards,metropolitan planning,planning organizations,as campo,board in,boards of,down as,fellow campo    
+
+
+#USING ARTICLES WITH ENTITY GREATER THAN 1, and then weighing by number of enities, bigrams
+[1] "eddie_rodriguez 294 54792 0.01021174124647 third_plus_mean_cutoffval 158 4366"
+Topic 19,13.29,district,where representative,bush got,statewide republicans,challenged by,faces democrat,is challenged,the compromise,abbotts office,and libertarian       
+Topic 2,10.76,ammonium nitrate,on june,fire marshals,kacal said,the chemical,the explosion,the town,file a,filed friday,filed house           
+Topic 18,6.96,uber and,and lyft,renewable energy,paddie said,energy efficiency,feb, lobbyists,homestead exemption,re feb,gambling interests    
+Topic 7,6.33,raw milk,farmers markets,at farmers,small farms,agricultural land,food sampling,foodsampling bill,land use,the foodsampling,local officials       
+Topic 17,6.33,austin energy,uncle billys,the utility,council members,texas craft,rate increase,an unelected,brewers guild,craft brewers,craft brewing         
+Topic 1,5.7,dream act,instate tuition,repeal of,ammonium nitrate,campbells bill,veterans affairs,higher education,a magnet,and universities,another bill          
+Topic 10,5.7,farmers markets,home sales,economic incentives,pilot program,the pilot,the wic,markets to,texas home,austin sustainable,customers to          
+Topic 8,5.06,the industry,cardiovascular fitness,craddick said,norcross said,payday lenders,the loan,the loans,high school,dell center,kids are              
+Topic 12,5.06,district,democrat district,precinct,as speaker,commissioner precinct,court judge,hays county,place,republican texas,the appropriations    
+Topic 5,4.43,interest rates,annual interest,payday lenders,chamber of,fair and,barnes noble,be illegal,beyond what,cash america,copelin reported      
+Topic 6,4.43,sold at,clothing line,is sold,latin market,the latin,of latina,local food,a clothing,and havanera,at foleys             
+Topic 13,4.43,district,tesla motors,a travis,travis countycentered,for tesla,musk told,sell cars,senate transportation,doggett is,the consolidation     
+Topic 15,4.43,favorite designers,and stores,designers and, hometown,energy efficiency,goodluck charm,money will,democrat age,her goodluck,neiman marcus         
+Topic 11,3.8,dec,on dec,metal detectors,board members,campo board,hosting a,the boards,beer and,concealed handgun,location of           
+Topic 14,3.16,jackson lee,mead said,appearance program,at hutto,avoid detention,conditions at,detain them,detention and,immigrant families,immigration officials 
+Topic 4,2.53,d hd,r hd,district,fair and,repeal of,as speaker,court judge,owned by,money will,scheduled to          
+Topic 9,2.53,leffingwell said,foreign investors,immigration services,caucus will,regional centers,and rural,chinese restaurant,citizenship and,clean tech,for investment        
+Topic 3,1.9,interest rates,the ordinance, feet,also bar,bar new,different set,feet of,from locating,hesitate to,its authority         
+Topic 16,1.9,austin energy,austin neighborhoods,city staffers,electric rates,energy officials,homestead preservation,neighborhood plans,overarching vision,scheduled to,the utility           
+Topic 20,1.27,vowing to,craddick has,craddicks top,to oppose, craddick, half,a bare,a betting,a consensus,a craddick    
+
+
+
+
+
+
+#USING ARTICLES WITH ENTITY GREATER THAN 2, single
+[1] "eddie_rodriguez 294 6075 0.00398497137069168 median 25 3038"
+Topic 7,4,district,said,court,state,maps,antonio,san,texas,plaintiffs,redistricting 
+Topic 1,8,interest,rates,lenders,bill,council,loans,lending,ordinance,can,craddick      
+Topic 5,8,austin,said,percent,will,city,sales,texas,incentives,central,county        
+Topic 10,8,said,markets,farmers,program,wic,snap,pilot,texas,families,food          
+Topic 12,4,texas,latin,line,beer,market,said,craft,distributors,rodriguez,billys        
+Topic 16,4,state,said,tesla,texas,bill,car,cars,latino,parties,senate        
+Topic 2,4,uber,said,texas,state,tesla,bill,dealers,lyft,committee,companies     
+Topic 3,4,said,loans,craddick,rodriguez,percent,lenders,loan,interest,texas,legislation   
+Topic 4,4,texas,campaign,last,primary,perry,race,state,new,public,representative
+Topic 8,8,tax,state,property,texas,perry,taxes,districts,local,school,governor      
+Topic 11,4,said,food,bill,caucus,rodriguez,farmers,milk,raw,regulations,small         
+Topic 13,4,representative,democrat,republican,dallas,will,races,republicans,two,democrats,faces         
+Topic 14,8,state,texas,will,houston,san,million,house,antonio,percent,representative
+Topic 15,4,tax,will,state,new,school,taxes,texas,billion,business,districts     
+Topic 17,4,utility,council,energy,austin,city,board,governance,public,changing,members       
+Topic 18,4,state,texas,says,representative,money,years,two,election,john,thats         
+Topic 19,NA,percent,republican,got,bush,state,district,property,texas,two,one           
+Topic 20,NA,bill,filed,state,house,representative,texas,bills,session,lawmakers,can 
+
+
+#USING ARTICLES WITH ENTITY GREATER THAN 2, bigrams
+[1] "eddie_rodriguez 294 27959 0.00860466200760612 third_plus_mean 25 2289"
+Topic 7,4, percent,got,bush got,statewide republicans,hd where,it should,percent next,sued the,that district,the industry          
+Topic 17,4,uber and,and lyft,mexican american,district,paddie said,state house, lobbyists,abbotts office,antonio court,compromise maps       
+Topic 1,8,district,austin energy,the utility,council members,dc court,a white,an unelected,by march,energy is,other plaintiffs      
+Topic 11,4,bill,house bill, percent,the industry,craddick said,norcross said,payday lenders,the loan,the loans,bills filed           
+Topic 16,4, billion, percent,percent increase,rates beyond,the passage,rodriguez said,the industry,it should,district,doesnt deserve        
+Topic 3,4,interest rates,the council,the ordinance, feet,also bar,bar new,council is,different set,feet of,from locating         
+Topic 4,4,uncle billys,texas craft,brewers guild,craft brewers,craft brewing,distributors and,and sellers,beer distributors,beer industry,new laws              
+Topic 5,4,raw milk,farmers markets,rodriguez said,at farmers,small farms,agricultural land,bill,food sampling,foodsampling bill,for small             
+Topic 6,12, percent,the county,austin energy,austin neighborhoods,city staffers,electric rates,energy officials,homestead preservation,neighborhood plans,overarching vision    
+Topic 8,4,interest rates, percent,annual interest,payday lenders,be illegal,beyond what,cash america,copelin reported,fair and,inc of                
+Topic 9,4,farmers markets,pilot program,the pilot,the wic,farmers market,markets to,austin sustainable,customers to,edwards gockel,healthy food          
+Topic 10,8, percent,home sales,economic incentives,percent increase,texas home,to austin,austin area,austin board,be another,carol dochen          
+Topic 12,4,d hd,r hd, percent,district,the industry,it should,rodriguez said,doesnt deserve,house bill,bill                  
+Topic 13,4,bill,tesla motors,an exemption,cars directly,exemption from,for tesla,musk told,sell cars,senate transportation,ass kicked            
+Topic 14,8,hd where,where representative,challenged by,faces democrat,is challenged,sd where,and libertarian,where senator, percent,the industry          
+Topic 18,4,the latin,to attract,sold at,of latina,line which,carlos santana,latin market,market and,of femininity,they love             
+Topic 19,NA,latino districts,the compromise,abbotts office,agreement with,an agreement,parties to,some plaintiffs,the latino,and latinos,are protected         
+Topic 20,NA,jackson lee,mead said,appearance program,at hutto,avoid detention,conditions at,detain them,detention and,immigrant families,immigration officials 
+
+
+#USING ARTICLES WITH ENTITY GREATER THAN 3, single
+Topic 1,12.5,latin,line,market,fashion,sold,clothing,culture,said,think,stores     
+Topic 3,12.5,state,tax,property,taxes,districts,plan,local,business,governor,texas      
+Topic 5,12.5,latino,parties,districts,state,maldef,district,represent,agreement,plaintiffs,said       
+Topic 10,NA,state,texas,maps,abbott,judges,mexican,said,monday,american,house      
+Topic 11,NA,said,food,bill,caucus,rodriguez,farmers,milk,raw,small,regulations
+Topic 13,NA,percent,republican,got,republicans,one,will,bush,district,two,property   
+Topic 14,NA,texas,last,primary,campaign,new,opponent,race,gop,district,just       
+Topic 16,NA,austin,sales,said,incentives,home,governor,jobs,central,state,percent   
+
+
+
+#USING ARTICLES WITH ENTITY GREATER THAN 3, bigrams
+Topic 1,12.5,of the,to the,for the,on the,the compromise,in the,agreement with,san antonio,latino districts,the judges           
+Topic 4,12.5,the caucus,raw milk,of the,he said,farmers markets,hb,rodriguez said,at farmers,small farms,the same             
+Topic 6,12.5,of the,for the,to the,the mexican,mexican american,in a,and state,the compromise,with abbott,compromise maps      
+Topic 8,12.5, percent,of the,got,on the,years ago,two years,bush got,the state,in the,statewide republicans
+Topic 11,NA,home sales, percent,central texas,of the,in the, million,to be,economic incentives,percent increase,to austin            
+Topic 15,NA,d hd,r hd,in the,on the,the texas,a runoff,from the, percent,in hd,hd joe               
+Topic 18,NA,of the,in the,to the,the state,property tax,on the, billion,to be,business and,residential property 
+Topic 19,NA,sold at,latin market,is sold,its a,i think,of latina,which is,this year,clothing line,the latin         
+
+
+
+
+
+
+
+#or what if i just search for the number of topics which is equal to the max number of entities.. in this case 6 ( getting rid of noise)
+#single words , above 1
+[1] "eddie_rodriguez 294 9599 0.009245 third_quartile_cutoffval 64 2393"
+Topic 6,28.12,tax,percent,strayhorn,energy,rates,races,students,craddick,sanchez,runoff       
+Topic 3,17.19,doggett,maps,redistricting,plaintiffs,energy,map,latino,utility,uber,compromise   
+Topic 5,17.19,gambling,races,west,ammonium,nitrate,craddick,fire,explosion,casinos,challenged   
+Topic 4,14.06,food,farmers,markets,program,wic,market,snap,farm,jobs,customers    
+Topic 2,12.5,interest,rates,rate,lenders,loans,food,craddick,percent,caucus,loan         
+Topic 1,10.94,tesla,program,shoes,immigration,beer,car,cars,industry,jobs,leffingwell  
+
+
+#bigrams, above 1 , six topics
+[1] "eddie_rodriguez 294 54792 0.00990257399807719 third_plus_mean_cutoffval 63 4443"
+Topic 6,25.4,dec,dream act,favorite designers,foreign investors,on dec,and stores,designers and,the eb, hometown,a travis                   
+Topic 4,22.22,where representative,district,challenged by,faces democrat,is challenged,and libertarian,local food,the compromise,the industry,the caucus                 
+Topic 1,15.87,farmers markets,energy efficiency,the caucus,austin energy,renewable energy,interest rates,raw milk,at farmers,district,on june                    
+Topic 2,12.7,d hd,r hd,district,interest rates,rate increase,of commerce,chamber of,congressional redistricting,fischer said,municipally owned          
+Topic 5,12.7,bush got,statewide republicans,uber and,and lyft,home sales,metal detectors,tesla motors,expanded gambling,cars directly,board members              
+Topic 3,11.11,district,ammonium nitrate,democrat district,cardiovascular fitness,fire marshals,kacal said,the chemical,the explosion,the town,uncle billys               
+
+
+
+#WHAT IF INSTEAD OF 6 TOPICS I DO THE NUMBER OF ARTICLES WITH ENTITIES GREATER THAN 1 ( that will give me a summary of all these articles pretty much i'm guessing )!
+#THIS NUMBER COULD BE HUGE THOUGH
+
+
+#ASK MARTA WHAT SHE THINKS  .... START HERE TOMORROW

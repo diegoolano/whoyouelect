@@ -1,0 +1,38 @@
+<html>
+<head>
+<style>
+	body { background: white; }
+	a { text-decoration: none; color:black; }
+	a:hover { color:red; }
+</style>
+<script type="text/javascript" src="js/jquery-2.1.3.min.js"></script>
+<link rel="stylesheet" href="css/jquery-ui-smoothness.css">
+<script type="text/javascript" src="js/jquery-ui.min.js"></script>
+</head>
+<body>
+<div id='links' style='position:fixed; left:5px;top:5px; width:150; font-size:14px; border: 2px red dashed; padding:10px'>
+<a style='color:blue;' href='javascript:show(1);'>AAS, DMN, HC</a><br>
+<a href='javascript:show(2);'>NYT, TXOB, TXTRB</a><br>
+<a href='javascript:show(3);'>AGGREGATE & AGGREGATE scaled</a></div>
+
+<p id='n1' style='text-align:center;text-transform:uppercase'>AUSTIN AMERICAN STATESMAN, DALLAS MORNING NEWS, HOUSTON CHRONICLE<br>
+<img style='width:75%;margin-top:-4px;' src='images/results-austin-dallas-houston.png'> </p><br>
+<br>
+<p id='n2' style='text-align:center;text-transform:uppercase'>NEW YORK TIMES, TEXAS OBSERVER, TEXAS TRIBUNE<br>
+<img style='width:75%; margin-top:-4px;' src='images/results-nyt-txob-txtr-WithHeaders.png'></br>
+<br>
+<p id='n3' style='text-align:center;text-transform:uppercase'>AGGREGATE SUM OF ALL SOURCES & AGGREGATE scaled<br>
+<img style='width:75%; margin-top:-4px;' src='images/result-aggregate-lump-scaled.png'></p><br><br>
+
+</body>
+<script>
+function show(n){
+	jQuery("#links a").css("color","black");
+	jQuery("#links a:eq("+( n - 1)+")").css("color","blue");
+	$('html, body').animate({
+		scrollTop: $("#n"+n).offset().top - 10
+	}, 1000);	
+	
+}
+</script>
+</html>

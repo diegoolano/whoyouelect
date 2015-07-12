@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<head>
+<title>Table of Contents</title>
+<meta charset="utf-8">
+<link rel="stylesheet" type="text/css" href="css/style2.css">
+<script type="text/javascript" src="js/jquery-2.1.3.min.js"></script>
+<script type="text/javascript" src="jq-ui/jquery-ui.min.js"></script>
+<link rel="stylesheet" type="text/css" href="jq-ui/jquery-ui.min.css">
+<script type="text/javascript" src="js/d3.v3.min.js"></script>
+<style>
+        body { margin: 0px; background:white;}
+	.toc { margin-left:-38px; margin-top:-38px; /* for use with smallest images */}
+	.toc a{ font-weight:normal; /*color:rgba(31, 119, 180, .8);*/color:gray; text-decoration: none; }
+	.toc a:hover{ /*color: #F15858;*/ color:rgba(31, 119, 180, .8); }
+	#search-results div{ font-size:18px; color:black}
+	#search-results div.dems{ color:rgba(31, 119, 180, .8);}
+	#search-results div.reps{ color: #F15858;}
+	#search-results div:hover{ cursor:pointer; font-weight:bold;}
+	.intro { height: 4000px; }
+	#cntrls{ position: fixed; bottom:50%; right:4px; width:70px; height: 43px; border:2px dashed gray; padding:5px;}
+	#cntrls a{ text-decoration: none; color: black; }
+	#cntrls a:hover{ text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="toc" style="width:100%;">
+<div style='position:absolute;bottom:-10px;right:10px'> <img style="margin-top:5px;width:300px;" src="images/WYE-small-logo.jpg"/>
+</div>
+<script>
+function gototop(){ jQuery("html, body").animate({ scrollTop: 0 }, 250); }
+function gotomid(){ jQuery("html, body").animate({ scrollTop: ($(document).height())/2 }, 250); }
+function gotobottom(){ jQuery("html, body").animate({ scrollTop: $(document).height() }, 250); }
+
+var center_node_attrs;
+d3.json("js/configdesc.json", function(error, cd){
+	center_node_attrs = cd;	
+	ks = Object.keys(center_node_attrs).sort();
+	ks.forEach(function(center_node){
+		cna = center_node_attrs[center_node];
+		centerrightimage = cna["image"]
+		if( cna["info1"].indexOf("Democrat") > -1){ 
+			clr = "rgba(31, 119, 180, .8)";
+			party = "democrat";
+		}
+		else{ 
+			if( cna["info1"].indexOf("Republican") > -1){
+				clr = "#F15858;"
+				party = "republican";
+			}
+			else{ clr = "black"; }
+		}
+	
+		pos = "";
+		if( cna["info1"].indexOf("State Representative") > -1 ){ pos = "staterep"; }
+		if( cna["info1"].indexOf("State Senator") > -1 ){ pos = "statesen"; }
+		if( cna["info1"].indexOf("Federal Representative") > -1 ){ pos = "fedrep"; }
+		if( cna["info1"].indexOf("Federal Senator") > -1 ){ pos = "fedsen"; }
+		if( cna["info1"].indexOf("Judge") > -1  ){ pos = "judge supreme"; }
+		if( cna["info1"].indexOf("Justice") > -1){ pos = "judge appeals"; }
+		if(pos == ""){ pos = "stateelect"; }
+
+		curid = center_node.replace(/ /g,"_");
+
+		output = "<div id='"+curid+"' alt='"+center_node.toUpperCase()+"' class='container "+party+" "+pos+"' style='float:left; width:68px; height:66px; border:0px dashed gray; margin-right:0px; margin-left:0px; margin-bottom:0px; margin-top:0px;'>";
+		output +='<div style="position:relative;"><svg width="104" height="104">';
+		output +='<defs> <pattern id="image'+curid+'" x="20" y="30" patternUnits="userSpaceOnUse" width="100" height="105">';
+		output +='<image x="0" y="0" width="100" height="105" xlink:href="'+cna["image"]+'"></image> </pattern> </defs>';
+		output +='<circle id="top" cx="71" cy="71" r="30" fill="url(#image'+curid+')" style="stroke:black; stroke-width:2px"/> </svg></div>';
+		output += "</div>";
+
+		/*
+		//small but could be smaller
+		output = "<div id='"+curid+"' alt='"+center_node.toUpperCase()+"' class='container "+party+" "+pos+"' style='float:left; width:110px; height:110px; border:0px dashed gray; margin-right:0px; margin-left:0px; margin-bottom:0px; margin-top:0px;'>";
+		output +='<div style="position:relative;"><svg width="124" height="124">';
+		output +='<defs> <pattern id="image'+curid+'" x="10" y="0" patternUnits="userSpaceOnUse" width="120" height="175">';
+		output +='<image x="0" y="0" width="120" height="175" xlink:href="'+cna["image"]+'"></image> </pattern> </defs>';
+		output +='<circle id="top" cx="71" cy="71" r="50" fill="url(#image'+curid+')" style="stroke:black; stroke-width:2px"/> </svg></div>';
+		output += "</div>";
+
+		//looks nice but is big
+		output = "<div id='"+curid+"' alt='"+center_node.toUpperCase()+"' class='container "+party+" "+pos+"' style='float:left; width:126px; height:126px; border:0px dashed gray; margin-right:0px; margin-left:0px; margin-bottom:0px; margin-top:0px;'>";
+		output +='<div style="position:relative;"><svg width="140" height="140">';
+		output +='<defs> <pattern id="image'+curid+'" x="10" y="0" patternUnits="userSpaceOnUse" width="125" height="175">';
+		output +='<image x="0" y="0" width="125" height="175" xlink:href="'+cna["image"]+'"></image> </pattern> </defs>';
+		output +='<circle id="top" cx="71" cy="71" r="60" fill="url(#image'+curid+')" style="stroke:black; stroke-width:2px"/> </svg></div>';
+		output += "</div>";
+
+
+		output = "<div id='"+curid+"' class='container "+party+" "+pos+"' style='float:left; width:242px; height:210px; border:1px dashed gray; margin-right:8px; margin-bottom:8px;'>";
+		output += '<div style=""><span style="font-weight:bold">'+center_node.toUpperCase()+'</span></div>';
+		output +='<div style=""><span style="font-weight:bold; color:'+clr+'">'+cna["info1"]+'</span></div>';
+		output +='<div style=""><span style="font-weight:bold;">'+cna["info2"]+'</span></div>';   //top was 0 and left was 15%
+		output +='<div style="position:relative; top:-5%; left:20%;"><svg width="140" height="140"> <defs> <pattern id="image'+curid+'" x="10" y="0" patternUnits="userSpaceOnUse" width="125" height="175"> <image x="0" y="0" width="125" height="175" xlink:href="'+cna["image"]+'"></image> </pattern> </defs> <circle id="top" cx="71" cy="71" r="60" fill="url(#image'+curid+')" style="stroke:black; stroke-width:2px"/> </svg></div>';
+		output += "<p style='text-align:center; position: relative; top:-16%;'><a target='_blank' href='explorer-view.html?show=20&minor=1&s="+center_node+"'>Inner Network</a>&nbsp;&nbsp;";
+		output += "|&nbsp;&nbsp;<a href='communities-from-ncol.html?cl=25&t=15&s="+center_node+"' target='_blank'>Extended Network</a></p>";
+		output += "</div>";
+		*/
+		jQuery(".toc").append(output);
+	});
+});
+
+</script>
+</body>
+</html>

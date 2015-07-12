@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<head>
+<title>Table of Contents</title>
+<meta charset="utf-8">
+<link rel="stylesheet" type="text/css" href="css/style2.css">
+<script type="text/javascript" src="js/jquery-2.1.3.min.js"></script>
+<script type="text/javascript" src="jq-ui/jquery-ui.min.js"></script>
+<link rel="stylesheet" type="text/css" href="jq-ui/jquery-ui.min.css">
+<script type="text/javascript" src="js/d3.v3.min.js"></script>
+<style>
+        body { margin: 4px; background:white;}
+	.toc a{ font-weight:normal; /*color:rgba(31, 119, 180, .8);*/color:gray; text-decoration: none; }
+	.toc a:hover{ /*color: #F15858;*/ color:rgba(31, 119, 180, .8); }
+	.container:hover{ background: rgba(239, 239, 239,.8);}
+	#search-results div{ font-size:18px; color:black}
+	#search-results div.dems{ color:rgba(31, 119, 180, .8);}
+	#search-results div.reps{ color: #F15858;}
+	#search-results div:hover{ cursor:pointer; font-weight:bold;}
+	.intro { height: 4000px; }
+	#cntrls{ position: fixed; bottom:50%; right:4px; width:70px; height: 43px; border:2px dashed gray; padding:5px;}
+	#cntrls a{ text-decoration: none; color: black; }
+	#cntrls a:hover{ text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="toc" style="width:80%">
+</div>
+<div class="intro">
+  <img style="width:430px;" src="images/WYE-small-logo.jpg"/>
+  <div id='search-results'></div>
+  <div id='cntrls'>
+	<a href='javascript: gototop();'>go to top</a><br/>
+	<a href='javascript: gotomid();'>go to middle</a><br/>
+	<a href='javascript: gotobottom();'>go to bottom</a>
+  </div>
+</div>
+<script>
+function gototop(){ jQuery("html, body").animate({ scrollTop: 0 }, 250); }
+function gotomid(){ jQuery("html, body").animate({ scrollTop: ($(document).height())/2 }, 250); }
+function gotobottom(){ jQuery("html, body").animate({ scrollTop: $(document).height() }, 250); }
+
+var center_node_attrs;
+d3.json("js/configdesc.json", function(error, cd){
+	center_node_attrs = cd;	
+	ks = Object.keys(center_node_attrs).sort();
+	ks.forEach(function(center_node){
+		cna = center_node_attrs[center_node];
+		centerrightimage = cna["image"]
+		if( cna["info1"].indexOf("Democrat") > -1){ 
+			clr = "rgba(31, 119, 180, .8)";
+			party = "democrat";
+		}
+		else{ 
+			if( cna["info1"].indexOf("Republican") > -1){
+				clr = "#F15858;"
+				party = "republican";
+			}
+			else{ clr = "black"; }
+		}
+	
+		pos = "";
+		if( cna["info1"].indexOf("State Representative") > -1 ){ pos = "staterep"; }
+		if( cna["info1"].indexOf("State Senator") > -1 ){ pos = "statesen"; }
+		if( cna["info1"].indexOf("Federal Representative") > -1 ){ pos = "fedrep"; }
+		if( cna["info1"].indexOf("Federal Senator") > -1 ){ pos = "fedsen"; }
+		if( cna["info1"].indexOf("Judge") > -1  ){ pos = "judge supreme"; }
+		if( cna["info1"].indexOf("Justice") > -1){ pos = "judge appeals"; }
+		if(pos == ""){ pos = "stateelect"; }
+
+		curid = center_node.replace(/ /g,"_");
+		output = "<div id='"+curid+"' class='container "+party+" "+pos+"' style='float:left; width:242px; height:210px; border:1px dashed gray; margin-right:8px; margin-bottom:8px;'>";
+		output += '<div style=""><span style="font-weight:bold">'+center_node.toUpperCase()+'</span></div>';
+		output +='<div style=""><span style="font-weight:bold; color:'+clr+'">'+cna["info1"]+'</span></div>';
+		output +='<div style=""><span style="font-weight:bold;">'+cna["info2"]+'</span></div>';   //top was 0 and left was 15%
+		output +='<div style="position:relative; top:-5%; left:20%;"><svg width="140" height="140"> <defs> <pattern id="image'+curid+'" x="10" y="0" patternUnits="userSpaceOnUse" width="125" height="175"> <image x="0" y="0" width="125" height="175" xlink:href="'+cna["image"]+'"></image> </pattern> </defs> <circle id="top" cx="71" cy="71" r="60" fill="url(#image'+curid+')" style="stroke:black; stroke-width:2px"/> </svg></div>';
+		output += "<p style='text-align:center; position: relative; top:-16%;'><a target='_blank' href='explorer-view.html?show=20&minor=1&s="+center_node+"'>Inner Network</a>&nbsp;&nbsp;";
+		//output += "|&nbsp;&nbsp;<a href='multi-large.html?n=20&s="+center_node+"' target='_blank'>Larger Network</a></p>";
+		output += "|&nbsp;&nbsp;<a href='communities-from-ncol.html?cl=25&t=15&s="+center_node+"' target='_blank'>Extended Network</a></p>";
+		output += "</div>";
+		jQuery(".toc").append(output);
+	});
+	total = "<div id='all'>"+( ks.length - 1 )+" Total People</div>"
+	dems = "<div id='democrat' class='dems'>"+jQuery(".democrat").length + " Democrats</div>";
+	reps = "<div id='republican' class='reps'>"+jQuery(".republican").length + " Republicans</div>";
+
+	statesum = jQuery(".staterep").length + jQuery(".statesen").length + jQuery(".judge").length + jQuery(".stateelect").length;
+	allstate = "<div id='allstate'><span style='text-decoration:underline; font-size:24px'>STATE LEVEL [ "+statesum+" ]</span><span style='text-decoration:none'><a style='color:black; font-size:12px; text-decoration:none;' target='_blank' href='committees.html'>[ COMMITTEE ASSIGNMENTS ]</a></span></div>";
+	statereps = "<div id='staterep'>"+jQuery(".staterep").length + " State Representatives [<a style='color:black; font-size:12px; text-decoration:none;' target='_blank' href='texas-house-map.html'>MAP</a>]</div>"; 
+	statereps += "<div id='staterepsrep' class='reps'>------"+jQuery(".staterep.republican").length + " Republicans</div>"; 
+	statereps += "<div id='staterepsdem' class='dems'>------"+jQuery(".staterep.democrat").length + " Democrats</div>"; 
+
+	statesens = "<div id='statesen'>"+jQuery(".statesen").length + " State Senators [<a style='color:black; font-size:12px; text-decoration:none;' target='_blank' href='texas-senate-map.html'>MAP</a>]</div>"; 
+	statesens += "<div id='statesensrep' class='reps'>------"+jQuery(".statesen.republican").length + " Republicans</div>"; 
+	statesens += "<div id='statesensdem' class='dems'>------"+jQuery(".statesen.democrat").length + " Democrats</div>"; 
+
+	judges = "<div id='judge'>"+jQuery(".judge").length + " State Judges</div>"; 
+	judges += "<div id='judgerep' class='reps'>-----"+jQuery(".judge.republican").length + " Republicans</div>"; 
+	judges += "<div id='judgedem' class='dems'>-----"+jQuery(".judge.democrat").length + " Democrats</div>"; 
+
+	texasstate = "<div id='stateelect'>"+ ( jQuery(".stateelect").length - 1 )+ " Other State Elected Officials</div>"; 
+	texasstate += "<div id='stateelectrep' class='reps'>-----"+( jQuery(".stateelect.republican").length - 1 )+ " Republicans</div>"; 
+	texasstate += "<div id='stateelectdem' class='dems'>-----"+jQuery(".stateelect.democrat").length + " Democrats</div>"; 
+
+	fedsum = jQuery(".fedrep").length + jQuery(".fedsen").length;
+	allfed = "<div id='allfed' style='text-decoration:underline; font-size:24px'>FEDERAL LEVEL [ "+ fedsum  +" ] </div>";
+	fedreps = "<div id='fedrep'>"+jQuery(".fedrep").length + " Federal Representatives [<a style='color:black; font-size:12px; text-decoration:none;' target='_blank' href='federal-districts.html'>MAP</a>]</div>"; 
+	fedreps += "<div id='fedrepsrep' class='reps'>------"+jQuery(".fedrep.republican").length + " Republicans</div>"; 
+	fedreps += "<div id='fedrepsdem' class='dems'>------"+jQuery(".fedrep.democrat").length + " Democrats</div>"; 
+
+	fedsens = "<div id='fedsen'>"+jQuery(".fedsen").length + " Federal Senators</div>"; 
+	fedsens += "<div id='fedsenrep' class='reps'>-----"+jQuery(".fedsen.republican").length + " Republicans</div>"; 
+	fedsens += "<div id='fedsendem' class='dems'>-----"+jQuery(".fedsen.democrat").length + " Democrats</div>"; 
+
+
+	jQuery("#search-results").html(total+reps+dems+"<br>"+allstate+statereps+"<br>"+statesens+"<br>"+judges+"<br>"+texasstate+"<br>"+allfed+fedreps+"<br/>"+fedsens+"<br>Don't know your representatives?&nbsp;&nbsp;Look them up <a style='color:black;' href='http://mapyourreps.appspot.com/' target='_blank'>here</a>"); 
+
+	
+	jQuery("#all").click( function(){ jQuery(".democrat").show(); jQuery(".republican").show();});
+	jQuery("#democrat").click( function(){ jQuery(".democrat").show(); jQuery(".republican").hide();});
+	jQuery("#republican").click( function(){ jQuery(".democrat").hide(); jQuery(".republican").show();});
+
+	
+	jQuery("#allstate").click( function(){ jQuery(".container").hide(); jQuery(".staterep").show(); jQuery(".statesen").show(); jQuery(".judge").show(); jQuery(".stateelect").show();});
+	jQuery("#staterep").click( function(){ jQuery(".container").hide(); jQuery(".staterep").show();});
+	jQuery("#staterepsrep").click( function(){ jQuery(".container").hide(); jQuery(".staterep.republican").show();});
+	jQuery("#staterepsdem").click( function(){ jQuery(".container").hide(); jQuery(".staterep.democrat").show();});
+
+	jQuery("#statesen").click( function(){ jQuery(".container").hide(); jQuery(".statesen").show();});
+	jQuery("#statesensrep").click( function(){ jQuery(".container").hide(); jQuery(".statesen.republican").show();});
+	jQuery("#statesensdem").click( function(){ jQuery(".container").hide(); jQuery(".statesen.democrat").show();});
+
+	jQuery("#judge").click( function(){ 
+		jQuery(".container").hide(); 
+		judges = jQuery(".judge");
+
+		judges.sort(function(a,b){
+		  var keyA = a.className.split(" ")[3];
+		  var keyB = b.className.split(" ")[3];
+
+		  //console.log(keyA,keyB);
+		  if (keyA < keyB) return 1;
+		  if (keyA > keyB) return -1;
+		  return 0;
+		});
+		//console.log(judges);
+		judges.show();
+	});
+	jQuery("#judgerep").click( function(){ jQuery(".container").hide(); jQuery(".judge.republican").show();});
+	jQuery("#judgedem").click( function(){ jQuery(".container").hide(); jQuery(".judge.democrat").show();});
+
+	jQuery("#stateelect").click( function(){ jQuery(".container").hide(); jQuery(".stateelect").show();});
+	jQuery("#stateelectrep").click( function(){ jQuery(".container").hide(); jQuery(".stateelect.republican").show();});
+	jQuery("#stateelectdem").click( function(){ jQuery(".container").hide(); jQuery(".stateelect.democrat").show();});
+
+	jQuery("#allfed").click( function(){ jQuery(".container").hide(); jQuery(".fedrep").show();  jQuery(".fedsen").show(); });
+	jQuery("#fedrep").click( function(){ jQuery(".container").hide(); jQuery(".fedrep").show();});
+	jQuery("#fedrepsrep").click( function(){ jQuery(".container").hide(); jQuery(".fedrep.republican").show();});
+	jQuery("#fedrepsdem").click( function(){ jQuery(".container").hide(); jQuery(".fedrep.democrat").show();});
+
+	jQuery("#fedsen").click( function(){ jQuery(".container").hide(); jQuery(".fedsen").show();});
+	jQuery("#fedsenrep").click( function(){ jQuery(".container").hide(); jQuery(".fedsen.republican").show();});
+	jQuery("#fedsendem").click( function(){ jQuery(".container").hide(); jQuery(".fedsen.democrat").show();});
+
+	hh = (ks.length / 4) * 220;
+	jQuery(".intro").css("height",hh+"px");
+});
+
+</script>
+</body>
+</html>

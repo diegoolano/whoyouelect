@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Texas House Map</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="css/style2.css">
+    <script type="text/javascript" src="js/jquery-2.1.3.min.js"></script>
+    <!-- <script src="//code.jquery.com/jquery-2.0.0.js"></script> -->
+    <style>
+    body { background: white; }
+    #map { background-color: #fff; }
+    .intro{ position:fixed; }
+    #map svg {margin-left: 140px; }
+    .background { fill: none; pointer-events: all; }
+    #districts { cursor:pointer; }
+    #districts, #states { fill: #cde; stroke: #fff; stroke-linejoin: round; stroke-linecap: round; stroke-width: .5px;}
+    #districts .active, #states .active { fill: #89a; }
+    #cities { stroke-width: 0; }
+    .city { fill: #345; stroke: #fff; }
+    pre.prettyprint { border: 1px solid #ccc; margin-bottom: 0; padding: 9.5px; }
+    svg { margin-top: -140px; }
+	#search-results { font-size:18px; }
+	#search-results div{ font-size:18px; color:black; height:1000px;}
+	#search-results .dems{ color:rgba(31, 119, 180, .8); height:18px;}
+	#search-results .reps{ color: #F15858; height:18px;}
+	#search-results div.neighbordist{ height: 75px; float: left; width: 200px;}
+
+	.listreps{ position: absolute; left:2px; cursor:pointer;}
+    	.listreps ul{list-style-type: none; padding-left:2px; font-size:13px;}
+	.listreps .dems{ color:rgba(31, 119, 180, .8); height:18px;}
+	.listreps .reps{ color: #F15858; height:18px;}
+    </style>
+  </head>
+  <body>
+	<div class='listreps'></div>
+	<div class='intro'>
+	  <img style="width:430px;" src="images/WYE-small-logo.jpg"/>
+	  <div id='search-results'>
+	  </div>
+	</div>
+         <div id="map"></div>
+<script src="js/d3.v3.min.js"></script>
+<script src="js/topojson.v1.min.js"></script>
+<!--
+<script src="//d3js.org/d3.v3.min.js"></script>
+<script src="//d3js.org/topojson.v1.min.js"></script>
+-->
+<script>
+var m_width = $("#map").width(),
+    width = 938,
+    height = 700,
+    country,
+    state;
+
+    //.scale(150)
+/*
+var projection = d3.geo.mercator()
+    .scale(2200)
+    .translate([width / .225, height / .33]);
+*/
+
+var projection = d3.geo.albersUsa() .scale(2650) .translate([width / 2.25, .001]);
+
+var path = d3.geo.path() .projection(projection);
+
+var svg = d3.select("#map").append("svg")
+    .attr("preserveAspectRatio", "xMidYMid")
+    .attr("viewBox", "0 0 " + width + " " + height)
+    .attr("width", m_width)
+    .attr("height", m_width * height / width);
+
+svg.append("rect")
+    .attr("class", "background")
+    .attr("width", width)
+    .attr("height", height)
+    .on("click", district_clicked);
+
+var g = svg.append("g");
+
+var gr;
+var center_node_attrs;
+var states,texasneighbors;
+var hovered;
+d3.json("js/configdesc.json", function(error, cd){
+	center_node_attrs = cd;	
+	states = {};
+	Object.keys(center_node_attrs).forEach(function(c){ 
+		cna = center_node_attrs[c]; 
+		if(cna["info1"].indexOf("State Representative") > -1 ){ 
+			dnum = cna["info2"].split("District: ")[1]; 
+			if( cna["info1"].indexOf("Democrat") > -1){ party = "Democratic"; }
+			else{ 
+				if( cna["info1"].indexOf("Republican") > -1){
+					party = "Republican";
+				}
+			}
+			states[dnum] = {'name':c, 'party': party, 'image': cna["image"], 'snippet': cna['snippet']};
+		}
+	});
+
+	//now take states and add to listreps sorted by name
+	console.log("here");
+	lrout = "<ul>";
+	rmap = {'Republican':'reps','Democratic':'dems'}
+	Object.keys(states).forEach(function(d){
+		curdistrict = d;
+		lrout += "<li class='"+rmap[states[d]['party']]+"'>"+states[d]['name']+" (District: "+d+")</li>";
+	});
+	jQuery(".listreps").html(lrout);
+	items = jQuery(".listreps li");
+	items.sort(function(a,b){
+	  var keyA = jQuery(a).text();
+	  var keyB = jQuery(b).text();
+
+	  if (keyA < keyB) return -1;
+	  if (keyA > keyB) return 1;
+	  return 0;
+	});
+	jQuery(".listreps ul").html(items);
+
+         jQuery(".listreps li").hover(
+	  function() {
+	    //on over
+	    if(clicked ==0){ 
+		    //console.log(this.textContent);
+		    hovered = this;
+		    nodeid = this.textContent.split("District:")[1].split(")")[0];
+		    console.log("MOUSE OVER",nodeid);
+		    handle_mouseover(nodeid.trim());
+		    $(this).css("text-decoration","underline");
+	    }
+	  }, function() {
+	    //on out
+	    if(clicked ==0){ 
+		    nodeid = this.textContent.split("District:")[1].split(")")[0];
+		    console.log("MOUSE OVER",nodeid);
+		    handle_mouseout(nodeid.trim());
+		    $(this).css("text-decoration","none");
+	    }
+	  }
+         );
+   
+        jQuery(".listreps li").click( 
+		function(){ 
+		    nodeid = this.textContent.split("District:")[1].split(")")[0];
+		    console.log("MOUSE OVER",nodeid);
+		    district_clicked(nodeid.trim());
+		    $(this).css("text-decoration","underline");
+		});
+ 
+});
+
+var clicked, curclicked;
+function handle_mouseover(districtnum){
+	if(clicked == 0){
+		console.log("in mouseover with",districtnum);
+		jQuery("#district"+districtnum).css("fill","yellow");
+		per = states[districtnum];
+		pclass = 'reps';  
+		clr = '#F15858';
+		if(per['party'] == "Democratic"){ pclass='dems'; clr = 'rgba(31, 119, 180, .8)';}
+		output ='<div style="position:relative; top:27px; left:23%;height:15px;"><svg width="140" height="140"> <defs> <pattern id="image'+districtnum+'" x="10" y="0" patternUnits="userSpaceOnUse" width="125" height="175"> <image x="0" y="0" width="125" height="175" xlink:href="'+per["image"]+'"></image> </pattern> </defs> <circle id="top" cx="71" cy="71" r="60" fill="url(#image'+districtnum+')" style="stroke:'+clr+'; stroke-width:2px"/> </svg></div>';
+		
+		neighs = "<ul>";
+		texasneighbors[districtnum].forEach(function(n){ 
+			thisper = states[n]; 
+			if(typeof(thisper) != "undefined"){
+				thispclass = 'reps';  
+				thisclr = '#F15858';
+				if(thisper['party'] == "Democratic"){ thispclass='dems'; thisclr = 'rgba(31, 119, 180, .8)';}
+
+				neighs += "<div class='neighbordist'>District: "+n+"<br><span style='color:"+thisclr+"'> "+thisper['party']+'<br>'+thisper['name']+"</span>";
+				neighs +='<div style="position:relative; top:-5px; left:90px;height:20px;"><svg width="80" height="80"> <defs> <pattern id="image'+districtnum+"-"+n+'" x="10" y="0" patternUnits="userSpaceOnUse" width="64" height="88"> <image x="0" y="0" width="64" height="88" xlink:href="'+thisper["image"]+'"></image> </pattern> </defs> <circle id="top" cx="42" cy="38" r="30" fill="url(#image'+districtnum+'-'+n+')" style="stroke:'+thisclr+'; stroke-width:2px"/> </svg></div></div>';
+			}
+		});
+		neighs += "</ul>";
+		
+		jQuery(".clickres").html("<div><span style='color:yellow; font-weight:bold; font-size:24px;background:gray; line-height:60px;'>District "+districtnum+"</span><br>"+output+"<br><span class='"+pclass+"'>"+per['party']+" Representative "+per['name']+"</span><br><br><span style='color:orange; font-weight:bold'>with neighbors<br></span><br>"+neighs+"</div>");
+
+	}
+}
+
+function handle_mouseout(dt){
+	if(clicked == 0){
+		curns = texasneighbors[dt];
+		for(c=0; c < curns.length; c++){
+			if( typeof(states[curns[c]]) != "undefined"){
+				pf = states[curns[c]];
+				if( pf['party'] == "Republican"){ 
+					jQuery("#district"+curns[c]).css("fill","#F15858");
+				}
+				else{ 
+					jQuery("#district"+curns[c]).css("fill","rgba(31, 119, 180, .8)");
+				}
+			}else{ jQuery("#district"+curns[c]).css("fill","white");}
+		}
+		col = "#F15858";
+		if( typeof(states[dt]) != "undefined"){ 
+			if( states[dt]["party"] != "Republican"){ 
+				col = "rgba(31, 119, 180, .8)"; 
+			}
+		} 
+		jQuery("#district"+dt).css("fill",col);
+	}
+}
+
+
+d3.json("js/txhouse_districts.topo.json", function(error, us) {
+  gr = us;
+  clicked = 0, 
+  curclicked = 0;
+
+  var neighbors = topojson.neighbors(us.objects.txhouse_districts.geometries);
+  console.log(neighbors);
+  texasneighbors = {}
+  for(n=0; n < neighbors.length; n++){ curn = neighbors[n]; for(c=0; c < curn.length; c++){ curn[c] = curn[c] + 1; } texasneighbors[n+1] = curn; } 
+  //texasneighbors now is a dict indexed by district id with district id neighbors 
+
+  g.append("g")
+    .attr("id", "districts")
+    .selectAll("path")
+    .data(topojson.feature(us, us.objects.txhouse_districts).features)
+    .enter()
+    .append("path")
+    .attr("id", function(d) { return "district"+d.properties.District; })
+    .attr("d", path)
+    .style("fill", function(d){ 
+	if( typeof(states[d.properties.District]) != "undefined"){
+		if( states[d.properties.District]['party'] == "Republican"){return "#F15858";}
+		else{ return "rgba(31, 119, 180, .8)";}
+	}
+	else{ 	
+		console.log("Missing Rep For "+d.properties.District);
+		return "white"; 
+	}
+    })
+    .on("mouseover", function(d) { 
+	districtnum = d.properties.District;
+	handle_mouseover(districtnum); 
+    })
+    .on("mouseout", function(d) { 
+	districtnum = d.properties.District;
+	handle_mouseout(districtnum);
+    })
+    .on("click", function(d){ 
+	districtnum = d['properties']['District'];
+	district_clicked(districtnum); 
+    });
+
+  repst = 0;
+  demst = 0;
+  Object.keys(states).forEach(function(k){ if( states[k]['party'] == 'Republican'){ repst += 1; }else{ demst += 1;}});
+  repcount = "<div class='reps'>"+repst+" Republican</div>";
+  demcount = "<div class='dems'>"+demst+" Democrats</div>";
+  jQuery("#search-results").html("TEXAS STATE HOUSE DISTRICTS: "+repcount +demcount+"<b>"+ Object.keys(states).length +" TOTAL</b><br><div class='clickres'></div>");
+
+  jQuery("#map svg").css("position","fixed");
+});
+
+
+function district_clicked(districtnum){
+        curp = states[districtnum];
+	console.log("clicked "+ districtnum +" and clicked currently: "+clicked+ "and curclicked: "+curclicked);
+	if(clicked == 0){ 
+		curclicked = districtnum;
+		console.log(districtnum);
+		clicked = 1; 
+		jQuery("#district"+districtnum).css("fill","yellow");
+	} 
+	else{
+		if(clicked == 1 && curclicked == districtnum){ 
+			console.log("now unselected");
+			pf = states[curclicked]
+			if( typeof(pf) != "undefined" && 'party' in pf ){
+				if( pf['party'] == "Republican"){ 
+					jQuery("#district"+districtnum).css("fill","#F15858");
+				}
+				else{ 
+					jQuery("#district"+districtnum).css("fill","rgba(31, 119, 180, .8)");
+				} 
+			}else{ 
+				//this is beto
+				jQuery("#district"+districtnum).css("fill","rgba(31, 119, 180, .8)");
+			}
+			clicked = 0; curclicked = 0;
+		}
+		else{ return false; }
+	}
+
+	per = states[districtnum];
+	pclass = 'reps';  
+	clr = '#F15858';
+	if(per['party'] == "Democratic"){ pclass='dems'; clr = 'rgba(31, 119, 180, .8)';}
+	output ='<div style="position:relative; top:27px; left:23%;height:15px;"><svg width="140" height="140"> <defs> <pattern id="image'+districtnum+'" x="10" y="0" patternUnits="userSpaceOnUse" width="125" height="175"> <image x="0" y="0" width="125" height="175" xlink:href="'+per["image"]+'"></image> </pattern> </defs> <circle id="top" cx="71" cy="71" r="60" fill="url(#image'+districtnum+')" style="stroke:'+clr+'; stroke-width:2px"/> </svg></div>';
+	
+	neighs = "<ul>";
+	texasneighbors[districtnum].forEach(function(n){ 
+		thisper = states[n]; 
+		if(typeof(thisper) != "undefined"){
+			thispclass = 'reps';  
+			thisclr = '#F15858';
+			if(thisper['party'] == "Democratic"){ thispclass='dems'; thisclr = 'rgba(31, 119, 180, .8)';}
+
+			neighs += "<div class='neighbordist'>District: "+n+"<br><span style='color:"+thisclr+"'> "+thisper['party']+'<br>'+thisper['name']+"</span>";
+			neighs +='<div style="position:relative; top:-5px; left:90px;height:20px;"><svg width="80" height="80"> <defs> <pattern id="image'+districtnum+"-"+n+'" x="10" y="0" patternUnits="userSpaceOnUse" width="64" height="88"> <image x="0" y="0" width="64" height="88" xlink:href="'+thisper["image"]+'"></image> </pattern> </defs> <circle id="top" cx="42" cy="38" r="30" fill="url(#image'+districtnum+'-'+n+')" style="stroke:'+thisclr+'; stroke-width:2px"/> </svg></div></div>';
+		}
+	});
+	neighs += "</ul>";
+	
+	jQuery(".clickres").html("<div><span style='color:yellow; font-weight:bold; font-size:24px;background:gray; line-height:60px;'>District "+districtnum+"</span><br>"+output+"<br><span class='"+pclass+"'>"+per['party']+" Representative "+per['name']+"</span><br><br><span style='color:orange; font-weight:bold'>with neighbors<br></span><br>"+neighs+"</div>");
+
+
+}
+
+
+$(window).resize(function() {
+  var w = $("#map").width();
+  svg.attr("width", w);
+  svg.attr("height", w * height / width);
+});
+</script>
+</body>
+</html>

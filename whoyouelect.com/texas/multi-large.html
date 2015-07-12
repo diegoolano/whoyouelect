@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+.node { stroke: #fff; stroke-width: 1.5px; cursor:pointer;}
+.link { stroke: white; stroke-opacity: .6; }
+</style>
+<body>
+<script src="js/d3.v3.min.js"></script>
+<script type="text/javascript" src="js/jquery-2.1.3.min.js"></script>
+<script>
+jQuery("body").append("<div id='loading' style='position:absolute;top:20%;width:100%;text-align:center;'><img src='images/loading.gif'/></div>");
+
+function getURLParameter(name) {
+  return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search)||[,""])[1].replace(/\+/g, '%20'))||"NONE"
+}
+
+function clone(obj) {
+    if (null == obj || "object" != typeof obj) return obj;
+    if (obj instanceof Date) {
+        var copy = new Date();
+        copy.setTime(obj.getTime());
+        return copy;
+    }
+
+    if (obj instanceof Array) {
+        var copy = [];
+        for (var i = 0, len = obj.length; i < len; i++) { copy[i] = clone(obj[i]); }
+        return copy;
+    }
+
+    if (obj instanceof Object) {
+        var copy = {};
+        for (var attr in obj) { if (obj.hasOwnProperty(attr)) copy[attr] = clone(obj[attr]); }
+        return copy;
+    }
+
+    throw new Error("Unable to copy obj! Its type isn't supported.");
+}
+
+var s = getURLParameter("s") ;    //center node
+var width = window.innerWidth, height = window.innerHeight;    //changed these numbers
+var r = 6;
+var color = d3.scale.category20();
+var force = d3.layout.force()
+    .size([width, height]);
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+var gr;
+var link;
+var node;
+var name_to_index = {};
+var newlinks;
+var newnodes;
+var num_links;
+var sortedkeys;
+var toplinked;
+var search_terms;
+var entity_long_file;
+var priortextcolor;
+var linksdict = {};
+var alllinksdict = {};
+var priorstate = {};
+var clicklocked = 0;
+var currentclicked = "";
+
+
+function getSortedKeys(obj) {
+    var keys = []; for(var key in obj) keys.push(key);
+    return keys.sort(function(a,b){return obj[b]-obj[a]});
+}
+
+function showdetails(d){
+    nde = "#id"+name_to_index[d['full_name']]
+    selt = "#text" + name_to_index[d['full_name']];
+    sell = ".link" + name_to_index[d['full_name']];
+
+    //highlight all nodes touching it
+    curid = name_to_index[d['full_name']];
+    curlinks = linksdict[curid];
+    curnde = d3.select(nde)
+    curxpos = parseInt(curnde.attr("cx"))
+    curypos = parseInt(curnde.attr("cy"))
+
+    if(clicklocked == 1){
+	    console.log("Cur x,y = ("+curxpos+", "+curypos+")");
+	    console.log(curlinks);
+    }
+
+    if(typeof(curlinks) != "undefined" && curlinks.length > 0){
+	    curlinks.forEach(function(d){ 
+		if(clicklocked == 1){ console.log("Highlight text for "+ gr.elements.nodes[d].full_name + "( "+d+")"); }
+		d3.select("#text"+d).style("stroke","red").style("font-size","16px");
+		
+		//check if text is "", in which case set its text
+		if(d3.select("#text"+d).text() == ""){
+			d3.select("#text"+d).text(gr.elements.nodes[d].full_name);
+			priorstate[d] = "";
+		} 
+
+		//add count viz
+		dnde = d3.select("#id"+d);
+		dnde.append("text") 
+			.attr("id", function(d){ return "counttext"+name_to_index[d.full_name];})
+			.text(function(d) { 
+				id = name_to_index[d.full_name];	
+				count = links_soutar[curid][id];
+				if(clicklocked == 1){console.log("Found Count "+count+" between "+curid+" and "+id);}
+				return count; 			
+			})
+			.style("stroke",color(1))
+    			.attr("transform", function(d) { return "translate("+ (d.full_name.length * 6) +",12)"; })
+			.style("font-size","15px");
+
+	    })
+    }
+
+    d3.select(selt).style("stroke","green").style("font-size","18px");
+    d3.selectAll(sell).style("stroke","red").style("fill","black").style("stroke-width",1);
+}
+
+function hidedetails(d){
+    selt = "#text" + name_to_index[d['full_name']];
+    sell = ".link" + name_to_index[d['full_name']];
+    d3.select(selt).style("stroke","black").style("font-size","14px")
+    d3.selectAll(sell).style("stroke","white").style("fill","black").style("stroke-width",1);
+
+    //unhighlight
+    curid = name_to_index[d['full_name']];
+    curlinks = linksdict[curid];
+    if(typeof(curlinks) != "undefined" && curlinks.length > 0){
+	    curlinks.forEach(function(d){ 
+		d3.select("#text"+d).style("stroke","black").style("font-size","14px");
+		if(d in priorstate){ d3.select("#text"+d).text("");}
+
+    	        //remove numbers
+		d3.select("#counttext"+d).remove();
+	    })
+    }
+    priorstate = {};
+    d3.select(selt).style("stroke","black").style("font-size","14px")
+}
+
+
+//var firstres;
+
+//Load Entities from config file
+d3.json("js/config.json", function(error, st) {
+
+	search_terms = st;
+	entity_long_file = "data/"+search_terms[s][3];
+
+	//check for tar.gz file first and if not check for just json file
+	uncompress = "tar-utility.php?person="+s+"&action=retrieve&net=large";
+
+	jQuery("#loading").append("<p style='font-size:12px;'>uncompressing and retrieving files</p>");
+	$.ajax({ url: uncompress, 
+	    error: function(r) { console.log("error uncompressing"); },
+	    success: function(r) {
+		r = JSON.parse(r);;
+		console.log("uncompresssing: ");
+		console.log(uncompress);
+		console.log(r); 
+		console.log(r["success"] == 'true');
+
+		//uncompress file successfull so load json now
+		if( r['success'] != 'true')   //see if its just the case that the tar doesn't exist in the first place
+		{
+		     jQuery("#loading").append("<p style='font-size:12px;'>compressed large not found so also creating.. this could take a bit</p>");
+		     console.log("uncompresssing failed so try to compress existing json if they exist: ");
+		     compress = "tar-utility.php?person="+s+"&action=compress&net=large";
+		     console.log(compress);
+		     $.ajax({ url: compress, 
+				    error: function(r) { console.log("error compressing"); console.log(r); },
+				    success: function(r) {
+					r = JSON.parse(r);;
+					console.log(r); 
+					if( r['success'] == 'true' ){
+						console.log("compresssing worked, and now uncompressing: ");
+		     				jQuery("#loading").append("<p style='font-size:12px;'>compressing worked so uncompress and load</p>");
+						console.log(uncompress);
+						$.ajax({ url: uncompress, 
+						    error: function(a) { console.log("error uncompressing"); },
+						    success: function(a) {
+							a = JSON.parse(a);;
+							console.log(a); 
+							if( a['success'] == 'true')
+							{
+								handlelargenet(entity_long_file);
+							}
+						    }
+						});
+					}
+				    }
+			});
+		}
+		else{
+			//succesffull initial uncompress
+			handlelargenet(entity_long_file);
+		}
+	}});   //uncompress
+});
+
+function handlelargenet(entity_long_file){
+
+	console.log("calling "+entity_long_file);
+	d3.json(entity_long_file, function(error, graph) {
+
+	  console.log("1");
+	  gr = graph;
+
+	  //TODO algorithmically find highest size which still gives us a large (but not huge network)
+	  // for Kyle its 29
+	  lt = getURLParameter("n");
+	  if(lt == "NONE"){  link_threshhold = 39;}
+	  else{ link_threshhold = parseInt(lt); }
+
+
+	  //calculate number of links per node
+	  num_links = {};
+	  
+	  nums_to_keep = {}
+          jQuery("#loading").append("<p style='font-size:12px;'>traversing network and showing nodes/relations with count of "+lt+" or more</p>");
+	  for(i=0; i < gr.elements.links.length; i++){
+	     ts = ["target","source"];
+	     for(tc =0; tc < ts.length; tc++)
+	     {
+		   t = ts[tc]; 
+		   if(gr.elements.links[i][t] in num_links){
+			num_links[gr.elements.links[i][t]]++;
+		   } 
+		   else{
+			num_links[gr.elements.links[i][t]] = 1
+		   }
+
+		   if(gr.elements.links[i].inst.length >= link_threshhold)
+		   {
+			nums_to_keep[gr.elements.links[i][t]] = 1;
+		   }
+	     }
+	  }
+
+	  numtokeep = 200;
+	  if(Object.keys(nums_to_keep).length > numtokeep){
+		sortedkeys = getSortedKeys(num_links);
+			
+		//take out ones which aren't in nums_to_keep
+		sorted_in_nums_to_keep = sortedkeys.filter( function(d){ return (d in nums_to_keep); });
+
+		if(sorted_in_nums_to_keep > numtokeep){
+			//here you will have an issue,  some nodes displayed 
+			toplinked = sortedkeys.slice(0,numtokeep); 
+		}
+		else{
+			toplinked = sorted_in_nums_to_keep;
+		}
+	  }
+	  else{
+	       toplinked = Object.keys(nums_to_keep);
+	  }
+
+	  //generate name to id dict and set fixed position for center node
+	  for(i=0; i < gr.elements.nodes.length; i++){
+	    name_to_index[gr.elements.nodes[i]["full_name"]] = i;
+	    if( gr.elements.nodes[i]["full_name"] == s ){
+		gr.elements.nodes[i].fixed = true;
+		gr.elements.nodes[i].x = width/2 ;   //changed these numbers
+		gr.elements.nodes[i].y = height/2;   //changed these numbers
+		//gr.elements.nodes[i].x = width/4 ;   //changed these numbers
+		//gr.elements.nodes[i].y = height/4;   //changed these numbers
+	    }
+	    else{
+		if( toplinked.indexOf(String(i)) > -1 ){
+			xrand = Math.round(Math.random()); 
+			if(xrand == 0){ xrand = -1; }
+			yrand = Math.round(Math.random()); 
+			if(yrand == 0){ yrand = -1; }
+
+			gr.elements.nodes[i].fixed = true;	
+			gr.elements.nodes[i].x = width/2  + ( xrand * (((6.5*i)+1)/(i+1)) * Math.floor(Math.random() * 100));   //changed these numbers
+			gr.elements.nodes[i].y = height/2 + ( yrand * (((3.5*i)+1)/(i+1)) * Math.floor(Math.random() * 100));    //changed these numbers
+			//gr.elements.nodes[i].x = width/2  + ( xrand * (((13.5*i)+1)/(i+1)) * Math.floor(Math.random() * 100));   //changed these numbers
+			//gr.elements.nodes[i].y = height/2 + ( yrand * (((7.5*i)+1)/(i+1)) * Math.floor(Math.random() * 100));    //changed these numbers
+
+			if(gr.elements.nodes[i].y < 0){ gr.elements.nodes[i].y = 10; }
+			if(gr.elements.nodes[i].y > height ){ gr.elements.nodes[i].y = (height) - 10; }		         //changed these numbers
+			//if(gr.elements.nodes[i].y > height * 2 ){ gr.elements.nodes[i].y = (2 * height) - 10; }		         //changed these numbers
+
+			if(gr.elements.nodes[i].x < 0){ gr.elements.nodes[i].x = 10; }
+			if(gr.elements.nodes[i].x > width ){ gr.elements.nodes[i].x = (1 * width)  - 10; }                   //changed these numbers
+			//if(gr.elements.nodes[i].x > width * 2 ){ gr.elements.nodes[i].x = (2 * width)  - 10; }                   //changed these numbers
+			//console.log(gr.elements.nodes[i]["full_name"] + "("+i+") "+gr.elements.nodes[i].x + ","+gr.elements.nodes[i].y);	
+		}
+	    }
+	  }
+
+
+	  //distribution of link sizes
+	  linksizes = {}; 
+	  gr.elements.links.forEach(function(d){ 
+		if(d.inst.length in linksizes){linksizes[d.inst.length]++;}
+		else{ linksizes[d.inst.length] = 1;} 
+	   });
+
+
+	  links_soutar = {}
+	  for(i=0; i < gr.elements.links.length; i++){
+		   grsrc = gr.elements.links[i]['source'] 
+		   grtar = gr.elements.links[i]['target'] 
+		   grinst = gr.elements.links[i]['inst']
+
+		   //source centric 
+		   if( grsrc in links_soutar){
+			if( grtar in links_soutar[grsrc]){ 
+				links_soutar[grsrc][grtar] = links_soutar[grsrc][grtar] + grinst.length;
+			}
+			else{ 
+				links_soutar[grsrc][grtar] = grinst.length;
+			}
+		   } 
+		   else{
+			links_soutar[grsrc] = {}
+			links_soutar[grsrc][grtar] = grinst.length;
+		   }
+
+		   //new now target centric	   
+		   if( grtar in links_soutar){
+			if( grsrc in links_soutar[grtar]){ 
+				links_soutar[grtar][grsrc] = links_soutar[grtar][grsrc] + grinst.length;
+			}
+			else{ 
+				links_soutar[grtar][grsrc] = grinst.length;
+			}
+		   } 
+		   else{
+			links_soutar[grtar] = {}
+			links_soutar[grtar][grsrc] = grinst.length;
+		   }
+
+	  }
+
+
+	  newlinks = [];
+	  newnodes = {};
+	  for(i=0; i < gr.elements.links.length; i++){
+			grsource = gr.elements.links[i].source;
+			grtarget = gr.elements.links[i].target;
+			
+			if(grsource == 2 && grtarget == 50){ console.log("HERE WITH GARNET AND JANEK"); }
+
+			if(gr.elements.links[i].inst.length >= link_threshhold){	
+				newlinks.push(clone(gr.elements.links[i]));
+				newnodes[grsource] = 1;
+				newnodes[grtarget] = 1;
+				
+				if(grsource in linksdict){ if( linksdict[grsource].indexOf(grtarget) == -1){ linksdict[grsource].push(grtarget);}}
+				else{ linksdict[grsource] = [grtarget];}
+
+				if(grtarget in linksdict){ if( linksdict[grtarget].indexOf(grsource) == -1){ linksdict[grtarget].push(grsource);}}
+				else{ linksdict[grtarget] = [grsource];}
+			}
+			else{
+				/*
+				//add link cause its linked to middle person
+				sname = gr.elements.nodes[grsource].full_name ;
+				tname = gr.elements.nodes[grtarget].full_name ;
+
+				if(sname == s || tname == s){
+					newlinks.push(clone(gr.elements.links[i]));
+					newnodes[grsource] = 1;
+					newnodes[grtarget] = 1;
+				}
+				*/	
+			}
+			if(grsource in alllinksdict){ if( alllinksdict[grsource].indexOf(grtarget) == -1){ alllinksdict[grsource].push(grtarget);}}
+			else{ alllinksdict[grsource] = [grtarget];}
+
+			if(grtarget in alllinksdict){ if( alllinksdict[grtarget].indexOf(grsource) == -1){ alllinksdict[grtarget].push(grsource);}}
+			else{ alllinksdict[grtarget] = [grsource];}
+	   }
+	 
+	    
+          jQuery("#loading").append("<p style='font-size:12px;'>done</p>");
+
+	  //removing loading gif
+	  jQuery("#loading").hide();
+
+	  //graph.elements.links was used instead of newlinks before in force and links
+
+	  console.log("2");
+	  link = svg.selectAll(".link")
+	      .data(newlinks)
+	    .enter().append("line")
+	      .attr("class",function(d){return "link link"+d.source+" link"+d.target;})
+	      .style("stroke-width",0);
+
+	  node = svg.selectAll(".node")
+	      .data(graph.elements.nodes)
+	    .enter().append("g")
+	      .attr("class", "node")
+	      .style("fill", function(d) { 
+			//return color(d.group); 
+			return color(1);
+		})
+	      .attr("id", function(d){return "id"+name_to_index[d.full_name];})
+	       .on("mouseover", function(d){
+			if(clicklocked == 0){showdetails(d);}
+	       })
+	       .on("mouseout", function(d) {
+			if(clicklocked == 0){ hidedetails(d);}
+		 })
+		.on("click",function(d){
+			console.log("In click with "+ d.full_name + " ( "+name_to_index[d.full_name]+" ) .  Prior clicked was "+currentclicked);
+			
+		    //clicknode(d);
+		    if(currentclicked != ""){
+			hidedetails(currentclicked);
+		    }
+		    prior = currentclicked;
+		    currentclicked = name_to_index[d.full_name];
+
+		    if( currentclicked != prior ){
+			//deselect handled above already so only account for when showing new node
+			clicklocked = 1;
+			showdetails(d);
+		    }
+		    else{
+			clicklocked = 0;
+		    }
+		})
+		.call(force.drag);
+
+
+	  var circles = d3.selectAll("g.node");
+	  circles
+	      .append("circle")
+	      .attr("id", function(d){ return "circle"+name_to_index[d['full_name']];})
+	      .attr("r", function(d){ 
+			if( d.full_name == s){ return 25; }
+			else{ 
+				id = name_to_index[d.full_name];
+				if(toplinked.indexOf(String(id)) > -1){ return 7; }
+				else{
+					//if(id in newnodes){ return 3; }
+					//else{ return 0; }
+					return 0;
+				}
+		}})
+	      .attr("stroke","white")
+	      .style("opacity",0.5)
+	      .attr("cx",1).attr("cy",1);
+
+
+	  console.log("5");
+	  force.on("tick", function() {
+	     node.attr("cx", function(d) { return d.x = Math.max(r, Math.min(width - r, d.x)); })
+		 .attr("cy", function(d) { return d.y = Math.max(r, Math.min(height - r, d.y)); });
+
+	    link.attr("x1", function(d) { return d.source.x; })
+		.attr("y1", function(d) { return d.source.y; })
+		.attr("x2", function(d) { return d.target.x; })
+		.attr("y2", function(d) { return d.target.y; });
+
+	    node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+	  });
+
+	  console.log("4");
+	  //node.append("title") .text(function(d) { return d.full_name; });
+	  node.append("text") 
+		.attr("id", function(d){ return "text"+name_to_index[d['full_name']];})
+		.text(function(d) { 
+			id = name_to_index[d.full_name];	
+			if(toplinked.indexOf(String(id)) > -1){ return d.full_name; }
+			else{
+				//if(id in newnodes){ return d.full_name; }
+				//else{ return ""; }
+				return "";
+			}
+		})
+		.style("stroke","black")
+		.style("font-size","11px");
+
+	  force
+	      .nodes(graph.elements.nodes)
+	      .links(newlinks)
+	      .charge(function(d){
+		//var charge = -500;
+		var charge = -2000;
+		if(d.full_name.indexOf(s) > -1){
+			charge = 10 * charge;
+		}
+		return charge;
+	      })
+	      .start();
+
+
+		
+	     //now compress file again to save space
+	     compress = "tar-utility.php?person="+s+"&action=compress&net=large";
+	     $.ajax({ url: compress, 
+			    error: function(r) { console.log("error compressing"); console.log(r); },
+			    success: function(r) {
+				console.log(r);
+			    }});
+	});
+}
+</script>
+</body>
+</html>
