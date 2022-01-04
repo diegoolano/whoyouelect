@@ -22,3 +22,10 @@
 # Whoyouelect.com
 A tool that generates real world political networks from user provided lists of politicians and news sites.  Presented as my Master's Thesis for the Masters in Innovation and Research - Data Mining at the UPC in Barcelona.  See http://whoyouelect.com/texas for the thesis document, presentation, and visualizations.  More detailed explanation/docs for code coming soon though generally speaking the initial setup of politicians and sites to use along with the creation of the graphs themselves takes place in the "generate-network" folder while the website and visualizations is in "whoyouelect.com"
  
+![](figs/who-r1.png?raw=true)
+![](figs/who-r1b.png?raw=true)
+![](figs/who-s1.png?raw=true)
+
+![](figs/who-s2.png?raw=true)
+![](figs/who-s3.png?raw=true)
+![](figs/who-e1.png?raw=true)
